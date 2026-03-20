@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isael Cortes - Isael Barbeiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .active-tab { background: #10b981; color: #020617; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-[#020617] text-slate-200 min-h-screen">
+
+    <div id="modal-senha" class="modal">
+        <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs border-emerald-500/20 text-center animate-in zoom-in-95">
+            <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="lock" class="text-emerald-500"></i>
+            </div>
+            <h3 class="text-xl font-black text-white mb-2">Área Restrita</h3>
+            <p class="text-slate-500 text-xs mb-6">Digite a senha de administrador para continuar.</p>
+            <input type="password" id="input-senha-admin" placeholder="••••" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-center text-2xl tracking-widest outline-none focus:border-emerald-500 mb-4">
+            <div class="flex gap-2">
+                <button onclick="cancelarAcessoAdmin()" class="flex-1 py-3 bg-white/5 rounded-xl font-bold text-xs text-slate-400">Cancelar</button>
+                <button onclick="confirmarSenhaAdmin()" class="flex-1 py-3 bg-emerald-500 text-slate-950 rounded-xl font-black uppercase text-xs">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cliente" class="modal">
+        <div class="glass p-8 rounded-[2.5rem] w-full max-w-md border-emerald-500/20 text-left">
+            <h3 id="titulo-modal-cliente" class="text-2xl font-black text-white mb-6 text-center">Cliente</h3>
+            <input type="hidden" id="edit-cli-id">
+            <div class="space-y-4">
+                <input type="text" id="new-cli-nome" placeholder="Nome do Cliente" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-emerald-500">
+                <input type="text" id="new-cli-whats" placeholder="WhatsApp (DDD + Número)" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-emerald-500">
+                <div class="flex gap-2">
+                    <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-xl font-bold">Sair</button>
+                    <button onclick="salvarCliente()" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-xl font-black uppercase text-xs">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-produto" class="modal">
+        <div class="glass p-8 rounded-[2.5rem] w-full max-w-md border-purple-500/20 text-left">
+            <h3 id="titulo-modal-produto" class="text-2xl font-black text-white mb-6 text-center">Insumo / Produto</h3>
+            <input type="hidden" id="edit-prod-id">
+            <div class="space-y-4">
+                <input type="text" id="new-prod-nome" placeholder="Nome do Produto" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-purple-500">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="new-prod-qtd" placeholder="Qtd" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
+                    <input type="number" id="new-prod-crit" placeholder="Alerta Est." class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-xl font-bold">Sair</button>
+                    <button onclick="salvarProduto()" class="flex-1 py-4 bg-purple-500 text-white rounded-xl font-black uppercase text-xs">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex min-h-screen">
+        <aside class="w-64 bg-slate-900/20 border-r border-white/5 p-6 hidden lg:flex flex-col sticky top-0 h-screen z-50">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-10 h-10 bg-gradient-to-tr from-emerald-400 to-cyan-500 rounded-xl flex items-center justify-center"><i data-lucide="scissors" class="text-slate-950"></i></div>
+                <span class="text-xl font-black text-white uppercase tracking-tight">Isael<span class="text-emerald-400 italic font-light">Cortes</span></span>
+            </div>
+            <nav class="space-y-2 flex-1">
+                <button onclick="switchTab('vendas')" id="btn-vendas" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all active-tab"><i data-lucide="shopping-cart" size="20"></i> Novo Serviço</button>
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-slate-500 hover:bg-white/5 text-left"><i data-lucide="layout-dashboard" size="20"></i> Painel</button>
+                <button onclick="switchTab('clientes')" id="btn-clientes" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users" size="20"></i> Clientes</button>
+                <button onclick="switchTab('estoque')" id="btn-estoque" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package" size="20"></i> Estoque</button>
+                <button onclick="switchTab('config')" id="btn-config" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings" size="20"></i> Equipe</button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-6 lg:p-12 overflow-y-auto">
+            
+            <div id="tab-dashboard" class="tab-content hidden animate-in fade-in">
+                <header class="flex justify-between items-center mb-12 text-left">
+                    <div><h2 class="text-4xl font-black text-white tracking-tight">Fala, Isael! 👋</h2>
+                        <select id="filtro-tempo" onchange="inicializarSistema()" class="mt-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg px-2 py-1 outline-none">
+                            <option value="hoje">Hoje</option><option value="total">Acumulado</option>
+                        </select>
+                    </div>
+                    <button onclick="logoutAdmin()" class="text-slate-500 text-xs hover:text-white underline font-bold uppercase tracking-widest"> Sair do Admin</button>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-3xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-3xl font-black text-sky-400">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Produtos</p><h4 id="dash-produtos" class="text-3xl font-black text-purple-400">R$ 0,00</h4></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-12">
+                    <div class="bg-white/5 border border-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Pix</p><p id="total-pix" class="font-black text-emerald-400">R$ 0,00</p></div>
+                    <div class="bg-white/5 border border-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Cartão</p><p id="total-cartao" class="font-black text-sky-400">R$ 0,00</p></div>
+                    <div class="bg-white/5 border border-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Dinheiro</p><p id="total-dinheiro" class="font-black text-yellow-500">R$ 0,00</p></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 text-left"><h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="bell" class="text-rose-400"></i> Recuperar Clientes</h3><div id="crm-lista" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 text-left"><h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="wallet" class="text-sky-400"></i> Comissão Equipe</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
+                </div>
+            </div>
+
+            <div id="tab-clientes" class="tab-content hidden animate-in fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 text-left">
+                    <h3 class="text-3xl font-black text-white w-full">Meus Clientes</h3>
+                    <div class="flex gap-4 w-full md:w-auto">
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size="18"></i>
+                            <input type="text" id="busca-cliente" oninput="renderizarListas()" placeholder="Buscar cliente..." class="w-full bg-white/5 border border-white/10 pl-12 pr-4 py-3 rounded-xl text-white focus:border-emerald-500 outline-none transition-all">
+                        </div>
+                        <button onclick="prepararNovoCliente()" class="bg-emerald-500 text-slate-950 px-6 py-3 rounded-xl font-black text-xs uppercase">Novo +</button>
+                    </div>
+                </div>
+                <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div id="tab-estoque" class="tab-content hidden animate-in fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 text-left">
+                    <h3 class="text-3xl font-black text-white w-full">Estoque</h3>
+                    <div class="flex gap-4 w-full md:w-auto">
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size="18"></i>
+                            <input type="text" id="busca-estoque" oninput="renderizarListas()" placeholder="Buscar item..." class="w-full bg-white/5 border border-white/10 pl-12 pr-4 py-3 rounded-xl text-white focus:border-purple-500 outline-none transition-all">
+                        </div>
+                        <button onclick="prepararNovoProduto()" class="bg-purple-500 text-white px-6 py-3 rounded-xl font-black text-xs uppercase">Novo Item</button>
+                    </div>
+                </div>
+                <div id="lista-estoque" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div id="tab-config" class="tab-content hidden animate-in fade-in">
+                <div class="max-w-xl mx-auto glass p-10 rounded-[3rem] text-left">
+                    <h3 class="text-2xl font-black text-white mb-2">Equipe Isael Cortes</h3>
+                    <p class="text-slate-500 text-sm mb-8">Gerencie profissionais e contatos.</p>
+                    <input type="hidden" id="edit-barb-idx" value="">
+                    <div class="space-y-4 mb-8">
+                        <input type="text" id="novo-barbeiro-nome" placeholder="Nome do Barbeiro" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-emerald-500">
+                        <div class="flex gap-2">
+                            <input type="text" id="novo-barbeiro-whats" placeholder="WhatsApp (DDD + Número)" class="flex-1 bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-emerald-500">
+                            <button id="btn-salvar-barbeiro" onclick="salvarBarbeiro()" class="bg-emerald-500 text-slate-950 px-6 rounded-xl font-black uppercase text-xs">Salvar</button>
+                        </div>
+                    </div>
+                    <div id="lista-equipe" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div id="tab-vendas" class="tab-content animate-in zoom-in-95">
+                <div class="max-w-2xl mx-auto glass p-10 rounded-[3rem]">
+                    <h3 class="text-2xl font-black text-white mb-8">Lançar Atendimento</h3>
+                    <form id="form-venda" class="space-y-6 text-left">
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="venda-barbeiro" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
+                            <select id="venda-cliente" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
+                        </div>
+                        <input type="text" id="venda-descricao" placeholder="Serviço ou Produto" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="venda-valor" placeholder="Valor R$" step="0.01" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                            <select id="venda-pagamento" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                                <option value="">Pagamento...</option>
+                                <option value="Pix">Pix</option>
+                                <option value="Cartão">Cartão</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5">
+                            <input type="checkbox" id="venda-e-produto" class="w-5 h-5 accent-emerald-500">
+                            <label for="venda-e-produto" class="text-sm font-bold text-slate-400 cursor-pointer">É Produto? (Ganha 10%)</label>
+                        </div>
+                        <button type="submit" class="w-full py-5 bg-emerald-500 text-slate-950 font-black rounded-xl uppercase tracking-widest">Finalizar Atendimento</button>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- CONFIGURAÇÕES ---
+        const SENHA_ADMIN = "1234"; // Você pode mudar aqui
+        let abaDestinoPendente = "";
+
+        const DB = {
+            vendas: JSON.parse(localStorage.getItem('bf_vendas')) || [],
+            clientes: JSON.parse(localStorage.getItem('bf_clientes')) || [],
+            estoque: JSON.parse(localStorage.getItem('bf_estoque')) || [],
+            barbeiros: JSON.parse(localStorage.getItem('bf_barbeiros_v2')) || [
+                {nome: "Isael", celular: ""}, {nome: "Henrique", celular: ""}, {nome: "Diego", celular: ""}
+            ],
+            salvar: function() { 
+                localStorage.setItem('bf_vendas', JSON.stringify(this.vendas)); 
+                localStorage.setItem('bf_clientes', JSON.stringify(this.clientes)); 
+                localStorage.setItem('bf_estoque', JSON.stringify(this.estoque)); 
+                localStorage.setItem('bf_barbeiros_v2', JSON.stringify(this.barbeiros));
+            }
+        };
+
+        function formatarMoeda(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+        function inicializarSistema() {
+            const filtro = document.getElementById('filtro-tempo').value;
+            const hoje = new Date().toISOString().split('T')[0];
+            let faturamento = 0, comissoes = 0, produtosTotal = 0;
+            let tPix = 0, tCard = 0, tCash = 0;
+            let bMap = {}; 
+            DB.barbeiros.forEach(b => bMap[b.nome] = 0);
+
+            DB.vendas.filter(v => filtro === 'total' || v.data === hoje).forEach(v => {
+                const val = parseFloat(v.valor); faturamento += val;
+                const cV = val * (v.eProduto ? 0.10 : 0.50); comissoes += cV;
+                if(v.eProduto) produtosTotal += val;
+                if(bMap[v.barbeiro] !== undefined) bMap[v.barbeiro] += cV;
+
+                if(v.pagamento === 'Pix') tPix += val;
+                else if(v.pagamento === 'Cartão') tCard += val;
+                else if(v.pagamento === 'Dinheiro') tCash += val;
+            });
+
+            document.getElementById('dash-faturamento').innerText = formatarMoeda(faturamento);
+            document.getElementById('dash-comissoes').innerText = formatarMoeda(comissoes);
+            document.getElementById('dash-produtos').innerText = formatarMoeda(produtosTotal);
+            document.getElementById('total-pix').innerText = formatarMoeda(tPix);
+            document.getElementById('total-cartao').innerText = formatarMoeda(tCard);
+            document.getElementById('total-dinheiro').innerText = formatarMoeda(tCash);
+
+            const bCont = document.getElementById('lista-barbeiros-comissao'); bCont.innerHTML = '';
+            Object.entries(bMap).forEach(([n, v]) => bCont.innerHTML += `<div class="flex justify-between p-4 bg-white/5 rounded-2xl border border-white/5"><span>${n}</span><span class="font-black text-emerald-400">${formatarMoeda(v)}</span></div>`);
+
+            const bSel = document.getElementById('venda-barbeiro'); bSel.innerHTML = '<option value="">Barbeiro...</option>';
+            DB.barbeiros.forEach(b => bSel.innerHTML += `<option value="${b.nome}">${b.nome}</option>`);
+
+            const cSel = document.getElementById('venda-cliente'); cSel.innerHTML = '<option value="">Cliente...</option>';
+            DB.clientes.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => cSel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
+
+            renderizarListas(); renderizarEquipe(); lucide.createIcons();
+        }
+
+        function renderizarListas() {
+            const buscaCli = document.getElementById('busca-cliente').value.toLowerCase();
+            const buscaEst = document.getElementById('busca-estoque').value.toLowerCase();
+
+            const crm = document.getElementById('crm-lista'); crm.innerHTML = '';
+            DB.clientes.forEach(c => {
+                const diff = Math.floor((new Date() - new Date(c.dataUltimo)) / (1000*60*60*24));
+                if(diff > 20) crm.innerHTML += `<div class="flex justify-between p-4 bg-white/5 rounded-2xl border border-white/5"><div><p class="font-bold text-sm">${c.nome}</p><p class="text-xs text-rose-400">${diff} dias ausente</p></div><a href="https://api.whatsapp.com/send?phone=55${c.celular}" target="_blank" class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg text-[10px] font-black uppercase">ZAP</a></div>`;
+            });
+
+            const cliL = document.getElementById('lista-completa-clientes'); cliL.innerHTML = '';
+            DB.clientes.filter(c => c.nome.toLowerCase().includes(buscaCli)).forEach(c => {
+                cliL.innerHTML += `
+                <div class="glass p-5 rounded-2xl border-white/5 flex flex-col gap-4 text-left">
+                    <div class="flex justify-between items-start">
+                        <div><h4 class="font-bold text-white text-lg">${c.nome}</h4><p class="text-xs text-slate-500">${c.celular}</p></div>
+                        <div class="flex gap-2">
+                            <button onclick="editarCliente(${c.id})" class="p-2 hover:text-emerald-400 transition-colors"><i data-lucide="edit-2" size="14"></i></button>
+                            <button onclick="removerCliente(${c.id})" class="p-2 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" size="14"></i></button>
+                        </div>
+                    </div>
+                    <a href="https://api.whatsapp.com/send?phone=55${c.celular}" target="_blank" class="w-full py-3 bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase hover:bg-[#25D366] hover:text-white transition-all">
+                        <i data-lucide="message-circle" size="14"></i> Enviar Mensagem
+                    </a>
+                </div>`;
+            });
+
+            const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
+            DB.estoque.filter(i => i.nome.toLowerCase().includes(buscaEst)).forEach(i => {
+                const isC = i.qtd <= i.critico;
+                estL.innerHTML += `
+                <div class="glass p-5 rounded-2xl border-white/5 flex justify-between items-center text-left">
+                    <div><span class="block font-bold ${isC ? 'text-rose-400' : 'text-white'}">${i.nome}</span><span class="text-[10px] text-slate-500 uppercase">Estoque: ${i.qtd} un</span></div>
+                    <div class="flex gap-2">
+                        <button onclick="editarProduto(${i.id})" class="p-2 hover:text-purple-400"><i data-lucide="edit-2" size="14"></i></button>
+                        <button onclick="removerProduto(${i.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button>
+                    </div>
+                </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        // --- GESTÃO ADMIN COM MODAL BONITO ---
+        function switchTab(t) {
+            if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
+                if(sessionStorage.getItem('is_admin') === 'true') {
+                    executarTrocaTab(t);
+                } else {
+                    abaDestinoPendente = t;
+                    document.getElementById('modal-senha').style.display = 'flex';
+                    document.getElementById('input-senha-admin').focus();
+                }
+            } else {
+                executarTrocaTab(t);
+            }
+        }
+
+        function confirmarSenhaAdmin() {
+            const pass = document.getElementById('input-senha-admin').value;
+            if(pass === SENHA_ADMIN) {
+                sessionStorage.setItem('is_admin', 'true');
+                fecharModaisSenha();
+                executarTrocaTab(abaDestinoPendente);
+            } else {
+                alert("Senha Incorreta!");
+                document.getElementById('input-senha-admin').value = '';
+            }
+        }
+
+        function cancelarAcessoAdmin() {
+            fecharModaisSenha();
+            executarTrocaTab('vendas');
+        }
+
+        function fecharModaisSenha() {
+            document.getElementById('modal-senha').style.display = 'none';
+            document.getElementById('input-senha-admin').value = '';
+        }
+
+        function executarTrocaTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(b => { 
+                b.classList.remove('active-tab'); 
+                b.classList.add('text-slate-500'); 
+            });
+            document.getElementById('tab-' + t).classList.remove('hidden');
+            document.getElementById('btn-' + t).classList.add('active-tab');
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('is_admin');
+            switchTab('vendas');
+        }
+
+        // ENTER NO INPUT DA SENHA
+        document.getElementById('input-senha-admin').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') confirmarSenhaAdmin();
+        });
+
+        // --- CRUD E OUTRAS FUNÇÕES ---
+        function renderizarEquipe() {
+            const listE = document.getElementById('lista-equipe'); listE.innerHTML = '';
+            DB.barbeiros.forEach((b, index) => {
+                const btnZap = b.celular ? `<a href="https://api.whatsapp.com/send?phone=55${b.celular}" target="_blank" class="text-emerald-400 hover:scale-110 transition-transform"><i data-lucide="message-circle" size="18"></i></a>` : '';
+                listE.innerHTML += `
+                <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <div><span class="font-bold text-white block">${b.nome}</span><span class="text-[10px] text-slate-500 uppercase">${b.celular || 'Sem Whats'}</span></div>
+                    <div class="flex gap-4 items-center">
+                        ${btnZap}
+                        <button onclick="prepararEdicaoBarbeiro(${index})" class="text-slate-400 hover:text-sky-400"><i data-lucide="edit-2" size="18"></i></button>
+                        <button onclick="removerBarbeiro(${index})" class="text-slate-400 hover:text-rose-400"><i data-lucide="user-minus" size="18"></i></button>
+                    </div>
+                </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function prepararEdicaoBarbeiro(idx) {
+            document.getElementById('edit-barb-idx').value = idx;
+            document.getElementById('novo-barbeiro-nome').value = DB.barbeiros[idx].nome;
+            document.getElementById('novo-barbeiro-whats').value = DB.barbeiros[idx].celular;
+            document.getElementById('btn-salvar-barbeiro').innerText = "Atualizar";
+        }
+
+        function salvarBarbeiro() {
+            const n = document.getElementById('novo-barbeiro-nome').value;
+            const w = document.getElementById('novo-barbeiro-whats').value.replace(/\D/g,'');
+            const idx = document.getElementById('edit-barb-idx').value;
+            if(!n) return;
+            if(idx !== "") { DB.barbeiros[idx] = {nome: n, celular: w}; } 
+            else { DB.barbeiros.push({nome: n, celular: w}); }
+            document.getElementById('novo-barbeiro-nome').value = '';
+            document.getElementById('novo-barbeiro-whats').value = '';
+            document.getElementById('edit-barb-idx').value = '';
+            document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar";
+            DB.salvar(); inicializarSistema();
+        }
+
+        function removerBarbeiro(idx) { if(confirm("Remover este barbeiro?")) { DB.barbeiros.splice(idx, 1); DB.salvar(); inicializarSistema(); } }
+
+        function prepararNovoCliente() { document.getElementById('titulo-modal-cliente').innerText = "Novo Cliente"; document.getElementById('edit-cli-id').value = ""; document.getElementById('new-cli-nome').value = ""; document.getElementById('new-cli-whats').value = ""; abrirModal('cliente'); }
+        function editarCliente(id) { const c = DB.clientes.find(x => x.id == id); document.getElementById('titulo-modal-cliente').innerText = "Editar Cliente"; document.getElementById('edit-cli-id').value = id; document.getElementById('new-cli-nome').value = c.nome; document.getElementById('new-cli-whats').value = c.celular; abrirModal('cliente'); }
+        function salvarCliente() {
+            const id = document.getElementById('edit-cli-id').value, nome = document.getElementById('new-cli-nome').value, zap = document.getElementById('new-cli-whats').value.replace(/\D/g,'');
+            if(!nome || !zap) return;
+            if(id) { const i = DB.clientes.findIndex(x => x.id == id); DB.clientes[i] = {...DB.clientes[i], nome, celular: zap}; }
+            else { DB.clientes.push({ id: Date.now(), nome, celular: zap, dataUltimo: new Date().toISOString() }); }
+            DB.salvar(); fecharModais(); inicializarSistema();
+        }
+        function removerCliente(id) { if(confirm("Apagar cliente?")) { DB.clientes = DB.clientes.filter(x => x.id != id); DB.salvar(); inicializarSistema(); } }
+
+        function prepararNovoProduto() { document.getElementById('titulo-modal-produto').innerText = "Novo Produto"; document.getElementById('edit-prod-id').value = ""; document.getElementById('new-prod-nome').value = ""; document.getElementById('new-prod-qtd').value = ""; document.getElementById('new-prod-crit').value = ""; abrirModal('produto'); }
+        function editarProduto(id) { const i = DB.estoque.find(x => x.id == id); document.getElementById('titulo-modal-produto').innerText = "Editar Produto"; document.getElementById('edit-prod-id').value = id; document.getElementById('new-prod-nome').value = i.nome; document.getElementById('new-prod-qtd').value = i.qtd; document.getElementById('new-prod-crit').value = i.critico; abrirModal('produto'); }
+        function salvarProduto() {
+            const id = document.getElementById('edit-prod-id').value, nome = document.getElementById('new-prod-nome').value, qtd = document.getElementById('new-prod-qtd').value, crit = document.getElementById('new-prod-crit').value;
+            if(!nome || !qtd) return;
+            if(id) { const i = DB.estoque.findIndex(x => x.id == id); DB.estoque[i] = {id, nome, qtd: parseInt(qtd), critico: parseInt(crit)}; }
+            else { DB.estoque.push({ id: Date.now(), nome, qtd: parseInt(qtd), critico: parseInt(crit) }); }
+            DB.salvar(); fecharModais(); inicializarSistema();
+        }
+        function removerProduto(id) { if(confirm("Apagar produto?")) { DB.estoque = DB.estoque.filter(x => x.id != id); DB.salvar(); inicializarSistema(); } }
+
+        function abrirModal(t) { document.getElementById('modal-'+t).style.display = 'flex'; }
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        
+        document.getElementById('form-venda').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nv = { 
+                barbeiro: document.getElementById('venda-barbeiro').value, 
+                cliente: document.getElementById('venda-cliente').value, 
+                descricao: document.getElementById('venda-descricao').value, 
+                valor: document.getElementById('venda-valor').value, 
+                pagamento: document.getElementById('venda-pagamento').value,
+                eProduto: document.getElementById('venda-e-produto').checked, 
+                data: new Date().toISOString().split('T')[0] 
+            };
+            DB.vendas.push(nv); 
+            const ic = DB.clientes.findIndex(c => c.nome === nv.cliente); 
+            if(ic !== -1) DB.clientes[ic].dataUltimo = nv.data;
+            DB.salvar(); 
+            this.reset(); 
+            alert("Atendimento registrado com sucesso!");
+            inicializarSistema(); 
+            executarTrocaTab('vendas');
+        });
+
+        inicializarSistema();
+    </script>
+</body>
+</html>
