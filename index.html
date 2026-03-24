@@ -102,6 +102,13 @@
                     <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-3xl font-black text-sky-400">R$ 0,00</h4></div>
                     <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Produtos</p><h4 id="dash-produtos" class="text-3xl font-black text-purple-400">R$ 0,00</h4></div>
                 </div>
+                
+                <div class="bg-white/[0.03] rounded-[2.5rem] p-8 mb-12">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="clock" class="text-emerald-400"></i> Log de Atendimentos</h3>
+                    <div id="log-vendas-horario" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        </div>
+                </div>
+
                 <div class="grid grid-cols-3 gap-4 mb-12">
                     <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Pix</p><p id="total-pix" class="font-black text-emerald-400">R$ 0,00</p></div>
                     <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Cartão</p><p id="total-cartao" class="font-black text-sky-400">R$ 0,00</p></div>
@@ -160,7 +167,7 @@
                         </div>
                         
                         <div class="relative">
-                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Digite para buscar Serviço ou Produto..." class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Buscar Serviço ou Produto..." class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
                             <datalist id="lista-itens-datalist"></datalist>
                         </div>
 
@@ -212,12 +219,33 @@
             let fat = 0, com = 0, prod = 0, tPix = 0, tCard = 0, tCash = 0;
             let bMap = {}; DB.barbeiros.forEach(b => bMap[b.nome] = 0);
 
-            DB.vendas.filter(v => filtro === 'total' || v.data === hoje).forEach(v => {
+            // LOG DE VENDAS COM HORÁRIO
+            const logCont = document.getElementById('log-vendas-horario');
+            logCont.innerHTML = '';
+
+            const vendasFiltradas = DB.vendas.filter(v => filtro === 'total' || v.data === hoje);
+            
+            // Inverter para mostrar a mais recente primeiro no Log
+            [...vendasFiltradas].reverse().forEach(v => {
                 const val = parseFloat(v.valor); fat += val;
                 const cV = val * (v.eProduto ? 0.10 : 0.50); com += cV;
                 if(v.eProduto) prod += val;
                 if(bMap[v.barbeiro] !== undefined) bMap[v.barbeiro] += cV;
                 if(v.pagamento === 'Pix') tPix += val; else if(v.pagamento === 'Cartão') tCard += val; else tCash += val;
+
+                // Adiciona ao Log Visual
+                logCont.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5 text-xs">
+                        <div class="flex items-center gap-3">
+                            <span class="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-1 rounded-lg">${v.hora || '--:--'}</span>
+                            <div>
+                                <p class="text-white font-bold">${v.cliente} <span class="text-slate-500 font-normal">com</span> ${v.barbeiro}</p>
+                                <p class="text-slate-500 text-[10px] uppercase">${v.descricao}</p>
+                            </div>
+                        </div>
+                        <span class="font-black text-white">${formatarMoeda(val)}</span>
+                    </div>
+                `;
             });
 
             document.getElementById('dash-faturamento').innerText = formatarMoeda(fat);
@@ -236,7 +264,6 @@
             const cSel = document.getElementById('venda-cliente'); cSel.innerHTML = '<option value="">Cliente...</option>';
             DB.clientes.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => cSel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
 
-            // Atualizar Lista de Itens na Busca de Venda
             const datalist = document.getElementById('lista-itens-datalist');
             datalist.innerHTML = '';
             DB.estoque.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(item => {
@@ -248,14 +275,9 @@
             renderizarListas(); renderizarEquipe(); lucide.createIcons();
         }
 
-        // Função de Preço Automático aprimorada para o campo de Busca
         function atualizarPrecoAutomatico() {
             const input = document.getElementById('venda-descricao');
-            const valorInput = input.value;
-            
-            // Procura o item no banco de dados que combina com o nome digitado
-            const itemEncontrado = DB.estoque.find(i => i.nome === valorInput);
-            
+            const itemEncontrado = DB.estoque.find(i => i.nome === input.value);
             if(itemEncontrado) {
                 document.getElementById('venda-valor').value = itemEncontrado.preco;
                 document.getElementById('venda-e-produto').checked = (itemEncontrado.tipo === "Produto");
@@ -274,13 +296,13 @@
 
             const cliL = document.getElementById('lista-completa-clientes'); cliL.innerHTML = '';
             DB.clientes.filter(c => c.nome.toLowerCase().includes(bC)).forEach(c => {
-                cliL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex flex-col gap-4 text-left"><div class="flex justify-between items-start"><div><h4 class="font-bold text-white text-lg">${c.nome}</h4><p class="text-xs text-slate-500">${c.celular}</p></div><div class="flex gap-2"><button onclick="editarCliente(${c.id})" class="p-2 hover:text-emerald-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerCliente(${c.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div><a href="https://wa.me/55${c.celular}" target="_blank" class="w-full py-3 bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase hover:bg-[#25D366] hover:text-white transition-all"><i data-lucide="message-circle" size="14"></i> Enviar Mensagem</a></div>`;
+                cliL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex flex-col gap-4 text-left"><div class="flex justify-between items-start"><div><h4 class="font-bold text-white text-lg">${c.nome}</h4><p class="text-xs text-slate-500">${c.celular}</p></div><div class="flex gap-2"><button onclick="editarCliente(${c.id})" class="p-2 hover:text-emerald-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerCliente(${c.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div><a href="https://wa.me/55${c.celular}" target="_blank" class="w-full py-3 bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase hover:bg-[#25D366] hover:text-white transition-all"><i data-lucide="message-circle" size="14"></i> Mensagem</a></div>`;
             });
 
             const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
             DB.estoque.filter(i => i.nome.toLowerCase().includes(bE)).forEach(i => {
                 const isC = i.qtd <= i.critico;
-                estL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex justify-between items-center text-left"><div><span class="block font-bold ${isC ? 'text-rose-400' : 'text-white'}">${i.nome}</span><span class="text-[10px] text-slate-500 uppercase">${i.tipo} | Estoque: ${i.qtd} un | ${formatarMoeda(i.preco || 0)}</span></div><div class="flex gap-2"><button onclick="editarProduto(${i.id})" class="p-2 hover:text-purple-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerProduto(${i.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div>`;
+                estL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex justify-between items-center text-left"><div><span class="block font-bold ${isC ? 'text-rose-400' : 'text-white'}">${i.nome}</span><span class="text-[10px] text-slate-500 uppercase">${i.tipo} | Estoque: ${i.qtd} | ${formatarMoeda(i.preco || 0)}</span></div><div class="flex gap-2"><button onclick="editarProduto(${i.id})" class="p-2 hover:text-purple-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerProduto(${i.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div>`;
             });
             lucide.createIcons();
         }
@@ -328,6 +350,11 @@
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // CAPTURA A HORA E MINUTO ATUAL
+            const agora = new Date();
+            const horaFormatada = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+
             const nv = { 
                 barbeiro: document.getElementById('venda-barbeiro').value, 
                 cliente: document.getElementById('venda-cliente').value, 
@@ -335,11 +362,12 @@
                 valor: document.getElementById('venda-valor').value, 
                 pagamento: document.getElementById('venda-pagamento').value,
                 eProduto: document.getElementById('venda-e-produto').checked, 
-                data: new Date().toISOString().split('T')[0] 
+                data: agora.toISOString().split('T')[0],
+                hora: horaFormatada // NOVO CAMPO
             };
             DB.vendas.push(nv);
             const ic = DB.clientes.findIndex(c => c.nome === nv.cliente); if(ic !== -1) DB.clientes[ic].dataUltimo = nv.data;
-            await salvar(); this.reset(); alert("Sucesso!"); carregar();
+            await salvar(); this.reset(); alert("Venda registrada às " + horaFormatada); carregar();
         });
 
         function switchTab(t) {
@@ -371,27 +399,5 @@
 
         carregar();
     </script>
-    <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-[100] rounded-t-[2rem]">
-        <button onclick="switchTab('vendas')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-            <i data-lucide="shopping-cart" size="20"></i>
-            <span class="text-[10px] font-bold uppercase">Vendas</span>
-        </button>
-        <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-            <i data-lucide="layout-dashboard" size="20"></i>
-            <span class="text-[10px] font-bold uppercase">Painel</span>
-        </button>
-        <button onclick="switchTab('clientes')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-            <i data-lucide="users" size="20"></i>
-            <span class="text-[10px] font-bold uppercase">Clientes</span>
-        </button>
-        <button onclick="switchTab('estoque')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-            <i data-lucide="package" size="20"></i>
-            <span class="text-[10px] font-bold uppercase">Itens</span>
-        </button>
-        <button onclick="switchTab('config')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-            <i data-lucide="settings" size="20"></i>
-            <span class="text-[10px] font-bold uppercase">Time</span>
-        </button>
-    </div>
 </body>
 </html>
