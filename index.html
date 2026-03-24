@@ -48,10 +48,17 @@
 
     <div id="modal-produto" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-md border-purple-500/20">
-            <h3 id="titulo-modal-produto" class="text-2xl font-black text-white mb-6 text-center">Produto</h3>
+            <h3 id="titulo-modal-produto" class="text-2xl font-black text-white mb-6 text-center">Produto / Serviço</h3>
             <input type="hidden" id="edit-prod-id">
             <div class="space-y-4">
                 <input type="text" id="new-prod-nome" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <select id="new-prod-tipo" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
+                        <option value="Serviço">Serviço</option>
+                        <option value="Produto">Produto</option>
+                    </select>
+                    <input type="number" id="new-prod-preco" placeholder="Preço R$" step="0.01" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <input type="number" id="new-prod-qtd" placeholder="Qtd" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
                     <input type="number" id="new-prod-crit" placeholder="Alerta" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
@@ -151,7 +158,12 @@
                             <select id="venda-barbeiro" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
                             <select id="venda-cliente" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
                         </div>
-                        <input type="text" id="venda-descricao" placeholder="Serviço ou Produto" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                        
+                        <div class="relative">
+                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Digite para buscar Serviço ou Produto..." class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                            <datalist id="lista-itens-datalist"></datalist>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <input type="number" id="venda-valor" placeholder="Valor R$" step="0.01" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
                             <select id="venda-pagamento" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
@@ -224,7 +236,30 @@
             const cSel = document.getElementById('venda-cliente'); cSel.innerHTML = '<option value="">Cliente...</option>';
             DB.clientes.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => cSel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
 
+            // Atualizar Lista de Itens na Busca de Venda
+            const datalist = document.getElementById('lista-itens-datalist');
+            datalist.innerHTML = '';
+            DB.estoque.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.nome;
+                datalist.appendChild(opt);
+            });
+
             renderizarListas(); renderizarEquipe(); lucide.createIcons();
+        }
+
+        // Função de Preço Automático aprimorada para o campo de Busca
+        function atualizarPrecoAutomatico() {
+            const input = document.getElementById('venda-descricao');
+            const valorInput = input.value;
+            
+            // Procura o item no banco de dados que combina com o nome digitado
+            const itemEncontrado = DB.estoque.find(i => i.nome === valorInput);
+            
+            if(itemEncontrado) {
+                document.getElementById('venda-valor').value = itemEncontrado.preco;
+                document.getElementById('venda-e-produto').checked = (itemEncontrado.tipo === "Produto");
+            }
         }
 
         function renderizarListas() {
@@ -245,7 +280,7 @@
             const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
             DB.estoque.filter(i => i.nome.toLowerCase().includes(bE)).forEach(i => {
                 const isC = i.qtd <= i.critico;
-                estL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex justify-between items-center text-left"><div><span class="block font-bold ${isC ? 'text-rose-400' : 'text-white'}">${i.nome}</span><span class="text-[10px] text-slate-500 uppercase">Estoque: ${i.qtd} un</span></div><div class="flex gap-2"><button onclick="editarProduto(${i.id})" class="p-2 hover:text-purple-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerProduto(${i.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div>`;
+                estL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex justify-between items-center text-left"><div><span class="block font-bold ${isC ? 'text-rose-400' : 'text-white'}">${i.nome}</span><span class="text-[10px] text-slate-500 uppercase">${i.tipo} | Estoque: ${i.qtd} un | ${formatarMoeda(i.preco || 0)}</span></div><div class="flex gap-2"><button onclick="editarProduto(${i.id})" class="p-2 hover:text-purple-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerProduto(${i.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div>`;
             });
             lucide.createIcons();
         }
@@ -258,7 +293,6 @@
             lucide.createIcons();
         }
 
-        // CRUD FUNCTIONS (AGORA ASYNC PARA SALVAR NO SUPABASE)
         async function salvarBarbeiro() {
             const n = document.getElementById('novo-barbeiro-nome').value;
             const w = document.getElementById('novo-barbeiro-whats').value.replace(/\D/g,'');
@@ -282,16 +316,16 @@
         async function removerCliente(id) { if(confirm("Apagar?")) { DB.clientes = DB.clientes.filter(x => x.id != id); await salvar(); carregar(); } }
 
         async function salvarProduto() {
-            const id = document.getElementById('edit-prod-id').value, n = document.getElementById('new-prod-nome').value, q = document.getElementById('new-prod-qtd').value, c = document.getElementById('new-prod-crit').value;
+            const id = document.getElementById('edit-prod-id').value, n = document.getElementById('new-prod-nome').value, q = document.getElementById('new-prod-qtd').value, c = document.getElementById('new-prod-crit').value, p = document.getElementById('new-prod-preco').value, t = document.getElementById('new-prod-tipo').value;
             if(!n) return;
-            if(id) { const i = DB.estoque.findIndex(x => x.id == id); DB.estoque[i] = {id, nome: n, qtd: parseInt(q), critico: parseInt(c)}; }
-            else { DB.estoque.push({ id: Date.now(), nome: n, qtd: parseInt(q), critico: parseInt(c) }); }
+            const obj = { id: id ? parseInt(id) : Date.now(), nome: n, qtd: parseInt(q) || 0, critico: parseInt(c) || 0, preco: parseFloat(p) || 0, tipo: t };
+            if(id) { const i = DB.estoque.findIndex(x => x.id == id); DB.estoque[i] = obj; }
+            else { DB.estoque.push(obj); }
             fecharModais(); await salvar(); carregar();
         }
 
         async function removerProduto(id) { if(confirm("Apagar?")) { DB.estoque = DB.estoque.filter(x => x.id != id); await salvar(); carregar(); } }
 
-        // ABA VENDAS - FORM SUBMIT
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault();
             const nv = { 
@@ -308,7 +342,6 @@
             await salvar(); this.reset(); alert("Sucesso!"); carregar();
         });
 
-        // UI HELPERS
         function switchTab(t) {
             if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
                 if(sessionStorage.getItem('is_admin') === 'true') { executarTrocaTab(t); } 
@@ -327,12 +360,11 @@
         function cancelarAcessoAdmin() { fecharModais(); executarTrocaTab('vendas'); }
         function prepararNovoCliente() { document.getElementById('titulo-modal-cliente').innerText = "Novo Cliente"; document.getElementById('edit-cli-id').value = ""; abrirModal('cliente'); }
         function editarCliente(id) { const c = DB.clientes.find(x => x.id == id); document.getElementById('edit-cli-id').value = id; document.getElementById('new-cli-nome').value = c.nome; document.getElementById('new-cli-whats').value = c.celular; abrirModal('cliente'); }
-        function prepararNovoProduto() { abrirModal('produto'); }
-        function editarProduto(id) { const i = DB.estoque.find(x => x.id == id); document.getElementById('edit-prod-id').value = id; document.getElementById('new-prod-nome').value = i.nome; document.getElementById('new-prod-qtd').value = i.qtd; document.getElementById('new-prod-crit').value = i.critico; abrirModal('produto'); }
+        function prepararNovoProduto() { document.getElementById('edit-prod-id').value = ""; document.getElementById('new-prod-nome').value = ""; document.getElementById('new-prod-qtd').value = ""; document.getElementById('new-prod-crit').value = ""; document.getElementById('new-prod-preco').value = ""; abrirModal('produto'); }
+        function editarProduto(id) { const i = DB.estoque.find(x => x.id == id); document.getElementById('edit-prod-id').value = id; document.getElementById('new-prod-nome').value = i.nome; document.getElementById('new-prod-qtd').value = i.qtd; document.getElementById('new-prod-crit').value = i.critico; document.getElementById('new-prod-preco').value = i.preco || ""; document.getElementById('new-prod-tipo').value = i.tipo || "Serviço"; abrirModal('produto'); }
         function abrirModal(t) { document.getElementById('modal-'+t).style.display = 'flex'; }
         function prepararEdicaoBarbeiro(idx) { document.getElementById('edit-barb-idx').value = idx; document.getElementById('novo-barbeiro-nome').value = DB.barbeiros[idx].nome; document.getElementById('novo-barbeiro-whats').value = DB.barbeiros[idx].celular; }
 
-        // REALTIME
         _supabase.channel('custom-all-channel').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'barbearia' }, payload => {
             DB = { ...payload.new }; renderizarTudo();
         }).subscribe();
@@ -340,26 +372,26 @@
         carregar();
     </script>
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-[100] rounded-t-[2rem]">
-    <button onclick="switchTab('vendas')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-        <i data-lucide="shopping-cart" size="20"></i>
-        <span class="text-[10px] font-bold uppercase">Vendas</span>
-    </button>
-    <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-        <i data-lucide="layout-dashboard" size="20"></i>
-        <span class="text-[10px] font-bold uppercase">Painel</span>
-    </button>
-    <button onclick="switchTab('clientes')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-        <i data-lucide="users" size="20"></i>
-        <span class="text-[10px] font-bold uppercase">Clientes</span>
-    </button>
-    <button onclick="switchTab('estoque')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-        <i data-lucide="package" size="20"></i>
-        <span class="text-[10px] font-bold uppercase">Itens</span>
-    </button>
-    <button onclick="switchTab('config')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
-        <i data-lucide="settings" size="20"></i>
-        <span class="text-[10px] font-bold uppercase">Time</span>
-    </button>
-</div>
+        <button onclick="switchTab('vendas')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
+            <i data-lucide="shopping-cart" size="20"></i>
+            <span class="text-[10px] font-bold uppercase">Vendas</span>
+        </button>
+        <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
+            <i data-lucide="layout-dashboard" size="20"></i>
+            <span class="text-[10px] font-bold uppercase">Painel</span>
+        </button>
+        <button onclick="switchTab('clientes')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
+            <i data-lucide="users" size="20"></i>
+            <span class="text-[10px] font-bold uppercase">Clientes</span>
+        </button>
+        <button onclick="switchTab('estoque')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
+            <i data-lucide="package" size="20"></i>
+            <span class="text-[10px] font-bold uppercase">Itens</span>
+        </button>
+        <button onclick="switchTab('config')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-400">
+            <i data-lucide="settings" size="20"></i>
+            <span class="text-[10px] font-bold uppercase">Time</span>
+        </button>
+    </div>
 </body>
 </html>
