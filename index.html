@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isael Cortes - Gestão Profissional</title>
+    <title>Isael Cortes - Gestão Total</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; padding-bottom: 80px; }
-        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .active-tab { background: #10b981; color: #020617; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; padding-bottom: 90px; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .active-tab { background: #10b981; color: #020617; box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
 </head>
@@ -22,51 +22,24 @@
 
     <div id="modal-senha" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs border-emerald-500/20 text-center">
-            <h3 class="text-xl font-black text-white mb-2">Área Restrita</h3>
+            <i data-lucide="lock" class="mx-auto mb-4 text-emerald-500"></i>
+            <h3 class="text-xl font-black text-white mb-2">Admin</h3>
             <input type="password" id="input-senha-admin" placeholder="••••" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-center text-2xl mb-4 outline-none">
             <div class="flex gap-2">
-                <button onclick="fecharModais()" class="flex-1 py-3 bg-white/5 rounded-xl font-bold text-slate-400">Sair</button>
+                <button onclick="fecharModais()" class="flex-1 py-3 bg-white/5 rounded-xl text-xs font-bold text-slate-400">Sair</button>
                 <button onclick="confirmarSenhaAdmin()" class="flex-1 py-3 bg-emerald-500 text-slate-950 rounded-xl font-black uppercase text-xs">Entrar</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-cliente" class="modal">
-        <div class="glass p-8 rounded-[2.5rem] w-full max-w-md border-emerald-500/20">
-            <h3 id="titulo-modal-cliente" class="text-2xl font-black text-white mb-6 text-center">Cliente</h3>
-            <input type="hidden" id="edit-cli-id">
-            <div class="space-y-4">
-                <input type="text" id="new-cli-nome" placeholder="Nome do Cliente" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                <input type="text" id="new-cli-whats" placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                <div class="flex gap-2">
-                    <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-xl font-bold">Sair</button>
-                    <button onclick="salvarCliente()" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-xl font-black uppercase text-xs">Salvar</button>
+    <div id="modal-editor" class="modal">
+        <div class="glass p-8 rounded-[3rem] w-full max-w-md border-white/10">
+            <h3 id="editor-titulo" class="text-2xl font-black text-white mb-6 text-center italic">Editar Registro</h3>
+            <div id="editor-campos" class="space-y-4">
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-produto" class="modal">
-        <div class="glass p-8 rounded-[2.5rem] w-full max-w-md border-purple-500/20">
-            <h3 id="titulo-modal-produto" class="text-2xl font-black text-white mb-6 text-center">Item do Estoque</h3>
-            <input type="hidden" id="edit-prod-id">
-            <div class="space-y-4">
-                <input type="text" id="new-prod-nome" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="new-prod-tipo" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                        <option value="Serviço">Serviço</option>
-                        <option value="Produto">Produto</option>
-                    </select>
-                    <input type="number" id="new-prod-preco" placeholder="Preço R$" step="0.01" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="new-prod-qtd" placeholder="Qtd" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                    <input type="number" id="new-prod-crit" placeholder="Alerta" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-xl font-bold">Sair</button>
-                    <button onclick="salvarProduto()" class="flex-1 py-4 bg-purple-500 text-white rounded-xl font-black uppercase text-xs">Salvar</button>
-                </div>
+            <div class="flex gap-2 mt-8">
+                <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-2xl font-bold">Cancelar</button>
+                <button id="btn-salvar-editor" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase text-xs">Salvar Alterações</button>
             </div>
         </div>
     </div>
@@ -74,7 +47,7 @@
     <div class="flex min-h-screen">
         <aside class="w-64 bg-slate-900/40 border-r border-white/5 p-6 hidden lg:flex flex-col sticky top-0 h-screen z-50">
             <div class="flex items-center gap-3 mb-10">
-                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center"><i data-lucide="scissors" class="text-slate-950"></i></div>
+                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20"><i data-lucide="scissors" class="text-slate-950"></i></div>
                 <span class="text-xl font-black text-white uppercase italic">Isael<span class="text-emerald-400">Cortes</span></span>
             </div>
             <nav class="space-y-2 flex-1">
@@ -90,110 +63,92 @@
             
             <div id="tab-dashboard" class="tab-content hidden">
                 <header class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-black text-white">Painel Isael</h2>
-                    <select id="filtro-tempo" onchange="renderizarTudo()" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg px-3 py-2 outline-none">
+                    <h2 class="text-3xl font-black text-white italic">Gestão Isael</h2>
+                    <select id="filtro-tempo" onchange="renderizarTudo()" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg px-4 py-2 outline-none">
                         <option value="hoje">Hoje</option><option value="total">Acumulado</option>
                     </select>
                 </header>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="glass p-7 rounded-[2.5rem] text-center md:text-left"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-3xl font-black text-white">R$ 0,00</h4></div>
-                    <div class="glass p-7 rounded-[2.5rem] text-center md:text-left"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-3xl font-black text-sky-400">R$ 0,00</h4></div>
-                    <div class="glass p-7 rounded-[2.5rem] text-center md:text-left"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Produtos</p><h4 id="dash-produtos" class="text-3xl font-black text-purple-400">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Faturamento</p><h4 id="dash-faturamento" class="text-3xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Comissões</p><h4 id="dash-comissoes" class="text-3xl font-black text-sky-400">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Produtos</p><h4 id="dash-produtos" class="text-3xl font-black text-purple-400">R$ 0,00</h4></div>
                 </div>
                 
-                <div class="bg-white/[0.03] rounded-[2.5rem] p-6 mb-8">
-                    <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="clock" class="text-emerald-400"></i> Log do Dia</h3>
-                    <div id="log-vendas-horario" class="space-y-3 max-h-80 overflow-y-auto"></div>
+                <div class="bg-white/[0.03] rounded-[2.5rem] p-6 border border-white/5 mb-8">
+                    <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2 italic">Atendimentos Registrados</h3>
+                    <div id="log-vendas-horario" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8"><h3 class="text-xl font-bold text-white mb-6 italic">Comissão Equipe</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
-                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8"><h3 class="text-xl font-bold text-white mb-6 italic">Alertas de Retorno</h3><div id="crm-lista" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8 border border-white/5"><h3 class="text-xl font-bold text-white mb-6">Comissões</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8 border border-white/5"><h3 class="text-xl font-bold text-white mb-6">Clientes Sumidos</h3><div id="crm-lista" class="space-y-4"></div></div>
                 </div>
             </div>
 
             <div id="tab-clientes" class="tab-content hidden">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                    <h3 class="text-3xl font-black text-white w-full">Clientes</h3>
-                    <div class="flex gap-4 w-full">
-                        <input type="text" id="busca-cliente" oninput="renderizarListas()" placeholder="Buscar..." class="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white outline-none">
-                        <button onclick="prepararNovoCliente()" class="bg-emerald-500 text-slate-950 px-6 rounded-xl font-black text-xs uppercase">Novo +</button>
-                    </div>
+                    <h3 class="text-3xl font-black text-white">Clientes</h3>
+                    <button onclick="abrirEditor('novo_cliente')" class="w-full md:w-auto bg-emerald-500 text-slate-950 px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-lg shadow-emerald-500/20">Novo Cliente +</button>
                 </div>
                 <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
             <div id="tab-estoque" class="tab-content hidden">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                    <h3 class="text-3xl font-black text-white w-full">Estoque</h3>
-                    <div class="flex gap-4 w-full">
-                        <input type="text" id="busca-estoque" oninput="renderizarListas()" placeholder="Buscar item..." class="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white outline-none">
-                        <button onclick="prepararNovoProduto()" class="bg-purple-500 text-white px-6 rounded-xl font-black text-xs uppercase">Item +</button>
-                    </div>
+                    <h3 class="text-3xl font-black text-white">Itens & Preços</h3>
+                    <button onclick="abrirEditor('novo_produto')" class="w-full md:w-auto bg-purple-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-lg shadow-purple-500/20">Novo Item +</button>
                 </div>
                 <div id="lista-estoque" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div id="tab-config" class="tab-content hidden">
                 <div class="max-w-xl mx-auto glass p-8 rounded-[3rem]">
-                    <h3 class="text-2xl font-black text-white mb-6">Equipe</h3>
-                    <div class="space-y-4 mb-8">
-                        <input type="text" id="novo-barbeiro-nome" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                        <div class="flex gap-2">
-                            <input type="text" id="novo-barbeiro-whats" placeholder="WhatsApp" class="flex-1 bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                            <button onclick="salvarBarbeiro()" class="bg-emerald-500 text-slate-950 px-6 rounded-xl font-black uppercase text-xs">Salvar</button>
-                        </div>
-                    </div>
-                    <div id="lista-equipe" class="space-y-3"></div>
+                    <h3 class="text-2xl font-black text-white mb-6 italic text-center">Gestão de Equipe</h3>
+                    <div id="lista-equipe" class="space-y-3 mb-8"></div>
+                    <button onclick="abrirEditor('novo_barbeiro')" class="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase hover:bg-white/10 transition-all text-emerald-400">Adicionar Barbeiro</button>
                 </div>
             </div>
 
             <div id="tab-vendas" class="tab-content">
-                <div class="max-w-xl mx-auto glass p-8 rounded-[3rem]">
-                    <h3 class="text-2xl font-black text-white mb-8">Novo Atendimento</h3>
-                    <form id="form-venda" class="space-y-6">
+                <div class="max-w-xl mx-auto glass p-8 rounded-[3rem] shadow-2xl">
+                    <h3 class="text-2xl font-black text-white mb-8 text-center uppercase tracking-tighter">Lançar Atendimento</h3>
+                    <form id="form-venda" class="space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <select id="venda-barbeiro" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
-                            <select id="venda-cliente" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none italic">
-                                </select>
+                            <select id="venda-barbeiro" class="bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white outline-none" required></select>
+                            <select id="venda-cliente" class="bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white outline-none italic"></select>
                         </div>
-                        
                         <div class="relative">
-                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Serviço ou Produto..." class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 O que foi feito?" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white outline-none" required>
                             <datalist id="lista-itens-datalist"></datalist>
                         </div>
-
                         <div class="grid grid-cols-2 gap-4">
-                            <input type="number" id="venda-valor" placeholder="Valor R$" step="0.01" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
-                            <select id="venda-pagamento" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                            <input type="number" id="venda-valor" placeholder="Valor R$" step="0.01" class="bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white outline-none" required>
+                            <select id="venda-pagamento" class="bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white outline-none" required>
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
-                        <div class="flex items-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5">
-                            <input type="checkbox" id="venda-e-produto" class="w-5 h-5 accent-emerald-500"><label for="venda-e-produto" class="text-sm font-bold text-slate-400 uppercase">É Produto? (10% comissão)</label>
+                        <div class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <input type="checkbox" id="venda-e-produto" class="w-6 h-6 accent-emerald-500 rounded-lg"><label for="venda-e-produto" class="text-sm font-bold text-slate-400 uppercase italic">É Produto? (10% de comissão)</label>
                         </div>
-                        <button type="submit" class="w-full py-5 bg-emerald-500 text-slate-950 font-black rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-500/20">Registrar</button>
+                        <button type="submit" class="w-full py-5 bg-emerald-500 text-slate-950 font-black rounded-[1.5rem] uppercase tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-transform">Finalizar</button>
                     </form>
                 </div>
             </div>
         </main>
     </div>
 
-    <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-3 flex justify-around items-center z-[300] rounded-t-[2.5rem]">
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-3 flex justify-around items-center z-[400] rounded-t-[2.5rem]">
         <button onclick="switchTab('vendas')" class="mob-btn flex flex-col items-center gap-1 text-emerald-400">
-            <i data-lucide="shopping-cart" size="20"></i><span class="text-[9px] font-bold uppercase">Novo</span>
+            <i data-lucide="plus-circle" size="24"></i><span class="text-[9px] font-bold uppercase">Lançar</span>
         </button>
         <button onclick="switchTab('dashboard')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="layout-dashboard" size="20"></i><span class="text-[9px] font-bold uppercase">Painel</span>
+            <i data-lucide="bar-chart-3" size="24"></i><span class="text-[9px] font-bold uppercase">Painel</span>
         </button>
         <button onclick="switchTab('clientes')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="users" size="20"></i><span class="text-[9px] font-bold uppercase">Clientes</span>
+            <i data-lucide="users" size="24"></i><span class="text-[9px] font-bold uppercase">Clientes</span>
         </button>
         <button onclick="switchTab('estoque')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="package" size="20"></i><span class="text-[9px] font-bold uppercase">Itens</span>
-        </button>
-        <button onclick="switchTab('config')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="settings" size="20"></i><span class="text-[9px] font-bold uppercase">Time</span>
+            <i data-lucide="package" size="24"></i><span class="text-[9px] font-bold uppercase">Itens</span>
         </button>
     </div>
 
@@ -201,8 +156,8 @@
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
         const SENHA_ADMIN = "1234";
-        let abaDestinoPendente = "";
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
+        let abaDestinoPendente = "";
 
         async function carregar() {
             const { data, error } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
@@ -221,27 +176,31 @@
             const filtro = document.getElementById('filtro-tempo').value;
             const hoje = new Date().toISOString().split('T')[0];
             let fat = 0, com = 0, prod = 0;
-            let bMap = {}; DB.barbeiros.forEach(b => bMap[b.nome] = 0);
+            let bMap = {}; (DB.barbeiros || []).forEach(b => bMap[b.nome] = 0);
 
             const logCont = document.getElementById('log-vendas-horario'); logCont.innerHTML = '';
-            const vendasFiltradas = DB.vendas.filter(v => filtro === 'total' || v.data === hoje);
+            const vendasFiltradas = (DB.vendas || []).filter(v => filtro === 'total' || v.data === hoje);
             
-            [...vendasFiltradas].reverse().forEach(v => {
+            [...vendasFiltradas].reverse().forEach((v, idxOriginal) => {
                 const val = parseFloat(v.valor); fat += val;
                 const cV = val * (v.eProduto ? 0.10 : 0.50); com += cV;
                 if(v.eProduto) prod += val;
                 if(bMap[v.barbeiro] !== undefined) bMap[v.barbeiro] += cV;
 
+                const realIdx = DB.vendas.length - 1 - idxOriginal;
                 logCont.innerHTML += `
-                    <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 text-xs">
+                    <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 text-xs hover:bg-white/10 transition-all">
                         <div class="flex items-center gap-3">
                             <span class="text-emerald-400 font-black bg-emerald-400/10 px-2 py-1 rounded-lg">${v.hora || '--:--'}</span>
                             <div>
                                 <p class="text-white font-bold">${v.cliente || 'Consumidor'}</p>
-                                <p class="text-slate-500 uppercase text-[10px]">${v.descricao} (${v.barbeiro})</p>
+                                <p class="text-slate-500 uppercase text-[9px]">${v.descricao} (${v.barbeiro})</p>
                             </div>
                         </div>
-                        <span class="font-black text-white">${formatarMoeda(val)}</span>
+                        <div class="flex items-center gap-4">
+                            <span class="font-black text-white">${formatarMoeda(val)}</span>
+                            <button onclick="abrirEditor('venda', ${realIdx})" class="text-slate-500 hover:text-sky-400"><i data-lucide="edit-2" size="14"></i></button>
+                        </div>
                     </div>`;
             });
 
@@ -266,13 +225,67 @@
             renderizarListas(); renderizarEquipe(); lucide.createIcons();
         }
 
-        function atualizarPrecoAutomatico() {
-            const input = document.getElementById('venda-descricao');
-            const item = DB.estoque.find(i => i.nome === input.value);
-            if(item) {
-                document.getElementById('venda-valor').value = item.preco;
-                document.getElementById('venda-e-produto').checked = (item.tipo === "Produto");
+        function abrirEditor(tipo, idOuIndex = null) {
+            const container = document.getElementById('editor-campos');
+            const btnSalvar = document.getElementById('btn-salvar-editor');
+            const titulo = document.getElementById('editor-titulo');
+            container.innerHTML = '';
+
+            if (tipo === 'venda') {
+                titulo.innerText = "Editar Atendimento";
+                const v = DB.vendas[idOuIndex];
+                container.innerHTML = `
+                    <input type="number" id="edit-v-valor" value="${v.valor}" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
+                    <select id="edit-v-barb" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white">
+                        ${DB.barbeiros.map(b => `<option ${b.nome === v.barbeiro ? 'selected' : ''}>${b.nome}</option>`).join('')}
+                    </select>`;
+                btnSalvar.onclick = async () => {
+                    DB.vendas[idOuIndex].valor = document.getElementById('edit-v-valor').value;
+                    DB.vendas[idOuIndex].barbeiro = document.getElementById('edit-v-barb').value;
+                    fecharModais(); await salvar(); carregar();
+                };
+            } else if (tipo === 'cliente' || tipo === 'novo_cliente') {
+                titulo.innerText = tipo.includes('novo') ? "Cadastrar Cliente" : "Editar Cliente";
+                const c = tipo.includes('novo') ? {nome:'', celular:''} : DB.clientes.find(x => x.id == idOuIndex);
+                container.innerHTML = `
+                    <input type="text" id="edit-c-nome" value="${c.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white">
+                    <input type="text" id="edit-c-whats" value="${c.celular}" placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white">`;
+                btnSalvar.onclick = async () => {
+                    const n = document.getElementById('edit-c-nome').value;
+                    const w = document.getElementById('edit-c-whats').value;
+                    if(tipo.includes('novo')) DB.clientes.push({id: Date.now(), nome: n, celular: w, dataUltimo: new Date().toISOString()});
+                    else { const i = DB.clientes.findIndex(x => x.id == idOuIndex); DB.clientes[i].nome = n; DB.clientes[i].celular = w; }
+                    fecharModais(); await salvar(); carregar();
+                };
+            } else if (tipo === 'produto' || tipo === 'novo_produto') {
+                titulo.innerText = tipo.includes('novo') ? "Cadastrar Item" : "Editar Item";
+                const p = tipo.includes('novo') ? {nome:'', preco:'', tipo:'Serviço'} : DB.estoque.find(x => x.id == idOuIndex);
+                container.innerHTML = `
+                    <input type="text" id="edit-p-nome" value="${p.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white">
+                    <input type="number" id="edit-p-preco" value="${p.preco}" placeholder="Preço" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white">
+                    <select id="edit-p-tipo" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white">
+                        <option ${p.tipo === 'Serviço' ? 'selected' : ''}>Serviço</option>
+                        <option ${p.tipo === 'Produto' ? 'selected' : ''}>Produto</option>
+                    </select>`;
+                btnSalvar.onclick = async () => {
+                    const obj = { id: tipo.includes('novo') ? Date.now() : idOuIndex, nome: document.getElementById('edit-p-nome').value, preco: document.getElementById('edit-p-preco').value, tipo: document.getElementById('edit-p-tipo').value };
+                    if(tipo.includes('novo')) DB.estoque.push(obj);
+                    else { const i = DB.estoque.findIndex(x => x.id == idOuIndex); DB.estoque[i] = obj; }
+                    fecharModais(); await salvar(); carregar();
+                };
+            } else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
+                const b = tipo.includes('novo') ? {nome:''} : DB.barbeiros[idOuIndex];
+                titulo.innerText = "Barbeiro";
+                container.innerHTML = `<input type="text" id="edit-b-nome" value="${b.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">`;
+                btnSalvar.onclick = async () => {
+                    const n = document.getElementById('edit-b-nome').value;
+                    if(tipo.includes('novo')) DB.barbeiros.push({nome: n, celular: ""});
+                    else DB.barbeiros[idOuIndex].nome = n;
+                    fecharModais(); await salvar(); carregar();
+                };
             }
+            
+            document.getElementById('modal-editor').style.display = 'flex';
         }
 
         function switchTab(t) {
@@ -285,26 +298,26 @@
         function executarTrocaTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById('tab-' + t).classList.remove('hidden');
-            
-            // UI Update Desktop
-            document.querySelectorAll('.nav-btn').forEach(b => { 
-                b.classList.remove('active-tab'); b.classList.add('text-slate-500'); 
-            });
-            const btnD = document.getElementById('btn-' + t);
-            if(btnD) { btnD.classList.add('active-tab'); btnD.classList.remove('text-slate-500'); }
-
-            // UI Update Mobile
+            document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active-tab'); b.classList.add('text-slate-500'); });
+            const bD = document.getElementById('btn-' + t); if(bD) bD.classList.add('active-tab');
             document.querySelectorAll('.mob-btn').forEach(b => b.classList.replace('text-emerald-400', 'text-slate-500'));
-            const btnM = Array.from(document.querySelectorAll('.mob-btn')).find(b => b.getAttribute('onclick').includes(t));
-            if(btnM) btnM.classList.replace('text-slate-500', 'text-emerald-400');
-            
+            const bM = Array.from(document.querySelectorAll('.mob-btn')).find(b => b.getAttribute('onclick').includes(t));
+            if(bM) bM.classList.replace('text-slate-500', 'text-emerald-400');
             fecharModais();
         }
+
+        function confirmarSenhaAdmin() {
+            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
+                sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente);
+            } else alert("Senha incorreta");
+        }
+
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault();
             const agora = new Date();
-            const nv = { 
+            DB.vendas.push({ 
                 barbeiro: document.getElementById('venda-barbeiro').value, 
                 cliente: document.getElementById('venda-cliente').value || "Consumidor", 
                 descricao: document.getElementById('venda-descricao').value, 
@@ -313,57 +326,47 @@
                 eProduto: document.getElementById('venda-e-produto').checked, 
                 data: agora.toISOString().split('T')[0],
                 hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0')
-            };
-            DB.vendas.push(nv);
-            if(nv.cliente !== "Consumidor") {
-                const ic = DB.clientes.findIndex(c => c.nome === nv.cliente);
-                if(ic !== -1) DB.clientes[ic].dataUltimo = nv.data;
-            }
+            });
             await salvar(); this.reset(); alert("Registrado!"); carregar();
         });
 
-        function confirmarSenhaAdmin() {
-            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
-                sessionStorage.setItem('is_admin', 'true');
-                executarTrocaTab(abaDestinoPendente);
-            } else { alert("Incorreta!"); }
-        }
-
-        function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-        function prepararNovoCliente() { document.getElementById('titulo-modal-cliente').innerText = "Novo Cliente"; document.getElementById('edit-cli-id').value = ""; document.getElementById('modal-cliente').style.display = 'flex'; }
-        async function salvarCliente() {
-            const n = document.getElementById('new-cli-nome').value, w = document.getElementById('new-cli-whats').value;
-            if(!n) return;
-            DB.clientes.push({ id: Date.now(), nome: n, celular: w, dataUltimo: new Date().toISOString() });
-            fecharModais(); await salvar(); carregar();
-        }
-
-        function prepararNovoProduto() { document.getElementById('edit-prod-id').value = ""; document.getElementById('modal-produto').style.display = 'flex'; }
-        async function salvarProduto() {
-            const n = document.getElementById('new-prod-nome').value, p = document.getElementById('new-prod-preco').value, t = document.getElementById('new-prod-tipo').value;
-            if(!n) return;
-            DB.estoque.push({ id: Date.now(), nome: n, preco: parseFloat(p) || 0, tipo: t, qtd: 0, critico: 0 });
-            fecharModais(); await salvar(); carregar();
-        }
-
-        async function salvarBarbeiro() {
-            const n = document.getElementById('novo-barbeiro-nome').value;
-            if(!n) return;
-            DB.barbeiros.push({nome: n, celular: ""});
-            await salvar(); carregar();
-        }
-
         function renderizarListas() {
             const cliL = document.getElementById('lista-completa-clientes'); cliL.innerHTML = '';
-            DB.clientes.forEach(c => cliL.innerHTML += `<div class="glass p-5 rounded-2xl flex justify-between items-center"><h4 class="font-bold text-white">${c.nome}</h4><span class="text-xs text-slate-500">${c.celular}</span></div>`);
+            DB.clientes.forEach(c => cliL.innerHTML += `
+                <div class="glass p-5 rounded-3xl flex justify-between items-center">
+                    <div><h4 class="font-bold text-white">${c.nome}</h4><p class="text-xs text-slate-500">${c.celular || 'Sem zap'}</p></div>
+                    <button onclick="abrirEditor('cliente', ${c.id})" class="p-2 text-slate-500 hover:text-emerald-400"><i data-lucide="edit-3" size="18"></i></button>
+                </div>`);
 
             const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
-            DB.estoque.forEach(i => estL.innerHTML += `<div class="glass p-5 rounded-2xl flex justify-between items-center"><div><p class="font-bold text-white">${i.nome}</p><p class="text-[10px] text-slate-500 uppercase">${i.tipo}</p></div><span class="font-black">${formatarMoeda(i.preco)}</span></div>`);
+            DB.estoque.forEach(i => estL.innerHTML += `
+                <div class="glass p-5 rounded-3xl flex justify-between items-center">
+                    <div><p class="font-bold text-white">${i.nome}</p><p class="text-[10px] text-slate-500 uppercase">${i.tipo}</p></div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-black">${formatarMoeda(parseFloat(i.preco))}</span>
+                        <button onclick="abrirEditor('produto', ${i.id})" class="p-2 text-slate-500 hover:text-purple-400"><i data-lucide="edit-3" size="18"></i></button>
+                    </div>
+                </div>`);
+            
+            const crm = document.getElementById('crm-lista'); crm.innerHTML = '';
+            DB.clientes.forEach(c => {
+                const diff = Math.floor((new Date() - new Date(c.dataUltimo)) / (1000*60*60*24));
+                if(diff > 20) crm.innerHTML += `<div class="flex justify-between p-4 bg-white/5 rounded-2xl border border-white/5 text-sm"><span>${c.nome}</span><span class="text-rose-400 font-bold">${diff} dias</span></div>`;
+            });
         }
 
         function renderizarEquipe() {
             const listE = document.getElementById('lista-equipe'); listE.innerHTML = '';
-            DB.barbeiros.forEach(b => listE.innerHTML += `<div class="p-4 bg-white/5 rounded-2xl flex justify-between"><span>${b.nome}</span></div>`);
+            DB.barbeiros.forEach((b, idx) => listE.innerHTML += `
+                <div class="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
+                    <span>${b.nome}</span>
+                    <button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-500 hover:text-emerald-400"><i data-lucide="edit-3" size="16"></i></button>
+                </div>`);
+        }
+
+        function atualizarPrecoAutomatico() {
+            const item = DB.estoque.find(i => i.nome === document.getElementById('venda-descricao').value);
+            if(item) { document.getElementById('venda-valor').value = item.preco; document.getElementById('venda-e-produto').checked = (item.tipo === "Produto"); }
         }
 
         carregar();
