@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isael Cortes - Gestão de Comissões</title>
+    <title>Isael Cortes - Gestão Profissional</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -14,6 +14,8 @@
         .active-tab { background: #10b981; color: #020617; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
         .btn-whatsapp { background: #25D366; color: white; transition: all 0.3s ease; }
+        .btn-delete { color: #ef4444; opacity: 0.6; transition: all 0.2s; }
+        .btn-delete:hover { opacity: 1; transform: scale(1.1); }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
 </head>
@@ -21,7 +23,7 @@
 
     <div id="modal-senha" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs text-center border-emerald-500/20">
-            <h3 class="text-xl font-black text-white mb-4 italic text-emerald-500">Acesso Restrito</h3>
+            <h3 class="text-xl font-black text-white mb-4 italic text-emerald-500 text-center uppercase">Admin</h3>
             <input type="password" id="input-senha-admin" placeholder="••••" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white text-center text-2xl mb-6 outline-none">
             <div class="flex gap-3">
                 <button onclick="fecharModais()" class="flex-1 py-3 text-slate-400 font-bold text-xs">Sair</button>
@@ -32,11 +34,14 @@
 
     <div id="modal-editor" class="modal">
         <div class="glass p-8 rounded-[3rem] w-full max-w-md border-white/10">
-            <h3 id="editor-titulo" class="text-2xl font-black text-white mb-8 text-center italic text-emerald-400">Editar</h3>
+            <h3 id="editor-titulo" class="text-2xl font-black text-white mb-8 text-center italic text-emerald-400 uppercase">Editar</h3>
             <div id="editor-campos" class="space-y-4"></div>
-            <div class="flex gap-3 mt-10">
-                <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-2xl font-bold text-xs text-slate-400">Cancelar</button>
-                <button id="btn-salvar-editor" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase text-xs">Confirmar</button>
+            <div class="flex flex-col gap-3 mt-10">
+                <div class="flex gap-3">
+                    <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-2xl font-bold text-xs text-slate-400">Cancelar</button>
+                    <button id="btn-salvar-editor" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase text-xs">Salvar</button>
+                </div>
+                <button id="btn-excluir-item" class="w-full py-3 text-rose-500 font-bold text-[10px] uppercase tracking-widest hover:bg-rose-500/10 rounded-xl transition-all">Excluir Registro permanentemente</button>
             </div>
         </div>
     </div>
@@ -76,8 +81,8 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    <div class="bg-white/[0.02] rounded-[3rem] p-8 border border-white/5"><h3 class="text-xl font-black text-white mb-8 uppercase italic">Divisão Barbeiros</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
-                    <div id="crm-secao" class="bg-white/[0.02] rounded-[3rem] p-8 border border-white/5"><h3 class="text-xl font-black text-white mb-8 uppercase italic text-rose-500">Alertas</h3><div id="crm-lista" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.02] rounded-[3rem] p-8 border border-white/5"><h3 class="text-xl font-black text-white mb-8 uppercase italic">Resumo do Time</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.02] rounded-[3rem] p-8 border border-white/5"><h3 class="text-xl font-black text-white mb-8 uppercase italic text-rose-500">Alertas de Retorno</h3><div id="crm-lista" class="space-y-4"></div></div>
                 </div>
             </div>
 
@@ -92,7 +97,7 @@
             <div id="tab-estoque" class="tab-content hidden">
                 <div class="flex justify-between items-center mb-10 gap-6">
                     <h3 class="text-4xl font-black text-white uppercase italic">Estoque</h3>
-                    <button onclick="abrirEditor('novo_produto')" class="bg-purple-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase">Novo Item +</button>
+                    <button onclick="abrirEditor('novo_produto')" class="bg-purple-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase">Adicionar Item +</button>
                 </div>
                 <div id="lista-estoque" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </div>
@@ -101,13 +106,13 @@
                 <div class="max-w-xl mx-auto glass p-10 rounded-[3.5rem]">
                     <h3 class="text-3xl font-black text-white mb-10 italic text-center uppercase">Time Isael</h3>
                     <div id="lista-equipe" class="space-y-4 mb-10"></div>
-                    <button onclick="abrirEditor('novo_barbeiro')" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs text-emerald-400">Adicionar Barbeiro</button>
+                    <button onclick="abrirEditor('novo_barbeiro')" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs text-emerald-400 uppercase">Adicionar Barbeiro</button>
                 </div>
             </div>
 
             <div id="tab-vendas" class="tab-content">
                 <div class="max-w-xl mx-auto glass p-10 lg:p-14 rounded-[4rem]">
-                    <h3 class="text-3xl font-black text-white mb-10 text-center uppercase italic">Novo Atendimento</h3>
+                    <h3 class="text-3xl font-black text-white mb-10 text-center uppercase italic">Lançar Registro</h3>
                     <form id="form-venda" class="space-y-6">
                         <div class="grid grid-cols-2 gap-4">
                             <select id="venda-barbeiro" class="bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-bold" required></select>
@@ -122,9 +127,9 @@
                             </select>
                         </div>
                         <div class="flex items-center gap-4 p-5 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
-                            <input type="checkbox" id="venda-e-produto" class="w-7 h-7 accent-emerald-500"><label for="venda-e-produto" class="text-xs font-black text-emerald-500 uppercase italic italic">Venda de Produto?</label>
+                            <input type="checkbox" id="venda-e-produto" class="w-7 h-7 accent-emerald-500"><label for="venda-e-produto" class="text-xs font-black text-emerald-500 uppercase italic">É Produto? (10% comissão)</label>
                         </div>
-                        <button type="submit" class="w-full py-6 bg-emerald-500 text-slate-950 font-black rounded-[2rem] uppercase tracking-widest shadow-2xl shadow-emerald-500/30">Finalizar Atendimento</button>
+                        <button type="submit" class="w-full py-6 bg-emerald-500 text-slate-950 font-black rounded-[2rem] uppercase tracking-widest shadow-2xl shadow-emerald-500/30">Finalizar e Salvar</button>
                     </form>
                 </div>
             </div>
@@ -145,7 +150,7 @@
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let abaDestinoPendente = "";
 
-        // TABELA DE COMISSÕES DO ISAEL
+        // TABELA OFICIAL ISAEL CORTES
         const TABELA_COMISSAO = {
             "corte": 20.00,
             "corte barba": 32.50,
@@ -160,11 +165,11 @@
             "corte luzes": 42.50
         };
 
-        function calcularComissao(servico, valorTotal, eProduto) {
-            if(eProduto) return parseFloat(valorTotal) * 0.10; // 10% fixo p/ produtos
-            const nomeLower = servico.toLowerCase().trim();
-            // Tenta achar na tabela do Isael, se não achar, paga 50% (Outros)
-            return TABELA_COMISSAO[nomeLower] || (parseFloat(valorTotal) * 0.50);
+        function calcularGanhosBarbeiro(servico, valorTotal, eProduto) {
+            if(eProduto) return parseFloat(valorTotal) * 0.10;
+            const s = servico.toLowerCase().trim();
+            // Retorna o valor fixo da tabela ou 50% se for "Outros"
+            return TABELA_COMISSAO[s] !== undefined ? TABELA_COMISSAO[s] : (parseFloat(valorTotal) * 0.50);
         }
 
         async function carregar() {
@@ -185,24 +190,25 @@
             const logCont = document.getElementById('log-vendas-horario'); logCont.innerHTML = '';
             const vendasFiltradas = (DB.vendas || []).filter(v => filtro === 'total' || v.data === hoje);
             
-            [...vendasFiltradas].reverse().forEach((v, idx) => {
+            [...vendasFiltradas].reverse().forEach((v, idxOriginal) => {
                 const val = parseFloat(v.valor); fat += val;
-                const cV = calcularComissao(v.descricao, val, v.eProduto); 
+                const cV = calcularGanhosBarbeiro(v.descricao, val, v.eProduto); 
                 com += cV;
                 if(v.eProduto) prod += val;
                 if(bMap[v.barbeiro] !== undefined) bMap[v.barbeiro] += cV;
 
+                const realIdx = DB.vendas.length - 1 - idxOriginal;
                 logCont.innerHTML += `
                     <div class="flex justify-between items-center p-5 bg-white/[0.03] rounded-[1.5rem] border border-white/5">
                         <div class="flex items-center gap-4">
-                            <span class="text-emerald-400 font-black bg-emerald-400/10 px-3 py-1 rounded-xl text-sm">${v.hora || '--:--'}</span>
-                            <div><p class="text-white font-black text-sm uppercase">${v.cliente || 'Consumidor'}</p>
-                            <p class="text-slate-500 font-bold text-[9px] tracking-widest uppercase">${v.descricao} | ${v.barbeiro}</p></div>
+                            <span class="text-emerald-400 font-black bg-emerald-400/10 px-3 py-1 rounded-xl text-[10px]">${v.hora || '--:--'}</span>
+                            <div><p class="text-white font-black text-xs uppercase italic">${v.cliente || 'Consumidor'}</p>
+                            <p class="text-slate-500 font-bold text-[8px] tracking-widest uppercase">${v.descricao} | ${v.barbeiro}</p></div>
                         </div>
                         <div class="flex items-center gap-4">
-                            <div class="text-right"><p class="font-black text-white text-sm">${val.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</p>
-                            <p class="text-[9px] text-sky-500 font-black">Com: ${cV.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</p></div>
-                            <button onclick="abrirEditor('venda', ${DB.vendas.length-1-idx})" class="p-2 text-slate-600 hover:text-sky-400"><i data-lucide="edit-3" size="16"></i></button>
+                            <div class="text-right"><p class="font-black text-white text-xs">${val.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</p>
+                            <p class="text-[9px] text-sky-500 font-black">Ganho: ${cV.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</p></div>
+                            <button onclick="abrirEditor('venda', ${realIdx})" class="p-2 text-slate-600 hover:text-emerald-400"><i data-lucide="edit-3" size="16"></i></button>
                         </div>
                     </div>`;
             });
@@ -256,23 +262,32 @@
 
         function abrirEditor(tipo, idIdx = null) {
             const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
-            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex';
+            const btnDel = document.getElementById('btn-excluir-item');
+            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block';
+
             if (tipo === 'venda') {
-                const v = DB.vendas[idIdx]; t.innerText = "Editar Registro";
+                const v = DB.vendas[idIdx]; t.innerText = "Registro de Venda";
                 c.innerHTML = `<input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black"><select id="ed-v-b" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold">${DB.barbeiros.map(b => `<option ${b.nome==v.barbeiro?'selected':''}>${b.nome}</option>`).join('')}</select>`;
                 document.getElementById('btn-salvar-editor').onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].barbeiro = document.getElementById('ed-v-b').value; fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Apagar esta venda do histórico?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'cliente' || tipo === 'novo_cliente') {
                 const cli = tipo.includes('novo') ? {nome:'',celular:''} : DB.clientes.find(x => x.id == idIdx); t.innerText = "Cliente";
-                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white"><input id="ed-c-w" value="${cli.celular}" placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white">`;
+                if(tipo.includes('novo')) btnDel.style.display = 'none';
+                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input id="ed-c-w" value="${cli.celular}" placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white">`;
                 document.getElementById('btn-salvar-editor').onclick = async () => { const n=document.getElementById('ed-c-n').value, w=document.getElementById('ed-c-w').value; if(tipo.includes('novo')) DB.clientes.push({id:Date.now(),nome:n,celular:w,dataUltimo:new Date().toISOString()}); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i].nome=n; DB.clientes[i].celular=w; } fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Deletar cliente permanentemente?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'produto' || tipo === 'novo_produto') {
                 const p = tipo.includes('novo') ? {nome:'',preco:'',tipo:'Serviço'} : DB.estoque.find(x => x.id == idIdx); t.innerText = "Estoque";
-                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white"><input type="number" id="ed-p-v" value="${p.preco}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white"><select id="ed-p-t" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><option ${p.tipo=='Serviço'?'selected':''}>Serviço</option><option ${p.tipo=='Produto'?'selected':''}>Produto</option></select>`;
-                document.getElementById('btn-salvar-editor').onclick = async () => { const obj={id:tipo.includes('novo')?Date.now():idIdx,nome:document.getElementById('ed-p-n').value,preco:document.getElementById('ed-p-v').value,tipo:document.getElementById('ed-p-t').value}; if(tipo.includes('novo')) DB.estoque.push(obj); else { const i=DB.estoque.findIndex(x=>x.id==idIdx); DB.estoque[i]=obj; } fecharModais(); await salvar(); carregar(); };
+                if(tipo.includes('novo')) btnDel.style.display = 'none';
+                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input type="number" id="ed-p-v" value="${p.preco}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
+                document.getElementById('btn-salvar-editor').onclick = async () => { const obj={id:tipo.includes('novo')?Date.now():idIdx,nome:document.getElementById('ed-p-n').value,preco:document.getElementById('ed-p-v').value,tipo:p.tipo}; if(tipo.includes('novo')) DB.estoque.push(obj); else { const i=DB.estoque.findIndex(x=>x.id==idIdx); DB.estoque[i]=obj; } fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Remover este item do estoque?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
-                const b = tipo.includes('novo') ? {nome:''} : DB.barbeiros[idIdx]; t.innerText = "Time";
-                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold">`;
+                const b = tipo.includes('novo') ? {nome:''} : DB.barbeiros[idIdx]; t.innerText = "Membro da Equipe";
+                if(tipo.includes('novo')) btnDel.style.display = 'none';
+                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
                 document.getElementById('btn-salvar-editor').onclick = async () => { const n=document.getElementById('ed-b-n').value; if(tipo.includes('novo')) DB.barbeiros.push({nome:n,celular:""}); else DB.barbeiros[idIdx].nome=n; fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Excluir barbeiro da equipe?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
             }
         }
 
@@ -297,29 +312,37 @@
         function confirmarSenhaAdmin() {
             if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
                 sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente);
-            } else alert("Senha Incorreta");
+            } else alert("Senha Incorreta!");
         }
 
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault(); const agora = new Date();
+            const servico = document.getElementById('venda-descricao').value;
+            const clienteNome = document.getElementById('venda-cliente').value || "Consumidor";
+            
             DB.vendas.push({ 
                 barbeiro: document.getElementById('venda-barbeiro').value, 
-                cliente: document.getElementById('venda-cliente').value || "Consumidor", 
-                descricao: document.getElementById('venda-descricao').value, 
+                cliente: clienteNome, 
+                descricao: servico, 
                 valor: document.getElementById('venda-valor').value, 
                 pagamento: document.getElementById('venda-pagamento').value,
                 eProduto: document.getElementById('venda-e-produto').checked, 
                 data: agora.toISOString().split('T')[0],
                 hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0')
             });
-            await salvar(); this.reset(); alert("Salvo!"); carregar();
+
+            // Atualiza data do último serviço do cliente
+            const cliIdx = DB.clientes.findIndex(c => c.nome === clienteNome);
+            if(cliIdx !== -1) DB.clientes[cliIdx].dataUltimo = agora.toISOString();
+
+            await salvar(); this.reset(); alert("Venda Registrada!"); carregar();
         });
 
         function renderizarEquipe() {
             const listE = document.getElementById('lista-equipe'); listE.innerHTML = '';
-            DB.barbeiros.forEach((b, idx) => listE.innerHTML += `<div class="p-5 bg-white/[0.03] rounded-2xl flex justify-between items-center border border-white/5"><span class="font-bold text-lg">${b.nome}</span><button onclick="abrirEditor('barbeiro', ${idx})" class="p-2 text-slate-500 hover:text-emerald-400"><i data-lucide="edit-3" size="18"></i></button></div>`);
+            DB.barbeiros.forEach((b, idx) => listE.innerHTML += `<div class="p-5 bg-white/[0.03] rounded-2xl flex justify-between items-center border border-white/5"><span class="font-black text-lg uppercase italic">${b.nome}</span><button onclick="abrirEditor('barbeiro', ${idx})" class="p-2 text-slate-500 hover:text-emerald-400"><i data-lucide="settings-2" size="20"></i></button></div>`);
         }
 
         function atualizarPrecoAutomatico() {
