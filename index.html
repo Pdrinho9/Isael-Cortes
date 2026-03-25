@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isael Cortes - Isael Barbeiro</title>
+    <title>Isael Cortes - Gestão Profissional</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; padding-bottom: 80px; }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .active-tab { background: #10b981; color: #020617; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
 </head>
 <body class="bg-[#020617] text-slate-200 min-h-screen">
 
     <div id="modal-senha" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs border-emerald-500/20 text-center">
-            <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="lock" class="text-emerald-500"></i></div>
             <h3 class="text-xl font-black text-white mb-2">Área Restrita</h3>
-            <input type="password" id="input-senha-admin" placeholder="••••" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-center text-2xl tracking-widest outline-none focus:border-emerald-500 mb-4">
+            <input type="password" id="input-senha-admin" placeholder="••••" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-center text-2xl mb-4 outline-none">
             <div class="flex gap-2">
-                <button onclick="cancelarAcessoAdmin()" class="flex-1 py-3 bg-white/5 rounded-xl font-bold text-xs text-slate-400">Cancelar</button>
+                <button onclick="fecharModais()" class="flex-1 py-3 bg-white/5 rounded-xl font-bold text-slate-400">Sair</button>
                 <button onclick="confirmarSenhaAdmin()" class="flex-1 py-3 bg-emerald-500 text-slate-950 rounded-xl font-black uppercase text-xs">Entrar</button>
             </div>
         </div>
@@ -48,7 +48,7 @@
 
     <div id="modal-produto" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-md border-purple-500/20">
-            <h3 id="titulo-modal-produto" class="text-2xl font-black text-white mb-6 text-center">Produto / Serviço</h3>
+            <h3 id="titulo-modal-produto" class="text-2xl font-black text-white mb-6 text-center">Item do Estoque</h3>
             <input type="hidden" id="edit-prod-id">
             <div class="space-y-4">
                 <input type="text" id="new-prod-nome" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
@@ -72,60 +72,52 @@
     </div>
 
     <div class="flex min-h-screen">
-        <aside class="w-64 bg-slate-900/20 border-r border-white/5 p-6 hidden lg:flex flex-col sticky top-0 h-screen z-50">
+        <aside class="w-64 bg-slate-900/40 border-r border-white/5 p-6 hidden lg:flex flex-col sticky top-0 h-screen z-50">
             <div class="flex items-center gap-3 mb-10">
-                <div class="w-10 h-10 bg-gradient-to-tr from-emerald-400 to-cyan-500 rounded-xl flex items-center justify-center"><i data-lucide="scissors" class="text-slate-950"></i></div>
-                <span class="text-xl font-black text-white uppercase tracking-tight">Isael<span class="text-emerald-400 italic font-light">Cortes</span></span>
+                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center"><i data-lucide="scissors" class="text-slate-950"></i></div>
+                <span class="text-xl font-black text-white uppercase italic">Isael<span class="text-emerald-400">Cortes</span></span>
             </div>
             <nav class="space-y-2 flex-1">
-                <button onclick="switchTab('vendas')" id="btn-vendas" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold active-tab"><i data-lucide="shopping-cart" size="20"></i> Novo Serviço</button>
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="layout-dashboard" size="20"></i> Painel</button>
-                <button onclick="switchTab('clientes')" id="btn-clientes" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users" size="20"></i> Clientes</button>
-                <button onclick="switchTab('estoque')" id="btn-estoque" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package" size="20"></i> Estoque</button>
-                <button onclick="switchTab('config')" id="btn-config" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings" size="20"></i> Equipe</button>
+                <button onclick="switchTab('vendas')" id="btn-vendas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold active-tab"><i data-lucide="shopping-cart"></i> Novo Serviço</button>
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="layout-dashboard"></i> Painel</button>
+                <button onclick="switchTab('clientes')" id="btn-clientes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users"></i> Clientes</button>
+                <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> Estoque</button>
+                <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> Equipe</button>
             </nav>
         </aside>
 
         <main class="flex-1 p-6 lg:p-12 overflow-y-auto">
             
             <div id="tab-dashboard" class="tab-content hidden">
-                <header class="flex justify-between items-center mb-12">
-                    <div><h2 class="text-4xl font-black text-white">Fala, Isael! 👋</h2>
-                        <select id="filtro-tempo" onchange="renderizarTudo()" class="mt-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg px-2 py-1 outline-none">
-                            <option value="hoje">Hoje</option><option value="total">Acumulado</option>
-                        </select>
-                    </div>
-                    <button onclick="logoutAdmin()" class="text-slate-500 text-xs hover:text-white underline font-bold uppercase">Sair do Admin</button>
+                <header class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-black text-white">Painel Isael</h2>
+                    <select id="filtro-tempo" onchange="renderizarTudo()" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg px-3 py-2 outline-none">
+                        <option value="hoje">Hoje</option><option value="total">Acumulado</option>
+                    </select>
                 </header>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-3xl font-black text-white">R$ 0,00</h4></div>
-                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-3xl font-black text-sky-400">R$ 0,00</h4></div>
-                    <div class="glass p-7 rounded-[2.5rem]"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Produtos</p><h4 id="dash-produtos" class="text-3xl font-black text-purple-400">R$ 0,00</h4></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass p-7 rounded-[2.5rem] text-center md:text-left"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-3xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem] text-center md:text-left"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-3xl font-black text-sky-400">R$ 0,00</h4></div>
+                    <div class="glass p-7 rounded-[2.5rem] text-center md:text-left"><p class="text-xs font-bold text-slate-500 mb-1 uppercase">Produtos</p><h4 id="dash-produtos" class="text-3xl font-black text-purple-400">R$ 0,00</h4></div>
                 </div>
                 
-                <div class="bg-white/[0.03] rounded-[2.5rem] p-8 mb-12">
-                    <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="clock" class="text-emerald-400"></i> Log de Atendimentos</h3>
-                    <div id="log-vendas-horario" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                        </div>
+                <div class="bg-white/[0.03] rounded-[2.5rem] p-6 mb-8">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="clock" class="text-emerald-400"></i> Log do Dia</h3>
+                    <div id="log-vendas-horario" class="space-y-3 max-h-80 overflow-y-auto"></div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-4 mb-12">
-                    <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Pix</p><p id="total-pix" class="font-black text-emerald-400">R$ 0,00</p></div>
-                    <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Cartão</p><p id="total-cartao" class="font-black text-sky-400">R$ 0,00</p></div>
-                    <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] uppercase text-slate-500 mb-1">Dinheiro</p><p id="total-dinheiro" class="font-black text-yellow-500">R$ 0,00</p></div>
-                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8"><h3 class="text-xl font-bold text-white mb-6">Recuperar Clientes</h3><div id="crm-lista" class="space-y-4"></div></div>
-                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8"><h3 class="text-xl font-bold text-white mb-6">Comissão Equipe</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8"><h3 class="text-xl font-bold text-white mb-6 italic">Comissão Equipe</h3><div id="lista-barbeiros-comissao" class="space-y-4"></div></div>
+                    <div class="bg-white/[0.03] rounded-[2.5rem] p-8"><h3 class="text-xl font-bold text-white mb-6 italic">Alertas de Retorno</h3><div id="crm-lista" class="space-y-4"></div></div>
                 </div>
             </div>
 
             <div id="tab-clientes" class="tab-content hidden">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                    <h3 class="text-3xl font-black text-white w-full">Meus Clientes</h3>
-                    <div class="flex gap-4 w-full md:w-auto">
-                        <input type="text" id="busca-cliente" oninput="renderizarListas()" placeholder="Buscar..." class="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white outline-none">
-                        <button onclick="prepararNovoCliente()" class="bg-emerald-500 text-slate-950 px-6 py-3 rounded-xl font-black text-xs uppercase">Novo +</button>
+                    <h3 class="text-3xl font-black text-white w-full">Clientes</h3>
+                    <div class="flex gap-4 w-full">
+                        <input type="text" id="busca-cliente" oninput="renderizarListas()" placeholder="Buscar..." class="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white outline-none">
+                        <button onclick="prepararNovoCliente()" class="bg-emerald-500 text-slate-950 px-6 rounded-xl font-black text-xs uppercase">Novo +</button>
                     </div>
                 </div>
                 <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -134,23 +126,22 @@
             <div id="tab-estoque" class="tab-content hidden">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <h3 class="text-3xl font-black text-white w-full">Estoque</h3>
-                    <div class="flex gap-4 w-full md:w-auto">
-                        <input type="text" id="busca-estoque" oninput="renderizarListas()" placeholder="Buscar item..." class="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white outline-none">
-                        <button onclick="prepararNovoProduto()" class="bg-purple-500 text-white px-6 py-3 rounded-xl font-black text-xs uppercase">Novo Item</button>
+                    <div class="flex gap-4 w-full">
+                        <input type="text" id="busca-estoque" oninput="renderizarListas()" placeholder="Buscar item..." class="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-white outline-none">
+                        <button onclick="prepararNovoProduto()" class="bg-purple-500 text-white px-6 rounded-xl font-black text-xs uppercase">Item +</button>
                     </div>
                 </div>
                 <div id="lista-estoque" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div id="tab-config" class="tab-content hidden">
-                <div class="max-w-xl mx-auto glass p-10 rounded-[3rem]">
-                    <h3 class="text-2xl font-black text-white mb-2">Equipe Isael Cortes</h3>
-                    <input type="hidden" id="edit-barb-idx" value="">
+                <div class="max-w-xl mx-auto glass p-8 rounded-[3rem]">
+                    <h3 class="text-2xl font-black text-white mb-6">Equipe</h3>
                     <div class="space-y-4 mb-8">
                         <input type="text" id="novo-barbeiro-nome" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
                         <div class="flex gap-2">
                             <input type="text" id="novo-barbeiro-whats" placeholder="WhatsApp" class="flex-1 bg-slate-900 border border-white/10 rounded-xl p-4 text-white outline-none">
-                            <button id="btn-salvar-barbeiro" onclick="salvarBarbeiro()" class="bg-emerald-500 text-slate-950 px-6 rounded-xl font-black uppercase text-xs">Salvar</button>
+                            <button onclick="salvarBarbeiro()" class="bg-emerald-500 text-slate-950 px-6 rounded-xl font-black uppercase text-xs">Salvar</button>
                         </div>
                     </div>
                     <div id="lista-equipe" class="space-y-3"></div>
@@ -158,16 +149,17 @@
             </div>
 
             <div id="tab-vendas" class="tab-content">
-                <div class="max-w-2xl mx-auto glass p-10 rounded-[3rem]">
-                    <h3 class="text-2xl font-black text-white mb-8">Lançar Atendimento</h3>
-                    <form id="form-venda" class="space-y-6 text-left">
-                        <div class="grid grid-cols-2 gap-4">
+                <div class="max-w-xl mx-auto glass p-8 rounded-[3rem]">
+                    <h3 class="text-2xl font-black text-white mb-8">Novo Atendimento</h3>
+                    <form id="form-venda" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <select id="venda-barbeiro" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
-                            <select id="venda-cliente" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required></select>
+                            <select id="venda-cliente" class="bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none italic">
+                                </select>
                         </div>
                         
                         <div class="relative">
-                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Buscar Serviço ou Produto..." class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
+                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Serviço ou Produto..." class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white outline-none" required>
                             <datalist id="lista-itens-datalist"></datalist>
                         </div>
 
@@ -178,31 +170,43 @@
                             </select>
                         </div>
                         <div class="flex items-center gap-2 p-4 bg-white/5 rounded-xl border border-white/5">
-                            <input type="checkbox" id="venda-e-produto" class="w-5 h-5 accent-emerald-500"><label for="venda-e-produto" class="text-sm font-bold text-slate-400">É Produto? (Ganha 10%)</label>
+                            <input type="checkbox" id="venda-e-produto" class="w-5 h-5 accent-emerald-500"><label for="venda-e-produto" class="text-sm font-bold text-slate-400 uppercase">É Produto? (10% comissão)</label>
                         </div>
-                        <button type="submit" class="w-full py-5 bg-emerald-500 text-slate-950 font-black rounded-xl uppercase tracking-widest">Finalizar Atendimento</button>
+                        <button type="submit" class="w-full py-5 bg-emerald-500 text-slate-950 font-black rounded-xl uppercase tracking-widest shadow-lg shadow-emerald-500/20">Registrar</button>
                     </form>
                 </div>
             </div>
         </main>
     </div>
 
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-4 py-3 flex justify-around items-center z-[300] rounded-t-[2.5rem]">
+        <button onclick="switchTab('vendas')" class="mob-btn flex flex-col items-center gap-1 text-emerald-400">
+            <i data-lucide="shopping-cart" size="20"></i><span class="text-[9px] font-bold uppercase">Novo</span>
+        </button>
+        <button onclick="switchTab('dashboard')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="layout-dashboard" size="20"></i><span class="text-[9px] font-bold uppercase">Painel</span>
+        </button>
+        <button onclick="switchTab('clientes')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="users" size="20"></i><span class="text-[9px] font-bold uppercase">Clientes</span>
+        </button>
+        <button onclick="switchTab('estoque')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="package" size="20"></i><span class="text-[9px] font-bold uppercase">Itens</span>
+        </button>
+        <button onclick="switchTab('config')" class="mob-btn flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="settings" size="20"></i><span class="text-[9px] font-bold uppercase">Time</span>
+        </button>
+    </div>
+
     <script>
         lucide.createIcons();
-
-        // --- SUPABASE CONFIG ---
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
         const SENHA_ADMIN = "1234";
         let abaDestinoPendente = "";
-
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
 
         async function carregar() {
             const { data, error } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-            if (!error && data) { 
-                DB = { ...data }; 
-                renderizarTudo(); 
-            }
+            if (!error && data) { DB = { ...data }; renderizarTudo(); }
         }
 
         async function salvar() {
@@ -216,159 +220,60 @@
         function renderizarTudo() {
             const filtro = document.getElementById('filtro-tempo').value;
             const hoje = new Date().toISOString().split('T')[0];
-            let fat = 0, com = 0, prod = 0, tPix = 0, tCard = 0, tCash = 0;
+            let fat = 0, com = 0, prod = 0;
             let bMap = {}; DB.barbeiros.forEach(b => bMap[b.nome] = 0);
 
-            // LOG DE VENDAS COM HORÁRIO
-            const logCont = document.getElementById('log-vendas-horario');
-            logCont.innerHTML = '';
-
+            const logCont = document.getElementById('log-vendas-horario'); logCont.innerHTML = '';
             const vendasFiltradas = DB.vendas.filter(v => filtro === 'total' || v.data === hoje);
             
-            // Inverter para mostrar a mais recente primeiro no Log
             [...vendasFiltradas].reverse().forEach(v => {
                 const val = parseFloat(v.valor); fat += val;
                 const cV = val * (v.eProduto ? 0.10 : 0.50); com += cV;
                 if(v.eProduto) prod += val;
                 if(bMap[v.barbeiro] !== undefined) bMap[v.barbeiro] += cV;
-                if(v.pagamento === 'Pix') tPix += val; else if(v.pagamento === 'Cartão') tCard += val; else tCash += val;
 
-                // Adiciona ao Log Visual
                 logCont.innerHTML += `
-                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5 text-xs">
+                    <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 text-xs">
                         <div class="flex items-center gap-3">
-                            <span class="text-emerald-400 font-bold bg-emerald-400/10 px-2 py-1 rounded-lg">${v.hora || '--:--'}</span>
+                            <span class="text-emerald-400 font-black bg-emerald-400/10 px-2 py-1 rounded-lg">${v.hora || '--:--'}</span>
                             <div>
-                                <p class="text-white font-bold">${v.cliente} <span class="text-slate-500 font-normal">com</span> ${v.barbeiro}</p>
-                                <p class="text-slate-500 text-[10px] uppercase">${v.descricao}</p>
+                                <p class="text-white font-bold">${v.cliente || 'Consumidor'}</p>
+                                <p class="text-slate-500 uppercase text-[10px]">${v.descricao} (${v.barbeiro})</p>
                             </div>
                         </div>
                         <span class="font-black text-white">${formatarMoeda(val)}</span>
-                    </div>
-                `;
+                    </div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = formatarMoeda(fat);
             document.getElementById('dash-comissoes').innerText = formatarMoeda(com);
             document.getElementById('dash-produtos').innerText = formatarMoeda(prod);
-            document.getElementById('total-pix').innerText = formatarMoeda(tPix);
-            document.getElementById('total-cartao').innerText = formatarMoeda(tCard);
-            document.getElementById('total-dinheiro').innerText = formatarMoeda(tCash);
 
             const bCont = document.getElementById('lista-barbeiros-comissao'); bCont.innerHTML = '';
-            Object.entries(bMap).forEach(([n, v]) => bCont.innerHTML += `<div class="flex justify-between p-4 bg-white/5 rounded-2xl border border-white/5"><span>${n}</span><span class="font-black text-emerald-400">${formatarMoeda(v)}</span></div>`);
+            Object.entries(bMap).forEach(([n, v]) => {
+                bCont.innerHTML += `<div class="flex justify-between p-4 bg-white/5 rounded-2xl border border-white/5 text-sm"><span>${n}</span><span class="font-black text-emerald-400">${formatarMoeda(v)}</span></div>`;
+            });
 
             const bSel = document.getElementById('venda-barbeiro'); bSel.innerHTML = '<option value="">Barbeiro...</option>';
             DB.barbeiros.forEach(b => bSel.innerHTML += `<option value="${b.nome}">${b.nome}</option>`);
 
-            const cSel = document.getElementById('venda-cliente'); cSel.innerHTML = '<option value="">Cliente...</option>';
+            const cSel = document.getElementById('venda-cliente'); cSel.innerHTML = '<option value="">Cliente (Opcional)...</option>';
             DB.clientes.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => cSel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
 
-            const datalist = document.getElementById('lista-itens-datalist');
-            datalist.innerHTML = '';
-            DB.estoque.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.nome;
-                datalist.appendChild(opt);
-            });
+            const datalist = document.getElementById('lista-itens-datalist'); datalist.innerHTML = '';
+            DB.estoque.forEach(i => datalist.innerHTML += `<option value="${i.nome}">`);
 
             renderizarListas(); renderizarEquipe(); lucide.createIcons();
         }
 
         function atualizarPrecoAutomatico() {
             const input = document.getElementById('venda-descricao');
-            const itemEncontrado = DB.estoque.find(i => i.nome === input.value);
-            if(itemEncontrado) {
-                document.getElementById('venda-valor').value = itemEncontrado.preco;
-                document.getElementById('venda-e-produto').checked = (itemEncontrado.tipo === "Produto");
+            const item = DB.estoque.find(i => i.nome === input.value);
+            if(item) {
+                document.getElementById('venda-valor').value = item.preco;
+                document.getElementById('venda-e-produto').checked = (item.tipo === "Produto");
             }
         }
-
-        function renderizarListas() {
-            const bC = document.getElementById('busca-cliente').value.toLowerCase();
-            const bE = document.getElementById('busca-estoque').value.toLowerCase();
-
-            const crm = document.getElementById('crm-lista'); crm.innerHTML = '';
-            DB.clientes.forEach(c => {
-                const diff = Math.floor((new Date() - new Date(c.dataUltimo)) / (1000*60*60*24));
-                if(diff > 20) crm.innerHTML += `<div class="flex justify-between p-4 bg-white/5 rounded-2xl border border-white/5"><div><p class="font-bold text-sm">${c.nome}</p><p class="text-xs text-rose-400">${diff} dias ausente</p></div><a href="https://wa.me/55${c.celular}" target="_blank" class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg text-[10px] font-black uppercase">ZAP</a></div>`;
-            });
-
-            const cliL = document.getElementById('lista-completa-clientes'); cliL.innerHTML = '';
-            DB.clientes.filter(c => c.nome.toLowerCase().includes(bC)).forEach(c => {
-                cliL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex flex-col gap-4 text-left"><div class="flex justify-between items-start"><div><h4 class="font-bold text-white text-lg">${c.nome}</h4><p class="text-xs text-slate-500">${c.celular}</p></div><div class="flex gap-2"><button onclick="editarCliente(${c.id})" class="p-2 hover:text-emerald-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerCliente(${c.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div><a href="https://wa.me/55${c.celular}" target="_blank" class="w-full py-3 bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase hover:bg-[#25D366] hover:text-white transition-all"><i data-lucide="message-circle" size="14"></i> Mensagem</a></div>`;
-            });
-
-            const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
-            DB.estoque.filter(i => i.nome.toLowerCase().includes(bE)).forEach(i => {
-                const isC = i.qtd <= i.critico;
-                estL.innerHTML += `<div class="glass p-5 rounded-2xl border-white/5 flex justify-between items-center text-left"><div><span class="block font-bold ${isC ? 'text-rose-400' : 'text-white'}">${i.nome}</span><span class="text-[10px] text-slate-500 uppercase">${i.tipo} | Estoque: ${i.qtd} | ${formatarMoeda(i.preco || 0)}</span></div><div class="flex gap-2"><button onclick="editarProduto(${i.id})" class="p-2 hover:text-purple-400"><i data-lucide="edit-2" size="14"></i></button><button onclick="removerProduto(${i.id})" class="p-2 hover:text-rose-500"><i data-lucide="trash-2" size="14"></i></button></div></div>`;
-            });
-            lucide.createIcons();
-        }
-
-        function renderizarEquipe() {
-            const listE = document.getElementById('lista-equipe'); listE.innerHTML = '';
-            DB.barbeiros.forEach((b, index) => {
-                listE.innerHTML += `<div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5"><div><span class="font-bold text-white block">${b.nome}</span><span class="text-[10px] text-slate-500 uppercase">${b.celular || 'Sem Whats'}</span></div><div class="flex gap-4 items-center"><button onclick="prepararEdicaoBarbeiro(${index})" class="text-slate-400 hover:text-sky-400"><i data-lucide="edit-2" size="18"></i></button><button onclick="removerBarbeiro(${index})" class="text-slate-400 hover:text-rose-400"><i data-lucide="user-minus" size="18"></i></button></div></div>`;
-            });
-            lucide.createIcons();
-        }
-
-        async function salvarBarbeiro() {
-            const n = document.getElementById('novo-barbeiro-nome').value;
-            const w = document.getElementById('novo-barbeiro-whats').value.replace(/\D/g,'');
-            const idx = document.getElementById('edit-barb-idx').value;
-            if(!n) return;
-            if(idx !== "") DB.barbeiros[idx] = {nome: n, celular: w}; else DB.barbeiros.push({nome: n, celular: w});
-            document.getElementById('novo-barbeiro-nome').value = ''; document.getElementById('novo-barbeiro-whats').value = ''; document.getElementById('edit-barb-idx').value = '';
-            await salvar(); carregar();
-        }
-
-        async function removerBarbeiro(idx) { if(confirm("Remover?")) { DB.barbeiros.splice(idx, 1); await salvar(); carregar(); } }
-
-        async function salvarCliente() {
-            const id = document.getElementById('edit-cli-id').value, n = document.getElementById('new-cli-nome').value, w = document.getElementById('new-cli-whats').value.replace(/\D/g,'');
-            if(!n) return;
-            if(id) { const i = DB.clientes.findIndex(x => x.id == id); DB.clientes[i] = {...DB.clientes[i], nome: n, celular: w}; }
-            else { DB.clientes.push({ id: Date.now(), nome: n, celular: w, dataUltimo: new Date().toISOString() }); }
-            fecharModais(); await salvar(); carregar();
-        }
-
-        async function removerCliente(id) { if(confirm("Apagar?")) { DB.clientes = DB.clientes.filter(x => x.id != id); await salvar(); carregar(); } }
-
-        async function salvarProduto() {
-            const id = document.getElementById('edit-prod-id').value, n = document.getElementById('new-prod-nome').value, q = document.getElementById('new-prod-qtd').value, c = document.getElementById('new-prod-crit').value, p = document.getElementById('new-prod-preco').value, t = document.getElementById('new-prod-tipo').value;
-            if(!n) return;
-            const obj = { id: id ? parseInt(id) : Date.now(), nome: n, qtd: parseInt(q) || 0, critico: parseInt(c) || 0, preco: parseFloat(p) || 0, tipo: t };
-            if(id) { const i = DB.estoque.findIndex(x => x.id == id); DB.estoque[i] = obj; }
-            else { DB.estoque.push(obj); }
-            fecharModais(); await salvar(); carregar();
-        }
-
-        async function removerProduto(id) { if(confirm("Apagar?")) { DB.estoque = DB.estoque.filter(x => x.id != id); await salvar(); carregar(); } }
-
-        document.getElementById('form-venda').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // CAPTURA A HORA E MINUTO ATUAL
-            const agora = new Date();
-            const horaFormatada = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
-
-            const nv = { 
-                barbeiro: document.getElementById('venda-barbeiro').value, 
-                cliente: document.getElementById('venda-cliente').value, 
-                descricao: document.getElementById('venda-descricao').value, 
-                valor: document.getElementById('venda-valor').value, 
-                pagamento: document.getElementById('venda-pagamento').value,
-                eProduto: document.getElementById('venda-e-produto').checked, 
-                data: agora.toISOString().split('T')[0],
-                hora: horaFormatada // NOVO CAMPO
-            };
-            DB.vendas.push(nv);
-            const ic = DB.clientes.findIndex(c => c.nome === nv.cliente); if(ic !== -1) DB.clientes[ic].dataUltimo = nv.data;
-            await salvar(); this.reset(); alert("Venda registrada às " + horaFormatada); carregar();
-        });
 
         function switchTab(t) {
             if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
@@ -376,26 +281,90 @@
                 else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; }
             } else { executarTrocaTab(t); }
         }
+
         function executarTrocaTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            document.querySelectorAll('nav button').forEach(b => { b.classList.remove('active-tab'); b.classList.add('text-slate-500'); });
             document.getElementById('tab-' + t).classList.remove('hidden');
-            document.getElementById('btn-' + t).classList.add('active-tab');
-        }
-        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); fecharModais(); executarTrocaTab(abaDestinoPendente); } else { alert("Senha Incorreta!"); } }
-        function logoutAdmin() { sessionStorage.removeItem('is_admin'); switchTab('vendas'); }
-        function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-        function cancelarAcessoAdmin() { fecharModais(); executarTrocaTab('vendas'); }
-        function prepararNovoCliente() { document.getElementById('titulo-modal-cliente').innerText = "Novo Cliente"; document.getElementById('edit-cli-id').value = ""; abrirModal('cliente'); }
-        function editarCliente(id) { const c = DB.clientes.find(x => x.id == id); document.getElementById('edit-cli-id').value = id; document.getElementById('new-cli-nome').value = c.nome; document.getElementById('new-cli-whats').value = c.celular; abrirModal('cliente'); }
-        function prepararNovoProduto() { document.getElementById('edit-prod-id').value = ""; document.getElementById('new-prod-nome').value = ""; document.getElementById('new-prod-qtd').value = ""; document.getElementById('new-prod-crit').value = ""; document.getElementById('new-prod-preco').value = ""; abrirModal('produto'); }
-        function editarProduto(id) { const i = DB.estoque.find(x => x.id == id); document.getElementById('edit-prod-id').value = id; document.getElementById('new-prod-nome').value = i.nome; document.getElementById('new-prod-qtd').value = i.qtd; document.getElementById('new-prod-crit').value = i.critico; document.getElementById('new-prod-preco').value = i.preco || ""; document.getElementById('new-prod-tipo').value = i.tipo || "Serviço"; abrirModal('produto'); }
-        function abrirModal(t) { document.getElementById('modal-'+t).style.display = 'flex'; }
-        function prepararEdicaoBarbeiro(idx) { document.getElementById('edit-barb-idx').value = idx; document.getElementById('novo-barbeiro-nome').value = DB.barbeiros[idx].nome; document.getElementById('novo-barbeiro-whats').value = DB.barbeiros[idx].celular; }
+            
+            // UI Update Desktop
+            document.querySelectorAll('.nav-btn').forEach(b => { 
+                b.classList.remove('active-tab'); b.classList.add('text-slate-500'); 
+            });
+            const btnD = document.getElementById('btn-' + t);
+            if(btnD) { btnD.classList.add('active-tab'); btnD.classList.remove('text-slate-500'); }
 
-        _supabase.channel('custom-all-channel').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'barbearia' }, payload => {
-            DB = { ...payload.new }; renderizarTudo();
-        }).subscribe();
+            // UI Update Mobile
+            document.querySelectorAll('.mob-btn').forEach(b => b.classList.replace('text-emerald-400', 'text-slate-500'));
+            const btnM = Array.from(document.querySelectorAll('.mob-btn')).find(b => b.getAttribute('onclick').includes(t));
+            if(btnM) btnM.classList.replace('text-slate-500', 'text-emerald-400');
+            
+            fecharModais();
+        }
+
+        document.getElementById('form-venda').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const agora = new Date();
+            const nv = { 
+                barbeiro: document.getElementById('venda-barbeiro').value, 
+                cliente: document.getElementById('venda-cliente').value || "Consumidor", 
+                descricao: document.getElementById('venda-descricao').value, 
+                valor: document.getElementById('venda-valor').value, 
+                pagamento: document.getElementById('venda-pagamento').value,
+                eProduto: document.getElementById('venda-e-produto').checked, 
+                data: agora.toISOString().split('T')[0],
+                hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0')
+            };
+            DB.vendas.push(nv);
+            if(nv.cliente !== "Consumidor") {
+                const ic = DB.clientes.findIndex(c => c.nome === nv.cliente);
+                if(ic !== -1) DB.clientes[ic].dataUltimo = nv.data;
+            }
+            await salvar(); this.reset(); alert("Registrado!"); carregar();
+        });
+
+        function confirmarSenhaAdmin() {
+            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
+                sessionStorage.setItem('is_admin', 'true');
+                executarTrocaTab(abaDestinoPendente);
+            } else { alert("Incorreta!"); }
+        }
+
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        function prepararNovoCliente() { document.getElementById('titulo-modal-cliente').innerText = "Novo Cliente"; document.getElementById('edit-cli-id').value = ""; document.getElementById('modal-cliente').style.display = 'flex'; }
+        async function salvarCliente() {
+            const n = document.getElementById('new-cli-nome').value, w = document.getElementById('new-cli-whats').value;
+            if(!n) return;
+            DB.clientes.push({ id: Date.now(), nome: n, celular: w, dataUltimo: new Date().toISOString() });
+            fecharModais(); await salvar(); carregar();
+        }
+
+        function prepararNovoProduto() { document.getElementById('edit-prod-id').value = ""; document.getElementById('modal-produto').style.display = 'flex'; }
+        async function salvarProduto() {
+            const n = document.getElementById('new-prod-nome').value, p = document.getElementById('new-prod-preco').value, t = document.getElementById('new-prod-tipo').value;
+            if(!n) return;
+            DB.estoque.push({ id: Date.now(), nome: n, preco: parseFloat(p) || 0, tipo: t, qtd: 0, critico: 0 });
+            fecharModais(); await salvar(); carregar();
+        }
+
+        async function salvarBarbeiro() {
+            const n = document.getElementById('novo-barbeiro-nome').value;
+            if(!n) return;
+            DB.barbeiros.push({nome: n, celular: ""});
+            await salvar(); carregar();
+        }
+
+        function renderizarListas() {
+            const cliL = document.getElementById('lista-completa-clientes'); cliL.innerHTML = '';
+            DB.clientes.forEach(c => cliL.innerHTML += `<div class="glass p-5 rounded-2xl flex justify-between items-center"><h4 class="font-bold text-white">${c.nome}</h4><span class="text-xs text-slate-500">${c.celular}</span></div>`);
+
+            const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
+            DB.estoque.forEach(i => estL.innerHTML += `<div class="glass p-5 rounded-2xl flex justify-between items-center"><div><p class="font-bold text-white">${i.nome}</p><p class="text-[10px] text-slate-500 uppercase">${i.tipo}</p></div><span class="font-black">${formatarMoeda(i.preco)}</span></div>`);
+        }
+
+        function renderizarEquipe() {
+            const listE = document.getElementById('lista-equipe'); listE.innerHTML = '';
+            DB.barbeiros.forEach(b => listE.innerHTML += `<div class="p-4 bg-white/5 rounded-2xl flex justify-between"><span>${b.nome}</span></div>`);
+        }
 
         carregar();
     </script>
