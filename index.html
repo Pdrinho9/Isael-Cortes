@@ -9,19 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; padding-bottom: 100px; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; padding-bottom: 100px; background: #020617; }
         .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .active-tab { background: #10b981; color: #020617; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
         .btn-whatsapp { background: #25D366; color: white; transition: all 0.3s ease; }
+        .logo-img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #10b981; margin: 0 auto; }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-200 min-h-screen">
+<body class="text-slate-200 min-h-screen">
 
     <div id="modal-senha" class="modal">
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs text-center border-emerald-500/20">
-            <h3 class="text-xl font-black text-emerald-500 mb-4 italic uppercase">Admin</h3>
+            <h3 class="text-xl font-black text-emerald-500 mb-4 italic uppercase">Acesso Restrito</h3>
             <input type="password" id="input-senha-admin" placeholder="••••" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-white text-center text-2xl mb-6 outline-none">
             <div class="flex gap-3">
                 <button onclick="fecharModais()" class="flex-1 py-3 text-slate-400 font-bold text-xs">Sair</button>
@@ -37,7 +38,7 @@
             <div class="flex flex-col gap-3 mt-10">
                 <div class="flex gap-3">
                     <button onclick="fecharModais()" class="flex-1 py-4 bg-white/5 rounded-2xl font-bold text-xs text-slate-400">Cancelar</button>
-                    <button id="btn-salvar-editor" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase text-xs">Salvar Alterações</button>
+                    <button id="btn-salvar-editor" class="flex-1 py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase text-xs text-center">Salvar</button>
                 </div>
                 <button id="btn-excluir-item" class="w-full py-3 text-rose-500 font-bold text-[10px] uppercase tracking-widest hover:bg-rose-500/10 rounded-xl transition-all border border-rose-500/20">
                     <i data-lucide="trash-2" class="inline-block w-3 h-3 mr-1"></i> Excluir Permanentemente
@@ -48,10 +49,11 @@
 
     <div class="flex min-h-screen">
         <aside class="w-72 bg-slate-900/40 border-r border-white/5 p-8 hidden lg:flex flex-col sticky top-0 h-screen z-50">
-            <div class="flex items-center gap-3 mb-12">
-                <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center"><i data-lucide="scissors" class="text-slate-950"></i></div>
-                <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">Isael<span class="text-emerald-400">Cortes</span></h1>
+            <div class="flex flex-col items-center mb-10">
+                <img src="logo.png" alt="Logo Isael" class="logo-img mb-4 shadow-lg shadow-emerald-500/20">
+                <h1 class="text-xl font-black text-white uppercase italic tracking-tighter">Isael<span class="text-emerald-400">Cortes</span></h1>
             </div>
+            
             <nav class="space-y-3 flex-1">
                 <button onclick="switchTab('vendas')" id="btn-vendas" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black active-tab"><i data-lucide="plus-square"></i> NOVO SERVIÇO</button>
                 <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="bar-chart-3"></i> PAINEL</button>
@@ -65,49 +67,26 @@
         </aside>
 
         <main class="flex-1 p-6 lg:p-16">
+            
             <div id="tab-dashboard" class="tab-content hidden">
                 <header class="flex justify-between items-center mb-10">
-                    <h2 class="text-4xl font-black text-white uppercase italic">Dashboard</h2>
+                    <h2 class="text-4xl font-black text-white uppercase italic">Painel de Ganhos</h2>
                     <select id="filtro-tempo" onchange="renderizarTudo()" class="bg-emerald-500 text-slate-950 text-xs font-black rounded-xl px-6 py-3 outline-none">
                         <option value="hoje">Hoje</option><option value="total">Geral</option>
                     </select>
                 </header>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-4xl font-black text-white italic">R$ 0,00</h4></div>
-                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-4xl font-black text-sky-400 italic">R$ 0,00</h4></div>
-                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Produtos</p><h4 id="dash-produtos" class="text-4xl font-black text-purple-400 italic">R$ 0,00</h4></div>
+                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Faturamento Total</p><h4 id="dash-faturamento" class="text-4xl font-black text-white italic">R$ 0,00</h4></div>
+                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Comissões Equipe</p><h4 id="dash-comissoes" class="text-4xl font-black text-sky-400 italic">R$ 0,00</h4></div>
+                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Venda de Produtos</p><h4 id="dash-produtos" class="text-4xl font-black text-purple-400 italic">R$ 0,00</h4></div>
                 </div>
                 
                 <div class="bg-white/[0.02] rounded-[3rem] p-8 border border-white/5 mb-10">
-                    <h3 class="text-xl font-black text-white mb-8 flex items-center gap-3 uppercase italic">Histórico de Atendimentos</h3>
+                    <h3 class="text-xl font-black text-white mb-8 uppercase italic">Fluxo de Atendimento</h3>
                     <div id="log-vendas-horario" class="space-y-4 max-h-[500px] overflow-y-auto pr-4"></div>
                 </div>
 
                 <div id="lista-barbeiros-comissao" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-            </div>
-
-            <div id="tab-clientes" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-10 gap-6">
-                    <h3 class="text-4xl font-black text-white uppercase italic">Clientes</h3>
-                    <button onclick="abrirEditor('novo_cliente')" class="bg-emerald-500 text-slate-950 px-10 py-5 rounded-[2rem] font-black text-xs uppercase">Novo Cadastro +</button>
-                </div>
-                <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            </div>
-
-            <div id="tab-estoque" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-10 gap-6">
-                    <h3 class="text-4xl font-black text-white uppercase italic">Estoque</h3>
-                    <button onclick="abrirEditor('novo_produto')" class="bg-purple-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase">Adicionar Item +</button>
-                </div>
-                <div id="lista-estoque" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-            </div>
-
-            <div id="tab-config" class="tab-content hidden">
-                <div class="max-w-xl mx-auto glass p-10 rounded-[3.5rem]">
-                    <h3 class="text-3xl font-black text-white mb-10 italic text-center uppercase">Time Isael</h3>
-                    <div id="lista-equipe" class="space-y-4 mb-10"></div>
-                    <button onclick="abrirEditor('novo_barbeiro')" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs text-emerald-400 uppercase">Adicionar Barbeiro</button>
-                </div>
             </div>
 
             <div id="tab-vendas" class="tab-content">
@@ -118,29 +97,46 @@
                             <select id="venda-barbeiro" class="bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-bold" required></select>
                             <select id="venda-cliente" class="bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none italic"></select>
                         </div>
-                        <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 O que foi feito?" class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-bold" required>
+                        <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="🔍 Serviço ou Produto" class="w-full bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-bold" required>
                         <datalist id="lista-itens-datalist"></datalist>
                         <div class="grid grid-cols-2 gap-4">
-                            <input type="number" id="venda-valor" placeholder="Valor R$" step="0.01" class="bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-black" required>
+                            <input type="number" id="venda-valor" placeholder="Preço R$" step="0.01" class="bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-black" required>
                             <select id="venda-pagamento" class="bg-slate-900 border border-white/10 p-5 rounded-2xl text-white outline-none font-bold" required>
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
                         <div class="flex items-center gap-4 p-5 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
-                            <input type="checkbox" id="venda-e-produto" class="w-7 h-7 accent-emerald-500"><label for="venda-e-produto" class="text-xs font-black text-emerald-500 uppercase italic">É Produto? (10% comissão)</label>
+                            <input type="checkbox" id="venda-e-produto" class="w-7 h-7 accent-emerald-500"><label for="venda-e-produto" class="text-xs font-black text-emerald-500 uppercase italic">Marcar como Produto (10% comissão)</label>
                         </div>
                         <button type="submit" class="w-full py-6 bg-emerald-500 text-slate-950 font-black rounded-[2rem] uppercase tracking-widest shadow-2xl shadow-emerald-500/30">Finalizar e Salvar</button>
                     </form>
                 </div>
             </div>
-        </main>
-    </div>
 
-    <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-4 flex justify-around items-center z-[450] rounded-t-[3rem]">
-        <button onclick="switchTab('vendas')" class="mob-btn flex flex-col items-center gap-1 text-emerald-400"><i data-lucide="plus-circle" size="28"></i></button>
-        <button onclick="switchTab('dashboard')" class="mob-btn flex flex-col items-center gap-1 text-slate-500"><i data-lucide="layout-grid" size="28"></i></button>
-        <button onclick="switchTab('clientes')" class="mob-btn flex flex-col items-center gap-1 text-slate-500"><i data-lucide="users" size="28"></i></button>
-        <button id="mob-logout" onclick="fazerLogout()" class="hidden mob-btn text-rose-500"><i data-lucide="log-out" size="28"></i></button>
+            <div id="tab-clientes" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-10 gap-6">
+                    <h3 class="text-4xl font-black text-white uppercase italic">Gestão de Clientes</h3>
+                    <button onclick="abrirEditor('novo_cliente')" class="bg-emerald-500 text-slate-950 px-10 py-5 rounded-[2rem] font-black text-xs uppercase">Adicionar Cliente +</button>
+                </div>
+                <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <div id="tab-estoque" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-10 gap-6">
+                    <h3 class="text-4xl font-black text-white uppercase italic">Produtos & Serviços</h3>
+                    <button onclick="abrirEditor('novo_produto')" class="bg-purple-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase">Novo Item +</button>
+                </div>
+                <div id="lista-estoque" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+
+            <div id="tab-config" class="tab-content hidden">
+                <div class="max-w-xl mx-auto glass p-10 rounded-[3.5rem]">
+                    <h3 class="text-3xl font-black text-white mb-10 italic text-center uppercase text-emerald-400">Time Isael</h3>
+                    <div id="lista-equipe" class="space-y-4 mb-10"></div>
+                    <button onclick="abrirEditor('novo_barbeiro')" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs text-emerald-400 uppercase">Novo Barbeiro +</button>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
@@ -150,6 +146,7 @@
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let abaDestinoPendente = "";
 
+        // TABELA DE PREÇOS FIXOS PARA COMISSÃO
         const TABELA_GANHOS = {
             "corte": 20.00, "corte barba": 32.50, "corte sobrancelha": 27.50,
             "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50,
@@ -190,14 +187,14 @@
 
                 const realIdx = DB.vendas.length - 1 - idxOriginal;
                 logCont.innerHTML += `
-                    <div class="flex justify-between items-center p-5 bg-white/[0.03] rounded-[1.5rem] border border-white/5">
+                    <div class="flex justify-between items-center p-5 bg-white/[0.03] rounded-[1.5rem] border border-white/5 hover:bg-white/[0.05] transition-all">
                         <div class="flex items-center gap-4">
                             <span class="text-emerald-400 font-black text-xs">${v.hora || '--:--'}</span>
                             <div><p class="text-white font-black text-xs uppercase italic">${v.cliente}</p>
-                            <p class="text-slate-500 font-bold text-[8px] uppercase">${v.descricao} | ${v.barbeiro}</p></div>
+                            <p class="text-slate-500 font-bold text-[8px] uppercase">${v.descricao} | <span class="text-emerald-500/50">${v.barbeiro}</span></p></div>
                         </div>
                         <div class="flex items-center gap-4 text-right">
-                            <div><p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p><p class="text-[9px] text-sky-500 font-black">Ganho: R$ ${cV.toFixed(2)}</p></div>
+                            <div><p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p><p class="text-[9px] text-sky-500 font-black">Ganho Barbeiro: R$ ${cV.toFixed(2)}</p></div>
                             <button onclick="abrirEditor('venda', ${realIdx})" class="p-2 text-slate-600 hover:text-emerald-400"><i data-lucide="edit-3" size="16"></i></button>
                         </div>
                     </div>`;
@@ -209,10 +206,10 @@
 
             const bCont = document.getElementById('lista-barbeiros-comissao'); bCont.innerHTML = '';
             Object.entries(bMap).forEach(([n, v]) => {
-                bCont.innerHTML += `<div class="glass p-5 rounded-2xl flex justify-between font-bold text-xs"><span>${n}</span><span class="text-emerald-400">R$ ${v.toFixed(2)}</span></div>`;
+                bCont.innerHTML += `<div class="glass p-5 rounded-2xl flex justify-between font-bold text-xs"><span>${n}</span><span class="text-emerald-400">Recebe R$ ${v.toFixed(2)}</span></div>`;
             });
 
-            document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
+            document.getElementById('venda-barbeiro').innerHTML = '<option value="">Quem atendeu?</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
             document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             document.getElementById('lista-itens-datalist').innerHTML = DB.estoque.map(i => `<option value="${i.nome}">`).join('');
 
@@ -224,10 +221,10 @@
             DB.clientes.forEach(c => cliL.innerHTML += `
                 <div class="glass p-6 rounded-[2.5rem] border-white/5 flex flex-col gap-5">
                     <div class="flex justify-between">
-                        <div><h4 class="font-black text-white text-xl uppercase italic tracking-tighter">${c.nome}</h4><p class="text-[10px] text-slate-500 font-bold uppercase">${c.celular || 'S/ Whats'}</p></div>
+                        <div><h4 class="font-black text-white text-xl uppercase italic tracking-tighter">${c.nome}</h4><p class="text-[10px] text-slate-500 font-bold uppercase">${c.celular || 'Sem Telefone'}</p></div>
                         <button onclick="abrirEditor('cliente', ${c.id})" class="p-2 text-slate-600 hover:text-emerald-400"><i data-lucide="edit-3" size="20"></i></button>
                     </div>
-                    <a href="https://wa.me/55${c.celular?.replace(/\D/g,'')}" target="_blank" class="btn-whatsapp w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase"><i data-lucide="message-circle" size="18"></i> Chamar no Zap</a>
+                    <a href="https://wa.me/55${c.celular?.replace(/\D/g,'')}" target="_blank" class="btn-whatsapp w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase"><i data-lucide="message-circle" size="18"></i> Chamar no WhatsApp</a>
                 </div>`);
 
             const estL = document.getElementById('lista-estoque'); estL.innerHTML = '';
@@ -250,32 +247,36 @@
             c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block';
 
             if (tipo === 'venda') {
-                const v = DB.vendas[idIdx]; t.innerText = "Editar Venda";
+                const v = DB.vendas[idIdx]; t.innerText = "Ajustar Venda";
                 c.innerHTML = `<input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black"><select id="ed-v-b" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold">${DB.barbeiros.map(b => `<option ${b.nome==v.barbeiro?'selected':''}>${b.nome}</option>`).join('')}</select>`;
                 document.getElementById('btn-salvar-editor').onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].barbeiro = document.getElementById('ed-v-b').value; fecharModais(); await salvar(); carregar(); };
-                btnDel.onclick = async () => { if(confirm("Apagar esta venda?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
+                btnDel.onclick = async () => { if(confirm("Apagar permanentemente este registro de venda?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'cliente' || tipo === 'novo_cliente') {
-                const cli = tipo.includes('novo') ? {nome:'',celular:''} : DB.clientes.find(x => x.id == idIdx); t.innerText = "Cliente";
+                const cli = tipo.includes('novo') ? {nome:'',celular:''} : DB.clientes.find(x => x.id == idIdx);
+                t.innerText = tipo.includes('novo') ? "Novo Cliente" : "Editar Cliente";
                 if(tipo.includes('novo')) btnDel.style.display = 'none';
-                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input id="ed-c-w" value="${cli.celular}" placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white">`;
-                document.getElementById('btn-salvar-editor').onclick = async () => { const n=document.getElementById('ed-c-n').value, w=document.getElementById('ed-c-w').value; if(tipo.includes('novo')) DB.clientes.push({id:Date.now(),nome:n,celular:w,dataUltimo:new Date().toISOString()}); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i].nome=n; DB.clientes[i].celular=w; } fecharModais(); await salvar(); carregar(); };
-                btnDel.onclick = async () => { if(confirm("Deletar cliente?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
+                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome do Cliente" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input id="ed-c-w" value="${cli.celular}" placeholder="WhatsApp (com DDD)" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white">`;
+                document.getElementById('btn-salvar-editor').onclick = async () => { const n=document.getElementById('ed-c-n').value, w=document.getElementById('ed-c-w').value; if(tipo.includes('novo')) DB.clientes.push({id:Date.now(),nome:n,celular:w}); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i].nome=n; DB.clientes[i].celular=w; } fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Remover este cliente da base de dados?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'produto' || tipo === 'novo_produto') {
-                const p = tipo.includes('novo') ? {nome:'',preco:'',tipo:'Serviço'} : DB.estoque.find(x => x.id == idIdx); t.innerText = "Estoque";
+                const p = tipo.includes('novo') ? {nome:'',preco:'',tipo:'Produto'} : DB.estoque.find(x => x.id == idIdx);
+                t.innerText = tipo.includes('novo') ? "Novo Item" : "Editar Item";
                 if(tipo.includes('novo')) btnDel.style.display = 'none';
-                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input type="number" id="ed-p-v" value="${p.preco}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
-                document.getElementById('btn-salvar-editor').onclick = async () => { const i=DB.estoque.findIndex(x=>x.id==idIdx); if(tipo.includes('novo')) DB.estoque.push({id:Date.now(),nome:document.getElementById('ed-p-n').value,preco:document.getElementById('ed-p-v').value,tipo:p.tipo}); else { DB.estoque[i].nome=document.getElementById('ed-p-n').value; DB.estoque[i].preco=document.getElementById('ed-p-v').value; } fecharModais(); await salvar(); carregar(); };
-                btnDel.onclick = async () => { if(confirm("Remover item?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
+                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" placeholder="Nome do Item" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input type="number" id="ed-p-v" value="${p.preco}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
+                document.getElementById('btn-salvar-editor').onclick = async () => { const n=document.getElementById('ed-p-n').value, v=document.getElementById('ed-p-v').value; if(tipo.includes('novo')) DB.estoque.push({id:Date.now(),nome:n,preco:v,tipo:p.tipo}); else { const i=DB.estoque.findIndex(x=>x.id==idIdx); DB.estoque[i].nome=n; DB.estoque[i].preco=v; } fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Excluir este item permanentemente?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
-                const b = tipo.includes('novo') ? {nome:''} : DB.barbeiros[idIdx]; t.innerText = "Barbeiro";
+                const b = tipo.includes('novo') ? {nome:''} : DB.barbeiros[idIdx];
+                t.innerText = tipo.includes('novo') ? "Novo Barbeiro" : "Editar Equipe";
                 if(tipo.includes('novo')) btnDel.style.display = 'none';
-                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
-                document.getElementById('btn-salvar-editor').onclick = async () => { if(tipo.includes('novo')) DB.barbeiros.push({nome:document.getElementById('ed-b-n').value}); else DB.barbeiros[idIdx].nome=document.getElementById('ed-b-n').value; fecharModais(); await salvar(); carregar(); };
-                btnDel.onclick = async () => { if(confirm("Excluir barbeiro?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
+                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome do Profissional" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
+                document.getElementById('btn-salvar-editor').onclick = async () => { const n=document.getElementById('ed-b-n').value; if(tipo.includes('novo')) DB.barbeiros.push({nome:n}); else DB.barbeiros[idIdx].nome=n; fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Remover este profissional?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
             }
             lucide.createIcons();
         }
 
+        // --- SISTEMA DE NAVEGAÇÃO E ADMIN ---
         function switchTab(t) {
             if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
                 if(sessionStorage.getItem('is_admin') === 'true') { executarTrocaTab(t); } 
@@ -286,33 +287,26 @@
         function executarTrocaTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById('tab-' + t).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+            document.querySelectorAll('.nav-btn, .mob-btn').forEach(b => b.classList.remove('active-tab'));
             const bD = document.getElementById('btn-' + t); if(bD) bD.classList.add('active-tab');
             fecharModais();
         }
 
         function confirmarSenhaAdmin() {
             if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
-                sessionStorage.setItem('is_admin', 'true'); 
-                verificarStatusAdmin();
-                executarTrocaTab(abaDestinoPendente);
+                sessionStorage.setItem('is_admin', 'true'); verificarStatusAdmin(); executarTrocaTab(abaDestinoPendente);
             } else alert("Senha incorreta!");
         }
 
+        function fazerLogout() { sessionStorage.removeItem('is_admin'); verificarStatusAdmin(); switchTab('vendas'); }
         function verificarStatusAdmin() {
             const status = sessionStorage.getItem('is_admin') === 'true';
             document.getElementById('logout-btn').classList.toggle('hidden', !status);
             document.getElementById('mob-logout').classList.toggle('hidden', !status);
         }
-
-        function fazerLogout() {
-            sessionStorage.removeItem('is_admin');
-            verificarStatusAdmin();
-            switchTab('vendas');
-        }
-
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
+        // LANÇAMENTO DE VENDAS
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault(); const agora = new Date();
             DB.vendas.push({ 
@@ -321,12 +315,15 @@
                 pagamento: document.getElementById('venda-pagamento').value, eProduto: document.getElementById('venda-e-produto').checked, 
                 data: agora.toISOString().split('T')[0], hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0')
             });
-            await salvar(); this.reset(); alert("Lançado com sucesso!"); carregar();
+            await salvar(); this.reset(); alert("Registro salvo com sucesso!"); carregar();
         });
 
         function atualizarPrecoAutomatico() {
             const item = DB.estoque.find(i => i.nome === document.getElementById('venda-descricao').value);
-            if(item) { document.getElementById('venda-valor').value = item.preco; document.getElementById('venda-e-produto').checked = (item.tipo === "Produto"); }
+            if(item) { 
+                document.getElementById('venda-valor').value = item.preco; 
+                document.getElementById('venda-e-produto').checked = (item.tipo === "Produto"); 
+            }
         }
 
         carregar();
