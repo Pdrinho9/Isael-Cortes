@@ -76,12 +76,17 @@
                     <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-4xl font-black text-white italic">R$ 0,00</h4></div>
                     <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-4xl font-black text-sky-400 italic">R$ 0,00</h4></div>
                     <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Vendas Brutas</p><h4 id="dash-produtos" class="text-4xl font-black text-purple-400 italic">R$ 0,00</h4></div>
+                    <div class="glass p-8 rounded-[2.5rem]"><p class="text-[10px] font-black text-slate-500 mb-2 uppercase">Produtos</p><h4 id="dash-produtos" class="text-4xl font-black text-purple-400 italic">R$ 0,00</h4></div>
                 </div>
                 
                 <div class="bg-white/[0.02] rounded-[3rem] p-8 border border-white/5 mb-10">
                     <h3 class="text-xl font-black text-white mb-8 flex items-center gap-3 uppercase italic">Histórico de Atendimentos</h3>
                     <div id="log-vendas-horario" class="space-y-4 max-h-[500px] overflow-y-auto pr-4"></div>
                 </div>
+                <div id="lista-barbeiros-comissao" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+
+
                 <div id="lista-barbeiros-comissao" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </div>
 
@@ -125,6 +130,9 @@
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
+                        <div class="flex items-center gap-4 p-5 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
+                            <input type="checkbox" id="venda-e-produto" class="w-7 h-7 accent-emerald-500"><label for="venda-e-produto" class="text-xs font-black text-emerald-500 uppercase italic">É Produto? (10% comissão)</label>
+                        </div>
                         <button type="submit" class="w-full py-6 bg-emerald-500 text-slate-950 font-black rounded-[2rem] uppercase tracking-widest shadow-2xl shadow-emerald-500/30">Finalizar e Salvar</button>
                     </form>
                 </div>
@@ -153,7 +161,8 @@
             "corte alisante/ pigmentado": 32.50, "corte luzes": 42.50
         };
 
-        function calcularComissao(servico, valor) {
+        function calcularComissao(servico, valor, eProd) {
+            if(eProd) return parseFloat(valor) * 0.10;
             const s = servico.toLowerCase().trim();
             // Se o serviço estiver na tabela, usa o valor fixo. Se não, paga 50%.
             return TABELA_GANHOS[s] !== undefined ? TABELA_GANHOS[s] : (parseFloat(valor) * 0.50);
@@ -182,6 +191,8 @@
                 const val = parseFloat(v.valor); fat += val;
                 const cV = calcularComissao(v.descricao, val); 
                 com += cV; 
+                const cV = calcularComissao(v.descricao, val, v.eProduto); 
+                com += cV; if(v.eProduto) prod += val;
                 if(bMap[v.barbeiro] !== undefined) bMap[v.barbeiro] += cV;
 
                 const realIdx = DB.vendas.length - 1 - idxOriginal;
@@ -201,7 +212,7 @@
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fat.toFixed(2);
             document.getElementById('dash-comissoes').innerText = "R$ " + com.toFixed(2);
-            document.getElementById('dash-produtos').innerText = "R$ " + fat.toFixed(2);
+            document.getElementById('dash-produtos').innerText = "R$ " + prod.toFixed(2);
 
             const bCont = document.getElementById('lista-barbeiros-comissao'); bCont.innerHTML = '';
             Object.entries(bMap).forEach(([n, v]) => {
@@ -261,6 +272,7 @@
                 if(tipo.includes('novo')) btnDel.style.display = 'none';
                 c.innerHTML = `<input id="ed-p-n" value="${p.nome}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-bold"><input type="number" id="ed-p-v" value="${p.preco}" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-white font-black">`;
                 document.getElementById('btn-salvar-editor').onclick = async () => { if(tipo.includes('novo')) DB.estoque.push({id:Date.now(),nome:document.getElementById('ed-p-n').value,preco:document.getElementById('ed-p-v').value,tipo:p.tipo}); else { const i=DB.estoque.findIndex(x=>x.id==idIdx); DB.estoque[i].nome=document.getElementById('ed-p-n').value; DB.estoque[i].preco=document.getElementById('ed-p-v').value; } fecharModais(); await salvar(); carregar(); };
+                document.getElementById('btn-salvar-editor').onclick = async () => { const i=DB.estoque.findIndex(x=>x.id==idIdx); if(tipo.includes('novo')) DB.estoque.push({id:Date.now(),nome:document.getElementById('ed-p-n').value,preco:document.getElementById('ed-p-v').value,tipo:p.tipo}); else { DB.estoque[i].nome=document.getElementById('ed-p-n').value; DB.estoque[i].preco=document.getElementById('ed-p-v').value; } fecharModais(); await salvar(); carregar(); };
                 btnDel.onclick = async () => { if(confirm("Remover item?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
             } else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
                 const b = tipo.includes('novo') ? {nome:''} : DB.barbeiros[idIdx]; t.innerText = "Barbeiro";
@@ -314,7 +326,7 @@
             DB.vendas.push({ 
                 barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, 
                 descricao: document.getElementById('venda-descricao').value, valor: document.getElementById('venda-valor').value, 
-                pagamento: document.getElementById('venda-pagamento').value, 
+                pagamento: document.getElementById('venda-pagamento').value, eProduto: document.getElementById('venda-e-produto').checked, 
                 data: agora.toISOString().split('T')[0], hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0')
             });
             await salvar(); this.reset(); alert("Lançado com sucesso!"); carregar();
@@ -323,6 +335,7 @@
         function atualizarPrecoAutomatico() {
             const item = DB.estoque.find(i => i.nome === document.getElementById('venda-descricao').value);
             if(item) { document.getElementById('venda-valor').value = item.preco; }
+            if(item) { document.getElementById('venda-valor').value = item.preco; document.getElementById('venda-e-produto').checked = (item.tipo === "Produto"); }
         }
 
         carregar();
