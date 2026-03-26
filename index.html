@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isael Alves Cortes - Gestão</title>
+    <title>Isael Alves Cortes - Gestão Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -13,17 +13,8 @@
         .glass { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .active-tab { background: #ffffff !important; color: #000000 !important; font-weight: 900; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
-        
-        /* Ajuste para a logo ficar redonda e bonita */
-        .brand-logo { 
-            width: 120px; 
-            height: 120px; 
-            object-fit: cover; 
-            border-radius: 50%; 
-            border: 2px solid rgba(255,255,255,0.1);
-            margin: 0 auto 2rem auto; 
-            display: block; 
-        }
+        .tipo-btn-active { border-color: #ffffff; background: rgba(255, 255, 255, 0.1); color: white; }
+        .brand-logo { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); margin: 0 auto 2rem auto; display: block; }
         
         @media (max-width: 1024px) {
             .brand-logo { width: 90px; height: 90px; margin-bottom: 1rem; }
@@ -47,9 +38,9 @@
     <div id="modal-editor" class="modal">
         <div class="glass p-8 rounded-[3rem] w-full max-w-md border-white/10">
             <h3 id="editor-titulo" class="text-2xl font-black text-white mb-6 text-center italic uppercase">Editor</h3>
-            <div id="seletor-tipo" class="flex gap-2 mb-6">
-                <button onclick="setTipoNovoItem('Serviço')" id="tipo-servico" class="flex-1 py-3 rounded-xl border border-white/10 text-[10px] font-black uppercase flex flex-col items-center gap-1">Serviço</button>
-                <button onclick="setTipoNovoItem('Produto')" id="tipo-produto" class="flex-1 py-3 rounded-xl border border-white/10 text-[10px] font-black uppercase flex flex-col items-center gap-1">Produto</button>
+            <div id="seletor-tipo" class="flex gap-2 mb-6" style="display: none;">
+                <button onclick="setTipoNovoItem('Serviço')" id="tipo-servico" class="flex-1 py-3 rounded-xl border border-white/10 text-[10px] font-black uppercase">Serviço</button>
+                <button onclick="setTipoNovoItem('Produto')" id="tipo-produto" class="flex-1 py-3 rounded-xl border border-white/10 text-[10px] font-black uppercase">Produto</button>
             </div>
             <div id="editor-campos" class="space-y-4"></div>
             <div class="flex flex-col gap-3 mt-10">
@@ -79,7 +70,7 @@
             <div id="tab-vendas" class="tab-content">
                 <div class="max-w-xl mx-auto glass p-8 lg:p-14 rounded-[3rem]">
                     <div class="lg:hidden mb-6"><img src="Logo.png" alt="Logo" class="brand-logo"></div>
-                    <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Lançar Registro</h3>
+                    <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Novo Lançamento</h3>
                     <form id="form-venda" class="space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <select id="venda-barbeiro" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold" required></select>
@@ -93,7 +84,7 @@
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
-                        <button type="submit" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Salvar</button>
+                        <button type="submit" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
                     </form>
                 </div>
             </div>
@@ -105,10 +96,10 @@
                         <option value="hoje">Hoje</option><option value="total">Geral</option>
                     </select>
                 </header>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div class="glass p-6 rounded-3xl text-center"><p class="text-[9px] text-slate-500 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-2xl font-black text-white">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl text-center"><p class="text-[9px] text-slate-500 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-2xl font-black text-white">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl text-center"><p class="text-[9px] text-slate-500 uppercase">Registros</p><h4 id="dash-lancamentos" class="text-2xl font-black text-white">0</h4></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-2xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-2xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Serviços</p><h4 id="dash-lancamentos" class="text-2xl font-black text-white">0</h4></div>
                 </div>
                 <div id="log-vendas-horario" class="space-y-3 mb-8"></div>
                 <div id="lista-barbeiros-comissao" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -133,22 +124,21 @@
 
             <div id="tab-config" class="tab-content hidden">
                 <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
-                <div id="lista-equipe" class="space-y-3 mb-8 max-w-md mx-auto"></div>
+                <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
                 <button onclick="abrirEditor('novo_barbeiro')" class="w-full max-w-md mx-auto block py-4 border border-white/10 rounded-xl font-black text-[10px] text-white">ADICIONAR BARBEIRO</button>
             </div>
         </main>
     </div>
 
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
-        <button onclick="switchTab('vendas')" id="mob-vendas" class="mob-btn text-white p-2"><i data-lucide="plus-circle" size="24"></i></button>
-        <button onclick="switchTab('dashboard')" id="mob-dashboard" class="mob-btn text-slate-600 p-2"><i data-lucide="layout-grid" size="24"></i></button>
-        <button onclick="switchTab('clientes')" id="mob-clientes" class="mob-btn text-slate-600 p-2"><i data-lucide="users" size="24"></i></button>
-        <button onclick="switchTab('estoque')" id="mob-estoque" class="mob-btn text-slate-600 p-2"><i data-lucide="package" size="24"></i></button>
-        <button onclick="switchTab('config')" id="mob-config" class="mob-btn text-slate-600 p-2"><i data-lucide="settings" size="24"></i></button>
+        <button onclick="switchTab('vendas')" id="mob-vendas" class="mob-btn text-white p-2"><i data-lucide="plus-circle"></i></button>
+        <button onclick="switchTab('dashboard')" id="mob-dashboard" class="mob-btn text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
+        <button onclick="switchTab('clientes')" id="mob-clientes" class="mob-btn text-slate-600 p-2"><i data-lucide="users"></i></button>
+        <button onclick="switchTab('estoque')" id="mob-estoque" class="mob-btn text-slate-600 p-2"><i data-lucide="package"></i></button>
+        <button onclick="switchTab('config')" id="mob-config" class="mob-btn text-slate-600 p-2"><i data-lucide="settings"></i></button>
     </div>
 
     <script>
-        // Mantenha seu script anterior aqui, ele continuará funcionando normalmente.
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
         const SENHA_ADMIN = "1234";
@@ -194,7 +184,7 @@
                 const realIdx = DB.vendas.length - 1 - idxOrig;
                 if(logCont) logCont.innerHTML += `<div class="flex justify-between items-center p-4 bg-white/[0.02] rounded-2xl border border-white/5">
                     <div class="text-[10px]"><p class="text-white font-black uppercase">${v.cliente}</p><p class="text-slate-500">${v.descricao} • ${v.barbeiro}</p></div>
-                    <div class="flex items-center gap-3"><div><p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black">Ganho: R$ ${cV.toFixed(2)}</p></div><button onclick="abrirEditor('venda', ${realIdx})" class="text-slate-600"><i data-lucide="edit-3" size="14"></i></button></div></div>`;
+                    <div class="flex items-center gap-3"><div><p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black">R$ ${cV.toFixed(2)}</p></div><button onclick="abrirEditor('venda', ${realIdx})" class="text-slate-600"><i data-lucide="edit-3" size="14"></i></button></div></div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fat.toFixed(2);
@@ -226,7 +216,7 @@
                 prodL.innerHTML = ''; DB.estoque.filter(i => i.tipo === 'Produto').forEach(i => prodL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between"><div><p class="text-[10px] font-black uppercase">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`);
             }
             const equL = document.getElementById('lista-equipe'); if(equL) {
-                equL.innerHTML = ''; DB.barbeiros.forEach((b, idx) => equL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><span class="font-black text-white uppercase text-xs">${b.nome}</span><button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`);
+                equL.innerHTML = ''; DB.barbeiros.forEach((b, idx) => equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase">${b.nome}</p></div><div class="flex gap-2"><button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button>${b.celular ? `<a href="https://wa.me/55${b.celular.replace(/\D/g,'')}" class="text-emerald-500"><i data-lucide="phone" size="16"></i></a>` : ''}</div></div>`);
             }
         }
 
@@ -236,34 +226,26 @@
                 else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; }
             } else { executarTrocaTab(t); }
         }
+
         function executarTrocaTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById('tab-' + t).classList.remove('hidden');
             document.querySelectorAll('.nav-btn, .mob-btn').forEach(b => {
                 b.classList.remove('active-tab');
-                b.classList.replace('text-white', 'text-slate-600');
-                if(b.id === 'btn-'+t || b.id === 'mob-'+t) {
-                    b.classList.add('active-tab');
-                    b.classList.replace('text-slate-600', 'text-white');
-                }
+                if(b.id === 'btn-'+t || b.id === 'mob-'+t) b.classList.add('active-tab');
             });
             fecharModais();
         }
-        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); verificarStatusAdmin(); executarTrocaTab(abaDestinoPendente); } else alert("Senha Errada!"); }
+
+        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); verificarStatusAdmin(); executarTrocaTab(abaDestinoPendente); } else alert("Erro!"); }
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
         function verificarStatusAdmin() { const s = sessionStorage.getItem('is_admin') === 'true'; document.getElementById('logout-btn').classList.toggle('hidden', !s); }
+        function fazerLogout() { sessionStorage.removeItem('is_admin'); verificarStatusAdmin(); switchTab('vendas'); }
+        function setTipoNovoItem(tipo) { tipoItemSelecionado = tipo; document.getElementById('tipo-servico').classList.toggle('tipo-btn-active', tipo==='Serviço'); document.getElementById('tipo-produto').classList.toggle('tipo-btn-active', tipo==='Produto'); }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault(); const agora = new Date();
-            DB.vendas.push({ 
-                barbeiro: document.getElementById('venda-barbeiro').value, 
-                cliente: document.getElementById('venda-cliente').value, 
-                descricao: document.getElementById('venda-descricao').value, 
-                valor: document.getElementById('venda-valor').value, 
-                pagamento: document.getElementById('venda-pagamento').value, 
-                data: agora.toISOString().split('T')[0], 
-                hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0') 
-            });
+            DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: document.getElementById('venda-descricao').value, valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: agora.toISOString().split('T')[0], hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0') });
             await salvar(); this.reset(); renderizarTudo();
         });
 
@@ -272,19 +254,46 @@
             if(item) document.getElementById('venda-valor').value = item.preco;
         }
 
-        // Funções de abrir editor simplificadas para caber
         function abrirEditor(tipo, idIdx = null) {
             const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
             const btnDel = document.getElementById('btn-excluir-item'); const btnSalvar = document.getElementById('btn-salvar-editor');
-            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block';
-            
+            const seletor = document.getElementById('seletor-tipo');
+            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block'; seletor.style.display = 'none';
+
             if (tipo === 'venda') {
                 const v = DB.vendas[idIdx]; t.innerText = "Editar Venda";
                 c.innerHTML = `<input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black">`;
                 btnSalvar.onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; fecharModais(); await salvar(); carregar(); };
                 btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
             }
-            // (Outros editores seguem a mesma lógica do código anterior)
+            else if (tipo === 'cliente' || tipo === 'novo_cliente') {
+                const isNovo = idIdx === null; const cli = isNovo ? {nome:'',celular:''} : DB.clientes.find(x => x.id == idIdx);
+                t.innerText = "Cliente"; if(isNovo) btnDel.style.display = 'none';
+                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold"><input id="ed-c-w" value="${cli.celular}" placeholder="Zap" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white">`;
+                btnSalvar.onclick = async () => { if(isNovo) DB.clientes.push({id:Date.now(),nome:document.getElementById('ed-c-n').value,celular:document.getElementById('ed-c-w').value}); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i].nome=document.getElementById('ed-c-n').value; DB.clientes[i].celular=document.getElementById('ed-c-w').value; } fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
+            }
+            else if (tipo === 'produto' || tipo === 'novo_produto') {
+                seletor.style.display = 'flex'; const isNovo = idIdx === null; 
+                const p = isNovo ? {nome:'',preco:'',tipo:'Serviço'} : DB.estoque.find(x => x.id == idIdx);
+                t.innerText = "Item Estoque"; if(isNovo) { btnDel.style.display = 'none'; setTipoNovoItem('Serviço'); } else { setTipoNovoItem(p.tipo); }
+                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold"><input type="number" id="ed-p-v" value="${p.preco}" placeholder="Preço" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black">`;
+                btnSalvar.onclick = async () => { if(isNovo) DB.estoque.push({id:Date.now(), nome:document.getElementById('ed-p-n').value, preco:document.getElementById('ed-p-v').value, tipo:tipoItemSelecionado}); else { const i=DB.estoque.findIndex(x=>x.id==idIdx); DB.estoque[i].nome=document.getElementById('ed-p-n').value; DB.estoque[i].preco=document.getElementById('ed-p-v').value; DB.estoque[i].tipo=tipoItemSelecionado; } fecharModais(); await salvar(); carregar(); };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); carregar(); } };
+            }
+            else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
+                const isNovo = idIdx === null; const b = isNovo ? {nome:'', celular:''} : DB.barbeiros[idIdx];
+                t.innerText = "Barbeiro"; if(isNovo) btnDel.style.display = 'none';
+                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome do Barbeiro" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black outline-none"><input id="ed-b-w" value="${b.celular || ''}" placeholder="WhatsApp (DDD)" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none">`;
+                btnSalvar.onclick = async () => { 
+                    const nome = document.getElementById('ed-b-n').value;
+                    const zap = document.getElementById('ed-b-w').value;
+                    if(isNovo) DB.barbeiros.push({nome: nome, celular: zap}); 
+                    else { DB.barbeiros[idIdx].nome = nome; DB.barbeiros[idIdx].celular = zap; } 
+                    fecharModais(); await salvar(); carregar(); 
+                };
+                btnDel.onclick = async () => { if(confirm("Excluir Barbeiro?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); carregar(); } };
+            }
             lucide.createIcons();
         }
 
