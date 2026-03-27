@@ -145,41 +145,33 @@
         let tipoItemSelecionado = 'Serviço';
         document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
 
-        // TABELA DE GANHOS EXATA CONFORME SOLICITADO
+        // TABELA DE GANHOS PADRONIZADA (ACEITA COM OU SEM O SINAL DE +)
         const TABELA_GANHOS = {
             "corte": 20.00,
-            "corte barba": 32.50,
-            "corte sobrancelha": 27.50,
+            "corte barba": 32.50, "corte + barba": 32.50,
+            "corte sobrancelha": 27.50, "corte + sobrancelha": 27.50,
             "pezinho": 10.00,
             "barba": 15.00,
             "sobrancelha": 7.50,
             "alisante": 12.50,
-            "corte sombra alisante": 35.00,
+            "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
             "luzes": 25.00,
-            "corte alisante/ pigmentado": 32.50,
-            "corte luzes": 42.50
+            "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50,
+            "corte luzes": 42.50, "corte + luzes": 42.50
         };
 
         function calcularComissao(descricao) {
             let total = 0;
-            // Divide a string pelas vírgulas
             const partes = descricao.split(',');
-            
             partes.forEach(p => {
                 let nome = p.trim().toLowerCase();
-                let multiplicador = 1;
-
-                // Extrai a quantidade se houver (ex: "2x corte")
+                let mult = 1;
                 if (nome.includes('x ')) {
                     const aux = nome.split('x ');
-                    multiplicador = parseInt(aux[0]) || 1;
+                    mult = parseInt(aux[0]) || 1;
                     nome = aux[1].trim();
                 }
-
-                // Busca na tabela ignorando espaços extras
-                if (TABELA_GANHOS[nome] !== undefined) {
-                    total += (TABELA_GANHOS[nome] * multiplicador);
-                }
+                if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
             });
             return total;
         }
@@ -198,39 +190,33 @@
             const dataS = document.getElementById('filtro-data').value;
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
-            
             let fatG = 0, comG = 0;
             const vFiltradas = (DB.vendas || []).filter(v => filtroT === 'total' || v.data === dataS);
 
             (DB.barbeiros || []).forEach(barb => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
                 if(vB.length === 0) return;
-                
                 let fatB = 0, comB = 0;
                 let htmlV = '';
-                
-                // Contador detalhado inicializado com os itens da tabela
                 let contagem = {};
-                Object.keys(TABELA_GANHOS).forEach(k => contagem[k] = 0);
+                // Filtramos a contagem para mostrar apenas os nomes principais sem duplicatas de "+"
+                const nomesPadrao = ["corte", "corte barba", "corte sobrancelha", "pezinho", "barba", "sobrancelha", "alisante", "corte sombra alisante", "luzes", "corte alisante/ pigmentado", "corte luzes"];
+                nomesPadrao.forEach(k => contagem[k] = 0);
                 contagem["outros"] = 0;
 
                 vB.forEach(v => {
                     const idxV = DB.vendas.indexOf(v);
                     const val = parseFloat(v.valor); fatB += val;
                     const cV = calcularComissao(v.descricao); comB += cV;
-                    
                     v.descricao.split(',').forEach(item => {
                         let nome = item.trim().toLowerCase();
                         let qtd = 1;
-                        if(nome.includes('x ')) { 
-                            const p = nome.split('x '); 
-                            qtd = parseInt(p[0]) || 1; 
-                            nome = p[1].trim(); 
-                        }
-                        if(contagem[nome] !== undefined) contagem[nome] += qtd; 
+                        if(nome.includes('x ')) { const p = nome.split('x '); qtd = parseInt(p[0]) || 1; nome = p[1].trim(); }
+                        // Normaliza o nome removendo o "+" para a contagem visual ficar limpa
+                        let nomeLimpo = nome.replace(/\+/g, '').replace(/\s\s+/g, ' ').trim();
+                        if(contagem[nomeLimpo] !== undefined) contagem[nomeLimpo] += qtd; 
                         else contagem["outros"] += qtd;
                     });
-
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
                         <div class="text-[10px] italic">
                             <span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.hora || ''}</span>
@@ -262,13 +248,10 @@
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
             document.getElementById('dash-comissoes').innerText = "R$ " + comG.toFixed(2);
             document.getElementById('dash-lancamentos').innerText = vFiltradas.length;
-
             document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
             document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             document.getElementById('lista-itens-datalist').innerHTML = DB.estoque.map(i => `<option value="${i.nome}">`).join('');
-            
-            renderizarListasSecundarias();
-            lucide.createIcons();
+            renderizarListasSecundarias(); lucide.createIcons();
         }
 
         function renderizarListasSecundarias() {
@@ -340,7 +323,7 @@
             document.querySelectorAll('.nav-btn, .mob-btn').forEach(b => { b.classList.remove('active-tab'); if(b.id === 'btn-'+t || b.id === 'mob-'+t) b.classList.add('active-tab'); });
             fecharModais();
         }
-        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente); } else alert("Erro!"); }
+        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente); } else alert("Senha Incorreta!"); }
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
         function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); }
 
@@ -383,7 +366,6 @@
             const item = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase());
             if(item) document.getElementById('venda-valor').value = item.preco;
         }
-
         carregar();
     </script>
 </body>
