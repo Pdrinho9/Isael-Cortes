@@ -142,12 +142,16 @@
     <script>
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
+        
+        // SENHA ATUALIZADA
         const SENHA_ADMIN = "81120824";
+        
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
         document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
 
+        // TABELA DE COMISSÕES (REATIVADA)
         const TABELA_GANHOS = {
             "corte": 20.00, "barba": 15.00, "sobrancelha": 7.50, "pezinho": 10.00,
             "corte barba": 32.50, "corte sobrancelha": 27.50, "alisante": 12.50, 
@@ -155,20 +159,23 @@
             "corte alisante/ pigmentado": 32.50, "corte luzes": 42.50
         };
 
+        // FUNÇÃO DE CÁLCULO DE COMISSÃO (CORRIGIDA PARA VÍRGULA E QUANTIDADE)
         function calcularComissao(descricao) {
             let total = 0;
-            // Separa pela vírgula (novo padrão)
             const itens = descricao.split(', ');
             itens.forEach(item => {
-                const nomeLimpo = item.trim().toLowerCase();
-                // Verifica se o item tem quantidade (ex: 2x Corte)
+                let nomeLimpo = item.trim().toLowerCase();
+                let multiplicador = 1;
+
+                // Verifica se tem quantidade (ex: 2x Corte)
                 if (nomeLimpo.includes('x ')) {
                     const partes = nomeLimpo.split('x ');
-                    const qtd = parseInt(partes[0]);
-                    const nome = partes[1];
-                    if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * qtd);
-                } else {
-                    if (TABELA_GANHOS[nomeLimpo] !== undefined) total += TABELA_GANHOS[nomeLimpo];
+                    multiplicador = parseInt(partes[0]) || 1;
+                    nomeLimpo = partes[1].trim();
+                }
+
+                if (TABELA_GANHOS[nomeLimpo] !== undefined) {
+                    total += (TABELA_GANHOS[nomeLimpo] * multiplicador);
                 }
             });
             return total;
@@ -290,7 +297,7 @@
             if(carrinhoTemporario.length === 0) return;
             const agora = new Date();
             
-            // SEPARAÇÃO POR VÍRGULA
+            // REGISTRO COM VÍRGULA
             let descFinal = carrinhoTemporario.map(i => i.nome).join(', ');
             
             DB.vendas.push({
@@ -305,7 +312,7 @@
             await salvar(); this.reset(); carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo();
         });
 
-        // NAVEGAÇÃO E EDITOR (MANTIDOS INTACTOS)
+        // NAVEGAÇÃO E EDITOR
         let abaDestinoPendente = 'vendas';
         function switchTab(t) {
             if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
@@ -319,7 +326,7 @@
             document.querySelectorAll('.nav-btn, .mob-btn').forEach(b => { b.classList.remove('active-tab'); if(b.id === 'btn-'+t || b.id === 'mob-'+t) b.classList.add('active-tab'); });
             fecharModais();
         }
-        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente); } else alert("Erro!"); }
+        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente); } else alert("Senha Incorreta!"); }
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
         function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); }
 
