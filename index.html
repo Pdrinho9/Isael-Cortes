@@ -145,26 +145,41 @@
         let tipoItemSelecionado = 'Serviço';
         document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
 
-        // TABELA DE GANHOS OFICIAL
+        // TABELA DE GANHOS EXATA CONFORME SOLICITADO
         const TABELA_GANHOS = {
-            "corte": 20.00, "barba": 15.00, "sobrancelha": 7.50, "pezinho": 10.00,
-            "corte barba": 32.50, "corte sobrancelha": 27.50, "alisante": 12.50, 
-            "corte sombra alisante": 35.00, "luzes": 25.00, 
-            "corte alisante/ pigmentado": 32.50, "corte luzes": 42.50
+            "corte": 20.00,
+            "corte barba": 32.50,
+            "corte sobrancelha": 27.50,
+            "pezinho": 10.00,
+            "barba": 15.00,
+            "sobrancelha": 7.50,
+            "alisante": 12.50,
+            "corte sombra alisante": 35.00,
+            "luzes": 25.00,
+            "corte alisante/ pigmentado": 32.50,
+            "corte luzes": 42.50
         };
 
         function calcularComissao(descricao) {
             let total = 0;
-            const itens = descricao.split(', ');
-            itens.forEach(item => {
-                let nomeLimpo = item.trim().toLowerCase();
-                let mult = 1;
-                if (nomeLimpo.includes('x ')) {
-                    const p = nomeLimpo.split('x ');
-                    mult = parseInt(p[0]) || 1;
-                    nomeLimpo = p[1].trim();
+            // Divide a string pelas vírgulas
+            const partes = descricao.split(',');
+            
+            partes.forEach(p => {
+                let nome = p.trim().toLowerCase();
+                let multiplicador = 1;
+
+                // Extrai a quantidade se houver (ex: "2x corte")
+                if (nome.includes('x ')) {
+                    const aux = nome.split('x ');
+                    multiplicador = parseInt(aux[0]) || 1;
+                    nome = aux[1].trim();
                 }
-                if (TABELA_GANHOS[nomeLimpo] !== undefined) total += (TABELA_GANHOS[nomeLimpo] * mult);
+
+                // Busca na tabela ignorando espaços extras
+                if (TABELA_GANHOS[nome] !== undefined) {
+                    total += (TABELA_GANHOS[nome] * multiplicador);
+                }
             });
             return total;
         }
@@ -194,20 +209,26 @@
                 let fatB = 0, comB = 0;
                 let htmlV = '';
                 
-                // Contador detalhado de serviços
-                let contagem = { "corte": 0, "corte barba": 0, "corte sobrancelha": 0, "pezinho": 0, "barba": 0, "sobrancelha": 0, "alisante": 0, "corte sombra alisante": 0, "luzes": 0, "corte alisante/ pigmentado": 0, "corte luzes": 0, "outros": 0 };
+                // Contador detalhado inicializado com os itens da tabela
+                let contagem = {};
+                Object.keys(TABELA_GANHOS).forEach(k => contagem[k] = 0);
+                contagem["outros"] = 0;
 
                 vB.forEach(v => {
                     const idxV = DB.vendas.indexOf(v);
                     const val = parseFloat(v.valor); fatB += val;
                     const cV = calcularComissao(v.descricao); comB += cV;
                     
-                    // Lógica para contar cada item da descrição
-                    v.descricao.split(', ').forEach(item => {
+                    v.descricao.split(',').forEach(item => {
                         let nome = item.trim().toLowerCase();
                         let qtd = 1;
-                        if(nome.includes('x ')) { const p = nome.split('x '); qtd = parseInt(p[0]) || 1; nome = p[1].trim(); }
-                        if(contagem[nome] !== undefined) contagem[nome] += qtd; else contagem["outros"] += qtd;
+                        if(nome.includes('x ')) { 
+                            const p = nome.split('x '); 
+                            qtd = parseInt(p[0]) || 1; 
+                            nome = p[1].trim(); 
+                        }
+                        if(contagem[nome] !== undefined) contagem[nome] += qtd; 
+                        else contagem["outros"] += qtd;
                     });
 
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
@@ -227,7 +248,7 @@
                     <div class="bg-white/5 p-5 flex justify-between items-end border-b border-white/10">
                         <div><h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-                            ${Object.entries(contagem).map(([k, v]) => v > 0 ? `<p class="text-[8px] text-slate-400 uppercase font-bold">${v} ${k} <span class="text-emerald-500/50">R$ ${TABELA_GANHOS[k] ? (TABELA_GANHOS[k]*v).toFixed(2) : ''}</span></p>` : '').join('')}
+                            ${Object.entries(contagem).map(([k, v]) => v > 0 ? `<p class="text-[8px] text-slate-400 uppercase font-bold">${v} ${k}</p>` : '').join('')}
                         </div></div>
                         <div class="flex gap-4">
                             <div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
@@ -281,7 +302,7 @@
             cont.classList.remove('hidden'); let total = 0;
             cont.innerHTML = carrinhoTemporario.map((item, idx) => {
                 total += item.preco;
-                return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`;
+                return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`;
             }).join('');
             t.value = total.toFixed(2); lucide.createIcons();
         }
