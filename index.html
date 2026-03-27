@@ -136,13 +136,13 @@
     <script>
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
-        const SENHA_ADMIN = "81120824";
+        const SENHA_ADMIN = "1234";
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
         document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
 
-        // TABELA DE GANHOS COM VALORES EXATOS
+        // TABELA DE GANHOS REVISADA (SOMA EXATA)
         const TABELA_GANHOS = {
             "corte": 20.00, "barba": 15.00, "sobrancelha": 7.50, "pezinho": 10.00,
             "corte barba": 32.50, "corte sobrancelha": 27.50, "alisante": 12.50, 
@@ -150,14 +150,23 @@
             "corte alisante/ pigmentado": 32.50, "corte luzes": 42.50
         };
 
-        // FUNÇÃO DE CÁLCULO PRECISO
+        // FUNÇÃO DE CÁLCULO QUE ENTENDE "+" E "E"
         function calcularComissao(descricao) {
             let total = 0;
-            // Limpa o nome para busca (troca " e " por " + " para processar)
-            const itens = descricao.replace(/ e /g, ' + ').split(' + ');
-            itens.forEach(item => {
-                const nome = item.trim().toLowerCase();
-                if (TABELA_GANHOS[nome] !== undefined) total += TABELA_GANHOS[nome];
+            // Divide por " e " primeiro para pegar itens diferentes, depois limpa cada um
+            const blocos = descricao.split(' e ');
+            blocos.forEach(bloco => {
+                const nomeLimpo = bloco.trim().replace(/\s\+\s/g, ' ').toLowerCase();
+                if (TABELA_GANHOS[nomeLimpo] !== undefined) {
+                    total += TABELA_GANHOS[nomeLimpo];
+                } else {
+                    // Se for um combo tipo "Corte + Barba" sem o nome exato na tabela, tenta somar as partes
+                    const partes = bloco.split(' + ');
+                    partes.forEach(p => {
+                        const subNome = p.trim().toLowerCase();
+                        if (TABELA_GANHOS[subNome] !== undefined) total += TABELA_GANHOS[subNome];
+                    });
+                }
             });
             return total;
         }
@@ -199,10 +208,7 @@
                             <p class="text-slate-500">${v.descricao}</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div class="text-right">
-                                <p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p>
-                                <p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p>
-                            </div>
+                            <div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
                             <button onclick="abrirEditor('venda', ${idxV})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button>
                         </div>
                     </div>`;
@@ -213,14 +219,8 @@
                     <div class="bg-white/5 p-5 flex justify-between items-end border-b border-white/10">
                         <div><h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4><p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">${qtdC} CORTES REGISTRADOS</p></div>
                         <div class="flex gap-4">
-                            <div class="text-right">
-                                <p class="text-[8px] text-slate-500 font-bold uppercase">Sua Comissão</p>
-                                <p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p>
-                            </div>
-                            <div class="text-right border-l border-white/10 pl-4">
-                                <p class="text-[8px] text-slate-500 font-bold uppercase">Casa</p>
-                                <p class="text-white font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p>
-                            </div>
+                            <div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-slate-500 font-bold uppercase">Casa</p><p class="text-white font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
                         </div>
                     </div>
                     <div>${htmlV}</div>
@@ -256,9 +256,12 @@
 
         function adicionarItemAoCarrinho() {
             const d = document.getElementById('venda-descricao'); const v = document.getElementById('venda-valor');
-            if(!d.value) return; carrinhoTemporario.push({ nome: d.value, preco: parseFloat(v.value) || 0 });
+            if(!d.value) return; 
+            // Usa "+" para juntar se já houver algo sendo digitado como combo
+            carrinhoTemporario.push({ nome: d.value, preco: parseFloat(v.value) || 0 });
             d.value = ''; atualizarVisualCarrinho();
         }
+
         function atualizarVisualCarrinho() {
             const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
             if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
@@ -269,6 +272,7 @@
             }).join('');
             t.value = total.toFixed(2); lucide.createIcons();
         }
+
         function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
@@ -276,7 +280,8 @@
             if(carrinhoTemporario.length === 0 && document.getElementById('venda-descricao').value) adicionarItemAoCarrinho();
             if(carrinhoTemporario.length === 0) return;
             const agora = new Date();
-            // LÓGICA DE NOME LIMPO "E" EM VEZ DE "+"
+            
+            // LÓGICA DE TEXTO: Itens do carrinho separados por " e "
             let descFinal = carrinhoTemporario.map(i => i.nome).join(' e ');
             
             DB.vendas.push({
