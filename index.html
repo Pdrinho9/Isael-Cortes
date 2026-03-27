@@ -145,19 +145,10 @@
         let tipoItemSelecionado = 'Serviço';
         document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
 
-        // TABELA DE GANHOS PADRONIZADA (ACEITA COM OU SEM O SINAL DE +)
         const TABELA_GANHOS = {
-            "corte": 20.00,
-            "corte barba": 32.50, "corte + barba": 32.50,
-            "corte sobrancelha": 27.50, "corte + sobrancelha": 27.50,
-            "pezinho": 10.00,
-            "barba": 15.00,
-            "sobrancelha": 7.50,
-            "alisante": 12.50,
-            "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
-            "luzes": 25.00,
-            "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50,
-            "corte luzes": 42.50, "corte + luzes": 42.50
+            "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 27.50, "corte + sobrancelha": 27.50,
+            "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
+            "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
         };
 
         function calcularComissao(descricao) {
@@ -166,11 +157,7 @@
             partes.forEach(p => {
                 let nome = p.trim().toLowerCase();
                 let mult = 1;
-                if (nome.includes('x ')) {
-                    const aux = nome.split('x ');
-                    mult = parseInt(aux[0]) || 1;
-                    nome = aux[1].trim();
-                }
+                if (nome.includes('x ')) { const aux = nome.split('x '); mult = parseInt(aux[0]) || 1; nome = aux[1].trim(); }
                 if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
             });
             return total;
@@ -199,9 +186,7 @@
                 let fatB = 0, comB = 0;
                 let htmlV = '';
                 let contagem = {};
-                // Filtramos a contagem para mostrar apenas os nomes principais sem duplicatas de "+"
-                const nomesPadrao = ["corte", "corte barba", "corte sobrancelha", "pezinho", "barba", "sobrancelha", "alisante", "corte sombra alisante", "luzes", "corte alisante/ pigmentado", "corte luzes"];
-                nomesPadrao.forEach(k => contagem[k] = 0);
+                ["corte", "corte barba", "corte sobrancelha", "pezinho", "barba", "sobrancelha", "alisante", "corte sombra alisante", "luzes", "corte alisante/ pigmentado", "corte luzes"].forEach(k => contagem[k] = 0);
                 contagem["outros"] = 0;
 
                 vB.forEach(v => {
@@ -212,10 +197,8 @@
                         let nome = item.trim().toLowerCase();
                         let qtd = 1;
                         if(nome.includes('x ')) { const p = nome.split('x '); qtd = parseInt(p[0]) || 1; nome = p[1].trim(); }
-                        // Normaliza o nome removendo o "+" para a contagem visual ficar limpa
                         let nomeLimpo = nome.replace(/\+/g, '').replace(/\s\s+/g, ' ').trim();
-                        if(contagem[nomeLimpo] !== undefined) contagem[nomeLimpo] += qtd; 
-                        else contagem["outros"] += qtd;
+                        if(contagem[nomeLimpo] !== undefined) contagem[nomeLimpo] += qtd; else contagem["outros"] += qtd;
                     });
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
                         <div class="text-[10px] italic">
@@ -256,7 +239,11 @@
 
         function renderizarListasSecundarias() {
             const cliL = document.getElementById('lista-completa-clientes'); if(cliL) {
-                cliL.innerHTML = ''; DB.clientes.forEach(c => cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><div class="flex gap-2"><button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`);
+                cliL.innerHTML = ''; DB.clientes.forEach(c => {
+                    const btnWhats = c.whatsapp ? `<a href="https://wa.me/55${c.whatsapp.replace(/\D/g,'')}" target="_blank" class="text-emerald-500"><i data-lucide="message-circle" size="16"></i></a>` : '';
+                    const btnInsta = c.instagram ? `<a href="https://instagram.com/${c.instagram.replace('@','')}" target="_blank" class="text-rose-400"><i data-lucide="instagram" size="16"></i></a>` : '';
+                    cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}${btnInsta}<button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600 ml-2"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
+                });
             }
             const servL = document.getElementById('lista-servicos'); if(servL) {
                 servL.innerHTML = ''; DB.estoque.filter(i => i.tipo === 'Serviço').forEach(i => servL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`);
@@ -339,10 +326,18 @@
                 btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'cliente' || tipo === 'novo_cliente') {
-                const isNovo = idIdx === null; const cli = isNovo ? {nome:''} : DB.clientes.find(x => x.id == idIdx);
+                const isNovo = idIdx === null; const cli = isNovo ? {nome:'', whatsapp:'', instagram:''} : DB.clientes.find(x => x.id == idIdx);
                 t.innerText = "CLIENTE";
-                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">`;
-                btnSalvar.onclick = async () => { if(isNovo) DB.clientes.push({id:Date.now(),nome:document.getElementById('ed-c-n').value}); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i].nome=document.getElementById('ed-c-n').value; } fecharModais(); await salvar(); renderizarTudo(); };
+                c.innerHTML = `
+                    <input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">
+                    <input id="ed-c-w" value="${cli.whatsapp || ''}" placeholder="WhatsApp (DDD + Número)" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">
+                    <input id="ed-c-i" value="${cli.instagram || ''}" placeholder="Instagram (Ex: @isael_cortes)" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">
+                `;
+                btnSalvar.onclick = async () => { 
+                    const data = {id: isNovo ? Date.now() : cli.id, nome: document.getElementById('ed-c-n').value, whatsapp: document.getElementById('ed-c-w').value, instagram: document.getElementById('ed-c-i').value};
+                    if(isNovo) DB.clientes.push(data); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i] = data; }
+                    fecharModais(); await salvar(); renderizarTudo(); 
+                };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'produto' || tipo === 'novo_produto') {
