@@ -156,7 +156,7 @@
     <script>
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
-        const SENHA_ADMIN = "81120824";
+        const SENHA_ADMIN = "123456";
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
@@ -179,9 +179,22 @@
         }
 
         const TABELA_GANHOS = {
-            "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 27.50, "corte + sobrancelha": 27.50,
-            "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
-            "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
+            "corte": 20.00, 
+            "corte barba": 32.50, 
+            "corte + barba": 32.50, 
+            "corte sobrancelha": 25.00, // ALTERADO: 25 pro barbeiro
+            "corte + sobrancelha": 25.00, // ALTERADO: 25 pro barbeiro
+            "pezinho": 10.00, 
+            "barba": 15.00, 
+            "sobrancelha": 7.50, 
+            "alisante": 12.50, 
+            "corte sombra alisante": 35.00, 
+            "corte + sombra + alisante": 35.00,
+            "luzes": 25.00, 
+            "corte alisante/ pigmentado": 32.50, 
+            "corte + alisante/ pigmentado": 32.50, 
+            "corte luzes": 42.50, 
+            "corte + luzes": 42.50
         };
 
         function calcularComissao(descricao) {
