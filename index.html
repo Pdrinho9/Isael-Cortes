@@ -72,12 +72,16 @@
                 <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> ESTOQUE</button>
                 <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> EQUIPE</button>
             </nav>
+            <button onclick="logoutAdmin()" class="mt-auto flex items-center gap-4 px-6 py-4 text-rose-500 font-black text-[10px] uppercase italic"><i data-lucide="log-out"></i> SAIR ADMIN</button>
         </aside>
 
         <main class="flex-1 p-4 lg:p-16">
             <div id="tab-vendas" class="tab-content">
                 <div class="max-w-xl mx-auto glass p-8 lg:p-14 rounded-[3rem]">
-                    <div class="lg:hidden mb-6"><img src="Logo.png" alt="Logo" class="brand-logo"></div>
+                    <div class="lg:hidden mb-6 flex justify-between items-start">
+                        <img src="Logo.png" alt="Logo" class="brand-logo !m-0">
+                        <button onclick="logoutAdmin()" class="text-rose-500 p-2"><i data-lucide="log-out"></i></button>
+                    </div>
                     <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Novo Lançamento</h3>
                     <form id="form-venda" class="space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -158,7 +162,6 @@
         let tipoItemSelecionado = 'Serviço';
         document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
 
-        // FUNÇÃO DE ACESSO AO SISTEMA (1ª CAMADA)
         function verificarSenhaEntrada() {
             if(document.getElementById('input-senha-entrada').value === SENHA_ADMIN) {
                 document.getElementById('modal-bloqueio-total').style.display = 'none';
@@ -167,6 +170,12 @@
         }
         if(sessionStorage.getItem('acesso_concedido') === 'true') {
             document.getElementById('modal-bloqueio-total').style.display = 'none';
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('is_admin');
+            executarTrocaTab('vendas');
+            alert("Sessão Admin Encerrada.");
         }
 
         const TABELA_GANHOS = {
@@ -225,31 +234,19 @@
                         if(contagem[nomeLimpo] !== undefined) contagem[nomeLimpo] += qtd; else contagem["outros"] += qtd;
                     });
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic">
-                            <span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.hora || ''}</span>
-                            <p class="text-slate-500">${v.descricao}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
-                            <button onclick="abrirEditor('venda', ${idxV})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button>
-                        </div>
+                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
+                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
+                        <button onclick="abrirEditor('venda', ${idxV})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
                     </div>`;
                 });
 
                 fatG += fatB; comG += comB;
                 logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem]">
                     <div class="bg-white/5 p-5 flex justify-between items-end border-b border-white/10">
-                        <div><h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-                            ${Object.entries(contagem).map(([k, v]) => v > 0 ? `<p class="text-[8px] text-slate-400 uppercase font-bold">${v} ${k}</p>` : '').join('')}
-                        </div></div>
-                        <div class="flex gap-4">
-                            <div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-slate-500 font-bold uppercase">Casa</p><p class="text-white font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
-                        </div>
-                    </div>
-                    <div>${htmlV}</div>
-                </div>`;
+                        <div><h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4><div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">${Object.entries(contagem).map(([k, v]) => v > 0 ? `<p class="text-[8px] text-slate-400 uppercase font-bold">${v} ${k}</p>` : '').join('')}</div></div>
+                        <div class="flex gap-4"><div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
+                        <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-slate-500 font-bold uppercase">Casa</p><p class="text-white font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div></div>
+                    </div><div>${htmlV}</div></div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
@@ -285,9 +282,7 @@
 
         function adicionarItemAoCarrinho() {
             const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
-            if(!d.value) return; 
-            const qtd = parseInt(q.value) || 1;
-            const precoUnit = parseFloat(v.value) || 0;
+            if(!d.value) return; const qtd = parseInt(q.value) || 1; const precoUnit = parseFloat(v.value) || 0;
             const nomeExib = qtd > 1 ? `${qtd}x ${d.value}` : d.value;
             carrinhoTemporario.push({ nome: nomeExib, preco: precoUnit * qtd, original: d.value, qtd: qtd });
             d.value = ''; q.value = '1'; atualizarVisualCarrinho();
@@ -297,48 +292,26 @@
             const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
             if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
             cont.classList.remove('hidden'); let total = 0;
-            cont.innerHTML = carrinhoTemporario.map((item, idx) => {
-                total += item.preco;
-                return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`;
-            }).join('');
+            cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
             t.value = total.toFixed(2); lucide.createIcons();
         }
 
         function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            if(carrinhoTemporario.length === 0 && document.getElementById('venda-descricao').value) adicionarItemAoCarrinho();
-            if(carrinhoTemporario.length === 0) return;
-            const agora = new Date();
-            let descFinal = carrinhoTemporario.map(i => i.nome).join(', ');
-            
-            carrinhoTemporario.forEach(item => {
-                const idxEstoque = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
-                if(idxEstoque !== -1 && DB.estoque[idxEstoque].tipo === 'Produto') {
-                    DB.estoque[idxEstoque].quantidade = (DB.estoque[idxEstoque].quantidade || 0) - item.qtd;
-                }
-            });
-
-            DB.vendas.push({
-                barbeiro: document.getElementById('venda-barbeiro').value,
-                cliente: document.getElementById('venda-cliente').value,
-                descricao: descFinal,
-                valor: document.getElementById('venda-valor').value,
-                pagamento: document.getElementById('venda-pagamento').value,
-                data: agora.toISOString().split('T')[0],
-                hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0')
-            });
+            e.preventDefault(); if(carrinhoTemporario.length === 0 && document.getElementById('venda-descricao').value) adicionarItemAoCarrinho();
+            if(carrinhoTemporario.length === 0) return; const agora = new Date();
+            carrinhoTemporario.forEach(item => { const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase()); if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd; });
+            DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: agora.toISOString().split('T')[0], hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0') });
             await salvar(); this.reset(); carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo();
         });
 
-        // LÓGICA DE TROCA DE ABA COM 2ª CAMADA DE SENHA (ADMIN)
         let abaDestinoPendente = 'vendas';
         function switchTab(t) {
             if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
-                if(sessionStorage.getItem('is_admin') === 'true') { executarTrocaTab(t); } 
+                if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t);
                 else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; }
-            } else { executarTrocaTab(t); }
+            } else executarTrocaTab(t);
         }
         function executarTrocaTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
@@ -347,20 +320,8 @@
             fecharModais();
         }
         function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente); } else alert("Senha Incorreta!"); }
-        
-        function fecharModais() { 
-            document.querySelectorAll('.modal').forEach(m => { 
-                if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; 
-            }); 
-        }
-        
-        function setTipoNovoItem(t) { 
-            tipoItemSelecionado = t; 
-            document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); 
-            document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); 
-            const q = document.getElementById('campo-qtd-editor');
-            if(q) q.style.display = t === 'Produto' ? 'block' : 'none';
-        }
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
+        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
 
         function abrirEditor(tipo, idIdx = null) {
             const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
@@ -376,50 +337,26 @@
             else if (tipo === 'cliente' || tipo === 'novo_cliente') {
                 const isNovo = idIdx === null; const cli = isNovo ? {nome:'', whatsapp:'', instagram:''} : DB.clientes.find(x => x.id == idIdx);
                 t.innerText = "CLIENTE";
-                c.innerHTML = `
-                    <input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">
-                    <input id="ed-c-w" value="${cli.whatsapp || ''}" placeholder="WhatsApp (DDD + Número)" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">
-                    <input id="ed-c-i" value="${cli.instagram || ''}" placeholder="Instagram (Ex: @isael_cortes)" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">
-                `;
-                btnSalvar.onclick = async () => { 
-                    const data = {id: isNovo ? Date.now() : cli.id, nome: document.getElementById('ed-c-n').value, whatsapp: document.getElementById('ed-c-w').value, instagram: document.getElementById('ed-c-i').value};
-                    if(isNovo) DB.clientes.push(data); else { const i=DB.clientes.findIndex(x=>x.id==idIdx); DB.clientes[i] = data; }
-                    fecharModais(); await salvar(); renderizarTudo(); 
-                };
+                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none"><input id="ed-c-w" value="${cli.whatsapp || ''}" placeholder="WhatsApp" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none"><input id="ed-c-i" value="${cli.instagram || ''}" placeholder="Instagram" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">`;
+                btnSalvar.onclick = async () => { const d = {id: isNovo ? Date.now() : cli.id, nome: document.getElementById('ed-c-n').value, whatsapp: document.getElementById('ed-c-w').value, instagram: document.getElementById('ed-c-i').value}; if(isNovo) DB.clientes.push(d); else DB.clientes[DB.clientes.findIndex(x=>x.id==idIdx)] = d; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'produto' || tipo === 'novo_produto') {
-                seletor.style.display = 'flex'; const isNovo = idIdx === null; 
-                const p = isNovo ? {nome:'',preco:'',tipo:'Serviço', quantidade: 0} : DB.estoque.find(x => x.id == idIdx);
-                t.innerText = "ITEM ESTOQUE"; if(isNovo) { btnDel.style.display = 'none'; setTipoNovoItem('Serviço'); } else { setTipoNovoItem(p.tipo); }
-                c.innerHTML = `
-                    <input id="ed-p-n" value="${p.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">
-                    <input type="number" id="ed-p-v" value="${p.preco}" placeholder="Preço" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">
-                    <div id="campo-qtd-editor" style="display: ${p.tipo === 'Produto' ? 'block' : 'none'}">
-                        <p class="text-[8px] text-slate-500 uppercase font-black ml-2 mb-1">Quantidade em Estoque</p>
-                        <input type="number" id="ed-p-q" value="${p.quantidade || 0}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">
-                    </div>
-                `;
-                btnSalvar.onclick = async () => { 
-                    const data = {id:isNovo ? Date.now() : idIdx, nome:document.getElementById('ed-p-n').value, preco:document.getElementById('ed-p-v').value, tipo:tipoItemSelecionado, quantidade: parseInt(document.getElementById('ed-p-q').value) || 0};
-                    if(isNovo) DB.estoque.push(data); else { const i=DB.estoque.findIndex(x=>x.id==idIdx); DB.estoque[i] = data; }
-                    fecharModais(); await salvar(); renderizarTudo(); 
-                };
+                seletor.style.display = 'flex'; const isNovo = idIdx === null; const p = isNovo ? {nome:'',preco:'',tipo:'Serviço', quantidade: 0} : DB.estoque.find(x => x.id == idIdx);
+                t.innerText = "ITEM ESTOQUE"; if(isNovo) { btnDel.style.display = 'none'; setTipoNovoItem('Serviço'); } else setTipoNovoItem(p.tipo);
+                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"><input type="number" id="ed-p-v" value="${p.preco}" placeholder="Preço" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"><div id="campo-qtd-editor" style="display: ${p.tipo === 'Produto' ? 'block' : 'none'}"><p class="text-[8px] text-slate-500 uppercase font-black ml-2 mb-1">Qtd em Estoque</p><input type="number" id="ed-p-q" value="${p.quantidade || 0}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+                btnSalvar.onclick = async () => { const d = {id:isNovo ? Date.now() : idIdx, nome:document.getElementById('ed-p-n').value, preco:document.getElementById('ed-p-v').value, tipo:tipoItemSelecionado, quantidade: parseInt(document.getElementById('ed-p-q').value) || 0}; if(isNovo) DB.estoque.push(d); else DB.estoque[DB.estoque.findIndex(x=>x.id==idIdx)] = d; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
                 const isNovo = idIdx === null; const b = isNovo ? {nome:''} : DB.barbeiros[idIdx];
                 t.innerText = "BARBEIRO"; if(isNovo) btnDel.style.display = 'none';
                 c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome do Barbeiro" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { if(isNovo) DB.barbeiros.push({nome:document.getElementById('ed-b-n').value}); else { DB.barbeiros[idIdx].nome=document.getElementById('ed-b-n').value; } fecharModais(); await salvar(); renderizarTudo(); };
+                btnSalvar.onclick = async () => { if(isNovo) DB.barbeiros.push({nome:document.getElementById('ed-b-n').value}); else DB.barbeiros[idIdx].nome=document.getElementById('ed-b-n').value; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
             }
         }
-        
-        function atualizarPrecoAutomatico() {
-            const item = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase());
-            if(item) document.getElementById('venda-valor').value = item.preco;
-        }
+        function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
         carregar();
     </script>
 </body>
