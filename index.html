@@ -17,6 +17,7 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
         #modal-bloqueio-total { display: flex; z-index: 999; } 
         .brand-logo { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); margin: 0 auto 2rem auto; display: block; }
+        input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(255,255,255,0.02) !important; }
         @media (max-width: 1024px) { .brand-logo { width: 90px; height: 90px; margin-bottom: 1rem; } }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
@@ -103,6 +104,12 @@
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
+                        
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Isael)</span></label>
+                            <input type="date" id="venda-data-retroativa" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
+                        </div>
+
                         <button type="submit" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
                     </form>
                 </div>
@@ -132,9 +139,7 @@
             </div>
             <div id="tab-estoque" class="tab-content hidden">
                 <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
-                <div class="mb-2"><span class="text-[10px] font-black uppercase text-slate-500 italic">Serviços</span></div>
                 <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-                <div class="mb-2"><span class="text-[10px] font-black uppercase text-slate-500 italic">Produtos & Materiais</span></div>
                 <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
             <div id="tab-config" class="tab-content hidden">
@@ -146,11 +151,11 @@
     </div>
 
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
-        <button onclick="switchTab('vendas')" id="mob-vendas" class="mob-btn text-white p-2"><i data-lucide="plus-circle"></i></button>
-        <button onclick="switchTab('dashboard')" id="mob-dashboard" class="mob-btn text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
-        <button onclick="switchTab('clientes')" id="mob-clientes" class="mob-btn text-slate-600 p-2"><i data-lucide="users"></i></button>
-        <button onclick="switchTab('estoque')" id="mob-estoque" class="mob-btn text-slate-600 p-2"><i data-lucide="package"></i></button>
-        <button onclick="switchTab('config')" id="mob-config" class="mob-btn text-slate-600 p-2"><i data-lucide="settings"></i></button>
+        <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
+        <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
+        <button onclick="switchTab('clientes')" class="text-slate-600 p-2"><i data-lucide="users"></i></button>
+        <button onclick="switchTab('estoque')" class="text-slate-600 p-2"><i data-lucide="package"></i></button>
+        <button onclick="switchTab('config')" class="text-slate-600 p-2"><i data-lucide="settings"></i></button>
     </div>
 
     <script>
@@ -160,7 +165,16 @@
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
-        document.getElementById('filtro-data').value = new Date().toISOString().split('T')[0];
+        
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('filtro-data').value = hoje;
+        document.getElementById('venda-data-retroativa').value = hoje;
+
+        const TABELA_GANHOS = {
+            "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
+            "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
+            "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
+        };
 
         function verificarSenhaEntrada() {
             if(document.getElementById('input-senha-entrada').value === SENHA_ADMIN) {
@@ -168,45 +182,13 @@
                 sessionStorage.setItem('acesso_concedido', 'true');
             } else { alert("Senha Incorreta!"); }
         }
-        if(sessionStorage.getItem('acesso_concedido') === 'true') {
-            document.getElementById('modal-bloqueio-total').style.display = 'none';
-        }
 
         function logoutAdmin() {
             sessionStorage.removeItem('is_admin');
+            document.getElementById('venda-data-retroativa').disabled = true;
+            document.getElementById('msg-lock').style.display = 'inline';
             executarTrocaTab('vendas');
             alert("Sessão Admin Encerrada.");
-        }
-
-        const TABELA_GANHOS = {
-            "corte": 20.00, 
-            "corte barba": 32.50, 
-            "corte + barba": 32.50, 
-            "corte sobrancelha": 25.00, // ALTERADO: 25 pro barbeiro
-            "corte + sobrancelha": 25.00, // ALTERADO: 25 pro barbeiro
-            "pezinho": 10.00, 
-            "barba": 15.00, 
-            "sobrancelha": 7.50, 
-            "alisante": 12.50, 
-            "corte sombra alisante": 35.00, 
-            "corte + sombra + alisante": 35.00,
-            "luzes": 25.00, 
-            "corte alisante/ pigmentado": 32.50, 
-            "corte + alisante/ pigmentado": 32.50, 
-            "corte luzes": 42.50, 
-            "corte + luzes": 42.50
-        };
-
-        function calcularComissao(descricao) {
-            let total = 0;
-            const partes = descricao.split(',');
-            partes.forEach(p => {
-                let nome = p.trim().toLowerCase();
-                let mult = 1;
-                if (nome.includes('x ')) { const aux = nome.split('x '); mult = parseInt(aux[0]) || 1; nome = aux[1].trim(); }
-                if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
-            });
-            return total;
         }
 
         async function carregar() {
@@ -216,6 +198,16 @@
 
         async function salvar() {
             await _supabase.from('barbearia').update({ vendas: DB.vendas, clientes: DB.clientes, estoque: DB.estoque, barbeiros: DB.barbeiros }).eq('id', 1);
+        }
+
+        function confirmarSenhaAdmin() {
+            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
+                sessionStorage.setItem('is_admin', 'true');
+                // LIBERA CAMPO DE DATA NO LANÇAMENTO QUANDO ADMIN ENTRA
+                document.getElementById('venda-data-retroativa').disabled = false;
+                document.getElementById('msg-lock').style.display = 'none';
+                executarTrocaTab(abaDestinoPendente);
+            } else { alert("Senha Incorreta!"); }
         }
 
         function renderizarTudo() {
@@ -231,34 +223,21 @@
                 if(vB.length === 0) return;
                 let fatB = 0, comB = 0;
                 let htmlV = '';
-                let contagem = {};
-                ["corte", "corte barba", "corte sobrancelha", "pezinho", "barba", "sobrancelha", "alisante", "corte sombra alisante", "luzes", "corte alisante/ pigmentado", "corte luzes"].forEach(k => contagem[k] = 0);
-                contagem["outros"] = 0;
-
                 vB.forEach(v => {
                     const idxV = DB.vendas.indexOf(v);
                     const val = parseFloat(v.valor); fatB += val;
                     const cV = calcularComissao(v.descricao); comB += cV;
-                    v.descricao.split(',').forEach(item => {
-                        let nome = item.trim().toLowerCase();
-                        let qtd = 1;
-                        if(nome.includes('x ')) { const p = nome.split('x '); qtd = parseInt(p[0]) || 1; nome = p[1].trim(); }
-                        let nomeLimpo = nome.replace(/\+/g, '').replace(/\s\s+/g, ' ').trim();
-                        if(contagem[nomeLimpo] !== undefined) contagem[nomeLimpo] += qtd; else contagem["outros"] += qtd;
-                    });
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
                         <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
                         <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
                         <button onclick="abrirEditor('venda', ${idxV})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
                     </div>`;
                 });
-
                 fatG += fatB; comG += comB;
-                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem]">
-                    <div class="bg-white/5 p-5 flex justify-between items-end border-b border-white/10">
-                        <div><h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4><div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">${Object.entries(contagem).map(([k, v]) => v > 0 ? `<p class="text-[8px] text-slate-400 uppercase font-bold">${v} ${k}</p>` : '').join('')}</div></div>
-                        <div class="flex gap-4"><div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
-                        <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-slate-500 font-bold uppercase">Casa</p><p class="text-white font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div></div>
+                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
+                    <div class="bg-white/5 p-5 flex justify-between items-center border-b border-white/10">
+                        <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
+                        <div class="flex gap-4"><div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div></div>
                     </div><div>${htmlV}</div></div>`;
             });
 
@@ -289,63 +268,29 @@
                 });
             }
             const equL = document.getElementById('lista-equipe'); if(equL) {
-                equL.innerHTML = ''; DB.barbeiros.forEach((b, idx) => equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`);
+                equL.innerHTML = ''; DB.barbeiros.forEach((b, idx) => equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><button onclick="abrirEditor('barbeiro', idx)" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`);
             }
         }
-
-        function adicionarItemAoCarrinho() {
-            const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
-            if(!d.value) return; const qtd = parseInt(q.value) || 1; const precoUnit = parseFloat(v.value) || 0;
-            const nomeExib = qtd > 1 ? `${qtd}x ${d.value}` : d.value;
-            carrinhoTemporario.push({ nome: nomeExib, preco: precoUnit * qtd, original: d.value, qtd: qtd });
-            d.value = ''; q.value = '1'; atualizarVisualCarrinho();
-        }
-
-        function atualizarVisualCarrinho() {
-            const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
-            if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
-            cont.classList.remove('hidden'); let total = 0;
-            cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
-            t.value = total.toFixed(2); lucide.createIcons();
-        }
-
-        function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
-
-        document.getElementById('form-venda').addEventListener('submit', async function(e) {
-            e.preventDefault(); if(carrinhoTemporario.length === 0 && document.getElementById('venda-descricao').value) adicionarItemAoCarrinho();
-            if(carrinhoTemporario.length === 0) return; const agora = new Date();
-            carrinhoTemporario.forEach(item => { const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase()); if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd; });
-            DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: agora.toISOString().split('T')[0], hora: agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0') });
-            await salvar(); this.reset(); carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo();
-        });
-
-        let abaDestinoPendente = 'vendas';
-        function switchTab(t) {
-            if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) {
-                if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t);
-                else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; }
-            } else executarTrocaTab(t);
-        }
-        function executarTrocaTab(t) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById('tab-' + t).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn, .mob-btn').forEach(b => { b.classList.remove('active-tab'); if(b.id === 'btn-'+t || b.id === 'mob-'+t) b.classList.add('active-tab'); });
-            fecharModais();
-        }
-        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); executarTrocaTab(abaDestinoPendente); } else alert("Senha Incorreta!"); }
-        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
-        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
 
         function abrirEditor(tipo, idIdx = null) {
             const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
             const btnDel = document.getElementById('btn-excluir-item'); const btnSalvar = document.getElementById('btn-salvar-editor');
             const seletor = document.getElementById('seletor-tipo');
             c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block'; seletor.style.display = 'none';
+            
             if (tipo === 'venda') {
                 const v = DB.vendas[idIdx]; t.innerText = "EDITAR LANÇAMENTO";
-                c.innerHTML = `<input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; fecharModais(); await salvar(); renderizarTudo(); };
-                btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
+                c.innerHTML = `
+                    <div class="space-y-4">
+                        <div><p class="text-[8px] text-slate-500 font-black uppercase ml-2 mb-1">Valor (R$)</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>
+                        <div><p class="text-[8px] text-slate-500 font-black uppercase ml-2 mb-1">Data do Serviço</p><input type="date" id="ed-v-d" value="${v.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>
+                    </div>`;
+                btnSalvar.onclick = async () => { 
+                    DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; 
+                    DB.vendas[idIdx].data = document.getElementById('ed-v-d').value; 
+                    fecharModais(); await salvar(); renderizarTudo(); 
+                };
+                btnDel.onclick = async () => { if(confirm("Excluir lançamento?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'cliente' || tipo === 'novo_cliente') {
                 const isNovo = idIdx === null; const cli = isNovo ? {nome:'', whatsapp:'', instagram:''} : DB.clientes.find(x => x.id == idIdx);
@@ -369,7 +314,68 @@
                 btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
             }
         }
+
+        document.getElementById('form-venda').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if(carrinhoTemporario.length === 0 && document.getElementById('venda-descricao').value) adicionarItemAoCarrinho();
+            if(carrinhoTemporario.length === 0) return;
+            const dataEscolhida = document.getElementById('venda-data-retroativa').value;
+            const agora = new Date();
+            const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+            carrinhoTemporario.forEach(item => {
+                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
+                if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
+            });
+            DB.vendas.push({
+                barbeiro: document.getElementById('venda-barbeiro').value,
+                cliente: document.getElementById('venda-cliente').value,
+                descricao: carrinhoTemporario.map(i => i.nome).join(', '),
+                valor: document.getElementById('venda-valor').value,
+                pagamento: document.getElementById('venda-pagamento').value,
+                data: dataEscolhida,
+                hora: horaAtual
+            });
+            await salvar(); this.reset(); 
+            // RESETA PARA HOJE E BLOQUEIA SE NÃO FOR ADMIN
+            document.getElementById('venda-data-retroativa').value = hoje;
+            if(sessionStorage.getItem('is_admin') !== 'true') document.getElementById('venda-data-retroativa').disabled = true;
+            carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo();
+            alert("Sucesso!");
+        });
+
+        function calcularComissao(descricao) {
+            let total = 0;
+            descricao.split(',').forEach(p => {
+                let nome = p.trim().toLowerCase();
+                let mult = 1;
+                if (nome.includes('x ')) { const aux = nome.split('x '); mult = parseInt(aux[0]) || 1; nome = aux[1].trim(); }
+                if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
+            });
+            return total;
+        }
+
+        function adicionarItemAoCarrinho() {
+            const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
+            if(!d.value) return; const qtd = parseInt(q.value) || 1; const precoUnit = parseFloat(v.value) || 0;
+            carrinhoTemporario.push({ nome: qtd > 1 ? `${qtd}x ${d.value}` : d.value, preco: precoUnit * qtd, original: d.value, qtd: qtd });
+            d.value = ''; q.value = '1'; atualizarVisualCarrinho();
+        }
+        function atualizarVisualCarrinho() {
+            const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
+            if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
+            cont.classList.remove('hidden'); let total = 0;
+            cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
+            t.value = total.toFixed(2); lucide.createIcons();
+        }
+        function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
         function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
+        
+        let abaDestinoPendente = 'vendas';
+        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
+        function executarTrocaTab(t) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.getElementById('tab-' + t).classList.remove('hidden'); fecharModais(); lucide.createIcons(); }
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
+        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
+        
         carregar();
     </script>
 </body>
