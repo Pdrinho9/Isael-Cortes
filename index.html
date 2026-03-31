@@ -17,14 +17,11 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
         #modal-bloqueio-total { display: flex; z-index: 999; } 
         .brand-logo { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); margin: 0 auto 2rem auto; display: block; }
-        
-        /* ESTÉTICA DO CALENDÁRIO - PALETA DARK */
         input[type="date"] { color-scheme: dark; cursor: pointer; }
         input[type="date"]::-webkit-calendar-picker-indicator {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
             cursor: pointer;
         }
-
         input:disabled, select:disabled { opacity: 0.3; cursor: not-allowed; background: rgba(255,255,255,0.02) !important; }
         @media (max-width: 1024px) { .brand-logo { width: 90px; height: 90px; margin-bottom: 1rem; } }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
@@ -36,9 +33,9 @@
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs text-center border-white/20">
             <img src="Logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-6 rounded-full border border-white/10">
             <h3 class="text-xl font-black text-white mb-2 italic uppercase">Acesso Restrito</h3>
-            <p class="text-[10px] text-slate-500 mb-6 uppercase font-bold">Digite a senha para entrar</p>
-            <input type="password" id="input-senha-entrada" placeholder="••••" class="w-full bg-black border border-white/10 rounded-2xl p-4 text-white text-center text-2xl mb-6 outline-none">
-            <button onclick="verificarSenhaEntrada()" class="w-full py-4 bg-white text-black rounded-xl font-black uppercase text-xs">Acessar</button>
+            <p class="text-[10px] text-slate-500 mb-6 uppercase font-bold">Digite a senha de entrada</p>
+            <input type="password" id="input-senha-entrada" placeholder="Senha..." class="w-full bg-black border border-white/10 rounded-2xl p-4 text-white text-center text-xl mb-6 outline-none">
+            <button onclick="verificarSenhaEntrada()" class="w-full py-4 bg-white text-black rounded-xl font-black uppercase text-xs">Acessar Sistema</button>
         </div>
     </div>
 
@@ -110,7 +107,7 @@
                         </div>
                         
                         <div class="flex flex-col gap-1">
-                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
+                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Isael)</span></label>
                             <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
                         </div>
 
@@ -141,11 +138,13 @@
                 <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
                 <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </div>
+
             <div id="tab-estoque" class="tab-content hidden">
                 <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
                 <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
                 <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
+
             <div id="tab-config" class="tab-content hidden">
                 <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
                 <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
@@ -165,11 +164,14 @@
     <script>
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
-        const SENHA_ADMIN = "81120824";
+        
+        // --- SENHAS DO SISTEMA ---
+        const SENHA_ENTRADA = "cortoupagou"; // NOVA SENHA DE ENTRADA
+        const SENHA_ADMIN = "81120824";    // SENHA DO ISAEL (PAINEL/DATA)
+
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
-        
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('filtro-data').value = hoje;
         document.getElementById('venda-data-retroativa').value = hoje;
@@ -181,10 +183,10 @@
         };
 
         function verificarSenhaEntrada() {
-            if(document.getElementById('input-senha-entrada').value === SENHA_ADMIN) {
+            if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) {
                 document.getElementById('modal-bloqueio-total').style.display = 'none';
                 sessionStorage.setItem('acesso_concedido', 'true');
-            } else { alert("Senha Incorreta!"); }
+            } else { alert("Senha de entrada incorreta!"); }
         }
 
         function logoutAdmin() {
@@ -210,7 +212,7 @@
                 document.getElementById('venda-data-retroativa').disabled = false;
                 document.getElementById('msg-lock').style.display = 'none';
                 executarTrocaTab(abaDestinoPendente);
-            } else { alert("Senha Incorreta!"); }
+            } else { alert("Senha Admin Incorreta!"); }
         }
 
         function renderizarTudo() {
