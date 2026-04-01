@@ -105,27 +105,38 @@
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
-                        
                         <div class="flex flex-col gap-1">
-                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
+                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Isael)</span></label>
                             <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
                         </div>
-
                         <button type="submit" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
                     </form>
                 </div>
             </div>
 
             <div id="tab-dashboard" class="tab-content hidden">
-                <header class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-                    <h2 class="text-2xl font-black text-white uppercase italic">Painel</h2>
-                    <div class="flex gap-2">
-                        <input type="date" id="filtro-data" onclick="this.showPicker()" onchange="renderizarTudo()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic outline-none">
-                        <select id="filtro-tempo" onchange="renderizarTudo()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic">
-                            <option value="dia">Hoje/Data</option><option value="total">Geral</option>
+                <header class="flex flex-col gap-4 mb-8">
+                    <div class="flex justify-between items-center w-full">
+                        <h2 class="text-2xl font-black text-white uppercase italic">Painel</h2>
+                        <select id="filtro-tempo" onchange="toggleFiltroData()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic">
+                            <option value="dia">Por Data</option>
+                            <option value="periodo">Por Período (Início/Fim)</option>
+                            <option value="total">Geral</option>
                         </select>
                     </div>
+                    
+                    <div id="area-filtros-data" class="flex flex-wrap gap-2 items-center bg-white/5 p-4 rounded-2xl">
+                        <div id="box-data-inicio" class="flex-1 min-w-[140px]">
+                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1">Início / Data Única</p>
+                            <input type="date" id="filtro-data" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-[10px] font-black rounded-xl px-4 py-3 outline-none">
+                        </div>
+                        <div id="box-data-fim" class="flex-1 min-w-[140px] hidden">
+                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1">Fim do Período</p>
+                            <input type="date" id="filtro-data-fim" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-[10px] font-black rounded-xl px-4 py-3 outline-none">
+                        </div>
+                    </div>
                 </header>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
                     <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento</p><h4 id="dash-faturamento" class="text-2xl font-black text-white italic">R$ 0,00</h4></div>
                     <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-2xl font-black text-white italic">R$ 0,00</h4></div>
@@ -138,13 +149,11 @@
                 <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
                 <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </div>
-
             <div id="tab-estoque" class="tab-content hidden">
                 <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
                 <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
                 <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
-
             <div id="tab-config" class="tab-content hidden">
                 <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
                 <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
@@ -164,16 +173,15 @@
     <script>
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
-        
-        // --- SENHAS DO SISTEMA ---
-        const SENHA_ENTRADA = "cortoupagou"; // NOVA SENHA DE ENTRADA
-        const SENHA_ADMIN = "81120824";    // SENHA DO ISAEL (PAINEL/DATA)
+        const SENHA_ENTRADA = "cortoupagou";
+        const SENHA_ADMIN = "81120824";
 
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('filtro-data').value = hoje;
+        document.getElementById('filtro-data-fim').value = hoje;
         document.getElementById('venda-data-retroativa').value = hoje;
 
         const TABELA_GANHOS = {
@@ -181,6 +189,13 @@
             "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
             "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
         };
+
+        function toggleFiltroData() {
+            const modo = document.getElementById('filtro-tempo').value;
+            document.getElementById('box-data-fim').classList.toggle('hidden', modo !== 'periodo');
+            document.getElementById('area-filtros-data').classList.toggle('hidden', modo === 'total');
+            renderizarTudo();
+        }
 
         function verificarSenhaEntrada() {
             if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) {
@@ -218,10 +233,17 @@
         function renderizarTudo() {
             const filtroT = document.getElementById('filtro-tempo').value;
             const dataS = document.getElementById('filtro-data').value;
+            const dataF = document.getElementById('filtro-data-fim').value;
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
             let fatG = 0, comG = 0;
-            const vFiltradas = (DB.vendas || []).filter(v => filtroT === 'total' || v.data === dataS);
+
+            const vFiltradas = (DB.vendas || []).filter(v => {
+                if(filtroT === 'total') return true;
+                if(filtroT === 'dia') return v.data === dataS;
+                if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
+                return false;
+            });
 
             (DB.barbeiros || []).forEach(barb => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
@@ -233,7 +255,7 @@
                     const val = parseFloat(v.valor); fatB += val;
                     const cV = calcularComissao(v.descricao); comB += cV;
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
+                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')} - ${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
                         <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
                         <button onclick="abrirEditor('venda', ${idxV})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
                     </div>`;
@@ -242,7 +264,7 @@
                 logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
                     <div class="bg-white/5 p-5 flex justify-between items-center border-b border-white/10">
                         <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-                        <div class="flex gap-4"><div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Comissão</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div></div>
+                        <div class="flex gap-4"><div class="text-right"><p class="text-[8px] text-slate-500 font-bold uppercase">Pagamento Total</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div></div>
                     </div><div>${htmlV}</div></div>`;
             });
 
