@@ -96,7 +96,10 @@
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
-                        <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
+                            <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
+                        </div>
                         <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase">Finalizar</button>
                     </form>
                 </div>
@@ -177,7 +180,7 @@
                 let fatB = 0, comB = 0;
                 vB.forEach(v => { fatB += parseFloat(v.valor); comB += calcularComissao(v.descricao); });
                 fatG += fatB; comG += comB;
-                logA.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><h4 class="text-white font-black uppercase text-sm">${barb.nome}</h4><p class="text-[10px] text-slate-500">Geração: R$ ${fatB.toFixed(2)}</p></div><div class="text-right"><p class="text-emerald-500 font-black">R$ ${comB.toFixed(2)}</p><p class="text-[8px] uppercase text-slate-500">Pagar Comissão</p></div></div>`;
+                logA.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><h4 class="text-white font-black uppercase text-sm">${barb.nome}</h4><p class="text-[10px] text-slate-500">Geração: R$ ${fatB.toFixed(2)}</p></div><div class="text-right"><p class="text-emerald-500 font-black">R$ ${comB.toFixed(2)}</p><p class="text-[8px] uppercase text-slate-500">Comissão</p></div></div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
@@ -185,21 +188,14 @@
             document.getElementById('dash-despesas').innerText = "R$ " + desG.toFixed(2);
             document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG - desG).toFixed(2);
 
-            renderizarFinanceiro(desFiltradas);
+            const contD = document.getElementById('lista-despesas'); if(contD) { contD.innerHTML = ''; desFiltradas.forEach(d => { contD.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="text-white font-black uppercase text-xs">${d.item}</p><p class="text-[9px] text-slate-500">${d.data.split('-').reverse().join('/')}</p></div><div class="flex items-center gap-4"><p class="text-rose-500 font-black italic">R$ ${parseFloat(d.valor).toFixed(2)}</p><button onclick="abrirEditor('despesa', ${DB.despesas.indexOf(d)})" class="text-slate-600"><i data-lucide="edit-3" size="14"></i></button></div></div>`; }); }
             renderizarListasSecundarias();
             lucide.createIcons();
         }
 
-        function renderizarFinanceiro(lista) {
-            const cont = document.getElementById('lista-despesas'); cont.innerHTML = '';
-            lista.forEach((d, idx) => {
-                cont.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="text-white font-black uppercase text-xs">${d.item}</p><p class="text-[9px] text-slate-500">${d.data.split('-').reverse().join('/')}</p></div><div class="flex items-center gap-4"><p class="text-rose-500 font-black italic">R$ ${parseFloat(d.valor).toFixed(2)}</p><button onclick="abrirEditor('despesa', ${DB.despesas.indexOf(d)})" class="text-slate-600"><i data-lucide="edit-3" size="14"></i></button></div></div>`;
-            });
-        }
-
         function abrirEditor(tipo, idIdx = null) {
             const c = document.getElementById('editor-campos'), t = document.getElementById('editor-titulo'), btnDel = document.getElementById('btn-excluir-item'), btnSalvar = document.getElementById('btn-salvar-editor');
-            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block';
+            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block'; document.getElementById('seletor-tipo').style.display='none';
             
             if (tipo === 'despesa' || tipo === 'nova_despesa') {
                 const isN = idIdx === null; const d = isN ? {item:'', valor:'', data:hoje} : DB.despesas[idIdx];
@@ -237,22 +233,37 @@
             }
         }
 
-        // --- FUNÇÕES DE NAVEGAÇÃO E SISTEMA ---
+        function confirmarSenhaAdmin() { 
+            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { 
+                sessionStorage.setItem('is_admin', 'true'); 
+                document.getElementById('venda-data-retroativa').disabled = false; 
+                document.getElementById('msg-lock').style.display = 'none';
+                executarTrocaTab(abaDestinoPendente); 
+            } else alert("Acesso Negado!"); 
+        }
+
+        function logoutAdmin() { 
+            sessionStorage.removeItem('is_admin'); 
+            document.getElementById('venda-data-retroativa').disabled = true; 
+            document.getElementById('msg-lock').style.display = 'inline';
+            executarTrocaTab('vendas'); 
+        }
+
         function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes', 'financeiro'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
         function executarTrocaTab(t) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.getElementById('tab-' + t).classList.remove('hidden'); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab', 'text-slate-500')); const btn = document.getElementById('btn-' + t); if(btn) btn.classList.add('active-tab'); fecharModais(); lucide.createIcons(); }
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
         function toggleFiltroData() { const m = document.getElementById('filtro-tempo').value; document.getElementById('filtro-data-fim').classList.toggle('hidden', m !== 'periodo'); document.getElementById('area-filtros-data').classList.toggle('hidden', m === 'total'); renderizarTudo(); }
         function verificarSenhaEntrada() { if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) { document.getElementById('modal-bloqueio-total').style.display = 'none'; } else alert("Senha incorreta!"); }
-        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); document.getElementById('venda-data-retroativa').disabled = false; executarTrocaTab(abaDestinoPendente); } else alert("Acesso Negado!"); }
-        function logoutAdmin() { sessionStorage.removeItem('is_admin'); document.getElementById('venda-data-retroativa').disabled = true; executarTrocaTab('vendas'); }
         function calcularComissao(desc) { let t = 0; desc.split(',').forEach(p => { let n = p.trim().toLowerCase(), m = 1; if (n.includes('x ')) { const a = n.split('x '); m = parseInt(a[0]) || 1; n = a[1].trim(); } if (TABELA_GANHOS[n] !== undefined) t += (TABELA_GANHOS[n] * m); }); return t; }
-        function adicionarItemAoCarrinho() { const d = document.getElementById('venda-descricao'), q = 1, v = document.getElementById('venda-valor'); if(!d.value) return; carrinhoTemporario.push({ nome: d.value, preco: parseFloat(v.value) || 0, original: d.value }); d.value = ''; atualizarVisualCarrinho(); }
+        function adicionarItemAoCarrinho() { const d = document.getElementById('venda-descricao'), v = document.getElementById('venda-valor'); if(!d.value) return; carrinhoTemporario.push({ nome: d.value, preco: parseFloat(v.value) || 0, original: d.value }); d.value = ''; atualizarVisualCarrinho(); }
         function atualizarVisualCarrinho() { const cont = document.getElementById('carrinho-venda'), t = document.getElementById('venda-valor'); if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; } cont.classList.remove('hidden'); let total = 0; cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join(''); t.value = total.toFixed(2); lucide.createIcons(); }
         function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
         function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
         function renderizarListasSecundarias() { 
             const cliL = document.getElementById('lista-completa-clientes'); if(cliL) { cliL.innerHTML = ''; DB.clientes.forEach(c => cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); }
             const equL = document.getElementById('lista-equipe'); if(equL) { equL.innerHTML = ''; DB.barbeiros.forEach((b, idx) => equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); }
+            const servL = document.getElementById('lista-servicos'); if(servL) { servL.innerHTML = ''; (DB.estoque || []).filter(i => i.tipo === 'Serviço').forEach(i => servL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); }
+            const prodL = document.getElementById('lista-produtos'); if(prodL) { prodL.innerHTML = ''; (DB.estoque || []).filter(i => i.tipo === 'Produto').forEach(i => prodL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); }
         }
         function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); }
 
