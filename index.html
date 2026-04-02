@@ -79,7 +79,7 @@
                 <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> ESTOQUE</button>
                 <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> EQUIPE</button>
             </nav>
-            <button onclick="logoutAdmin()" class="mt-auto flex items-center gap-4 px-6 py-4 text-rose-500 font-black text-[10px] uppercase italic"><i data-lucide="log-out"></i> SAIR ADMIN</button>
+            <button id="btn-logout-admin" onclick="logoutAdmin()" class="mt-auto flex items-center gap-4 px-6 py-4 text-rose-500 font-black text-[10px] uppercase italic hidden"><i data-lucide="log-out"></i> SAIR ADMIN</button>
         </aside>
 
         <main class="flex-1 p-4 lg:p-16">
@@ -219,7 +219,13 @@
             sessionStorage.removeItem('is_admin');
             document.getElementById('venda-data-retroativa').disabled = true;
             document.getElementById('msg-lock').style.display = 'inline';
+            
+            // Esconde o botão de logout imediatamente
+            const btnSair = document.getElementById('btn-logout-admin');
+            if(btnSair) btnSair.classList.add('hidden');
+            
             executarTrocaTab('vendas');
+            renderizarTudo();
         }
 
         async function carregar() {
@@ -237,10 +243,18 @@
                 document.getElementById('venda-data-retroativa').disabled = false;
                 document.getElementById('msg-lock').style.display = 'none';
                 executarTrocaTab(abaDestinoPendente);
+                renderizarTudo(); // Para mostrar o botão Sair
             } else { alert("Acesso Negado!"); }
         }
 
         function renderizarTudo() {
+            // Controle visual do botão Sair Admin
+            const btnSair = document.getElementById('btn-logout-admin');
+            if(btnSair) {
+                if(sessionStorage.getItem('is_admin') === 'true') btnSair.classList.remove('hidden');
+                else btnSair.classList.add('hidden');
+            }
+
             const filtroT = document.getElementById('filtro-tempo').value;
             const dataS = document.getElementById('filtro-data').value;
             const dataF = document.getElementById('filtro-data-fim').value;
