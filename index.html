@@ -18,12 +18,6 @@
         #modal-bloqueio-total { display: flex; z-index: 999; } 
         .brand-logo { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); margin: 0 auto 2rem auto; display: block; }
         input[type="date"] { color-scheme: dark; cursor: pointer; }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
-            cursor: pointer;
-        }
-        input:disabled, select:disabled { opacity: 0.3; cursor: not-allowed; background: rgba(255,255,255,0.02) !important; }
-        @media (max-width: 1024px) { .brand-logo { width: 90px; height: 90px; margin-bottom: 1rem; } }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
 </head>
@@ -33,9 +27,8 @@
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs text-center border-white/20">
             <img src="Logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-6 rounded-full border border-white/10">
             <h3 class="text-xl font-black text-white mb-2 italic uppercase">Acesso Restrito</h3>
-            <p class="text-[10px] text-slate-500 mb-6 uppercase font-bold">Digite a senha de entrada</p>
             <input type="password" id="input-senha-entrada" placeholder="Senha..." class="w-full bg-black border border-white/10 rounded-2xl p-4 text-white text-center text-xl mb-6 outline-none">
-            <button onclick="verificarSenhaEntrada()" class="w-full py-4 bg-white text-black rounded-xl font-black uppercase text-xs">Acessar Sistema</button>
+            <button onclick="verificarSenhaEntrada()" class="w-full py-4 bg-white text-black rounded-xl font-black uppercase text-xs">Acessar</button>
         </div>
     </div>
 
@@ -74,6 +67,7 @@
             <nav class="space-y-3 flex-1">
                 <button onclick="switchTab('vendas')" id="btn-vendas" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black active-tab"><i data-lucide="plus-square"></i> NOVO</button>
                 <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="bar-chart-3"></i> PAINEL</button>
+                <button onclick="switchTab('financeiro')" id="btn-financeiro" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="wallet"></i> FINANCEIRO</button>
                 <button onclick="switchTab('clientes')" id="btn-clientes" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users"></i> CLIENTES</button>
                 <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> ESTOQUE</button>
                 <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> EQUIPE</button>
@@ -90,12 +84,9 @@
                             <select id="venda-barbeiro" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold" required></select>
                             <select id="venda-cliente" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none italic"></select>
                         </div>
-                        <div class="flex flex-col md:flex-row gap-2">
+                        <div class="flex gap-2">
                             <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="Item ou Serviço..." class="flex-1 bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold">
-                            <div class="flex gap-2">
-                                <input type="number" id="venda-qtd" value="1" min="1" class="w-20 bg-black border border-white/10 p-4 rounded-2xl text-white text-center font-bold outline-none">
-                                <button type="button" onclick="adicionarItemAoCarrinho()" class="bg-white text-black px-6 py-4 rounded-2xl font-black text-xl">+</button>
-                            </div>
+                            <button type="button" onclick="adicionarItemAoCarrinho()" class="bg-white text-black px-6 py-4 rounded-2xl font-black text-xl">+</button>
                         </div>
                         <datalist id="lista-itens-datalist"></datalist>
                         <div id="carrinho-venda" class="space-y-2 hidden border-y border-white/5 py-4"></div>
@@ -105,13 +96,18 @@
                                 <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
                             </select>
                         </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
-                            <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
-                        </div>
-                        <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
+                        <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
+                        <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase">Finalizar</button>
                     </form>
                 </div>
+            </div>
+
+            <div id="tab-financeiro" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl font-black text-white uppercase italic">Financeiro (Saídas)</h3>
+                    <button onclick="abrirEditor('nova_despesa')" class="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase">Registrar Gasto -</button>
+                </div>
+                <div id="lista-despesas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div id="tab-dashboard" class="tab-content hidden">
@@ -119,53 +115,33 @@
                     <div class="flex justify-between items-center w-full">
                         <h2 class="text-2xl font-black text-white uppercase italic">Painel</h2>
                         <select id="filtro-tempo" onchange="toggleFiltroData()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic">
-                            <option value="dia">Por Data</option>
-                            <option value="periodo">Por Período</option>
-                            <option value="total">Geral</option>
+                            <option value="dia">Por Data</option><option value="periodo">Período</option><option value="total">Geral</option>
                         </select>
                     </div>
-                    <div id="area-filtros-data" class="flex flex-wrap gap-2 items-center bg-white/5 p-4 rounded-2xl">
-                        <div id="box-data-inicio" class="flex-1 min-w-[140px]">
-                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Data / Início</p>
-                            <input type="date" id="filtro-data" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
-                        </div>
-                        <div id="box-data-fim" class="flex-1 min-w-[140px] hidden">
-                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Fim</p>
-                            <input type="date" id="filtro-data-fim" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
-                        </div>
+                    <div id="area-filtros-data" class="flex gap-2 bg-white/5 p-4 rounded-2xl">
+                        <input type="date" id="filtro-data" onchange="renderizarTudo()" class="flex-1 bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl p-3 outline-none">
+                        <input type="date" id="filtro-data-fim" onchange="renderizarTudo()" class="flex-1 bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl p-3 outline-none hidden">
                     </div>
                 </header>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento Bruto</p><h4 id="dash-faturamento" class="text-2xl font-black text-white italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black italic">Total Comissões</p><h4 id="dash-comissoes" class="text-2xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black italic">Lucro da Casa</p><h4 id="dash-casa" class="text-2xl font-black text-rose-500 italic">R$ 0,00</h4></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 text-center">
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Bruto</p><h4 id="dash-faturamento" class="text-xl font-black text-white">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase">Comissões</p><h4 id="dash-comissoes" class="text-xl font-black text-emerald-500">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl border-rose-500/20"><p class="text-[9px] text-rose-500 uppercase">Despesas</p><h4 id="dash-despesas" class="text-xl font-black text-rose-500">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl bg-white/5"><p class="text-[9px] text-white uppercase">Lucro Real</p><h4 id="dash-casa" class="text-xl font-black text-white italic">R$ 0,00</h4></div>
                 </div>
-                <div id="log-vendas-agrupado" class="space-y-8"></div>
+                <div id="log-vendas-agrupado" class="space-y-6"></div>
             </div>
 
-            <div id="tab-clientes" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
-                <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </div>
-
-            <div id="tab-estoque" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
-                <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-                <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <div id="tab-config" class="tab-content hidden">
-                <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
-                <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-                <button onclick="abrirEditor('novo_barbeiro')" class="w-full max-w-md mx-auto block py-4 border border-white/10 rounded-xl font-black text-[10px] text-white uppercase italic">ADICIONAR BARBEIRO</button>
-            </div>
+            <div id="tab-clientes" class="tab-content hidden"><div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div><div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
+            <div id="tab-estoque" class="tab-content hidden"><div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div><div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div><div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
+            <div id="tab-config" class="tab-content hidden"><h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3><div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div><button onclick="abrirEditor('novo_barbeiro')" class="w-full max-w-md mx-auto block py-4 border border-white/10 rounded-xl font-black text-[10px] text-white uppercase italic">ADICIONAR BARBEIRO</button></div>
         </main>
     </div>
 
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
         <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
         <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
+        <button onclick="switchTab('financeiro')" class="text-slate-600 p-2"><i data-lucide="wallet"></i></button>
         <button onclick="switchTab('clientes')" class="text-slate-600 p-2"><i data-lucide="users"></i></button>
         <button onclick="switchTab('estoque')" class="text-slate-600 p-2"><i data-lucide="package"></i></button>
         <button onclick="switchTab('config')" class="text-slate-600 p-2"><i data-lucide="settings"></i></button>
@@ -174,259 +150,121 @@
     <script>
         lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
-        const SENHA_ENTRADA = "cortoupagou";
-        const SENHA_ADMIN = "81120824";
-
-        let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
-        let carrinhoTemporario = [];
-        let tipoItemSelecionado = 'Serviço';
+        const SENHA_ENTRADA = "cortoupagou", SENHA_ADMIN = "81120824";
+        let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [], despesas: [] };
+        let carrinhoTemporario = [], tipoItemSelecionado = 'Serviço', abaDestinoPendente = 'vendas';
         const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('filtro-data').value = hoje;
-        document.getElementById('filtro-data-fim').value = hoje;
-        document.getElementById('venda-data-retroativa').value = hoje;
+        document.getElementById('filtro-data').value = hoje; document.getElementById('filtro-data-fim').value = hoje; document.getElementById('venda-data-retroativa').value = hoje;
 
-        const TABELA_GANHOS = {
-            "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
-            "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
-            "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
-        };
+        const TABELA_GANHOS = { "corte": 20.0, "corte barba": 32.5, "corte + barba": 32.5, "corte sobrancelha": 25.0, "pezinho": 10.0, "barba": 15.0, "sobrancelha": 7.5, "alisante": 12.5, "luzes": 25.0 };
 
-        function toggleFiltroData() {
-            const modo = document.getElementById('filtro-tempo').value;
-            document.getElementById('box-data-fim').classList.toggle('hidden', modo !== 'periodo');
-            document.getElementById('area-filtros-data').classList.toggle('hidden', modo === 'total');
-            renderizarTudo();
-        }
-
-        function verificarSenhaEntrada() {
-            if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) {
-                document.getElementById('modal-bloqueio-total').style.display = 'none';
-                sessionStorage.setItem('acesso_concedido', 'true');
-            } else { alert("Senha incorreta!"); }
-        }
-
-        function logoutAdmin() {
-            sessionStorage.removeItem('is_admin');
-            document.getElementById('venda-data-retroativa').disabled = true;
-            document.getElementById('msg-lock').style.display = 'inline';
-            executarTrocaTab('vendas');
-        }
-
-        async function carregar() {
-            const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-            if (data) { DB = data; renderizarTudo(); }
-        }
-
-        async function salvar() {
-            await _supabase.from('barbearia').update({ vendas: DB.vendas, clientes: DB.clientes, estoque: DB.estoque, barbeiros: DB.barbeiros }).eq('id', 1);
-        }
-
-        function confirmarSenhaAdmin() {
-            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
-                sessionStorage.setItem('is_admin', 'true');
-                document.getElementById('venda-data-retroativa').disabled = false;
-                document.getElementById('msg-lock').style.display = 'none';
-                executarTrocaTab(abaDestinoPendente);
-            } else { alert("Acesso Negado!"); }
-        }
+        async function carregar() { const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single(); if (data) { DB = data; if(!DB.despesas) DB.despesas = []; renderizarTudo(); } }
+        async function salvar() { await _supabase.from('barbearia').update(DB).eq('id', 1); }
 
         function renderizarTudo() {
-            const filtroT = document.getElementById('filtro-tempo').value;
-            const dataS = document.getElementById('filtro-data').value;
-            const dataF = document.getElementById('filtro-data-fim').value;
-            const logA = document.getElementById('log-vendas-agrupado');
-            logA.innerHTML = '';
-            let fatG = 0, comG = 0;
+            const fT = document.getElementById('filtro-tempo').value, dS = document.getElementById('filtro-data').value, dF = document.getElementById('filtro-data-fim').value;
+            const vFiltradas = (DB.vendas || []).filter(v => fT==='total' || (fT==='dia' && v.data===dS) || (fT==='periodo' && v.data>=dS && v.data<=dF));
+            const desFiltradas = (DB.despesas || []).filter(d => fT==='total' || (fT==='dia' && d.data===dS) || (fT==='periodo' && d.data>=dS && d.data<=dF));
 
-            const vFiltradas = (DB.vendas || []).filter(v => {
-                if(filtroT === 'total') return true;
-                if(filtroT === 'dia') return v.data === dataS;
-                if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
-                return false;
-            });
+            let fatG = 0, comG = 0, desG = 0;
+            const logA = document.getElementById('log-vendas-agrupado'); logA.innerHTML = '';
+            
+            desFiltradas.forEach(d => desG += parseFloat(d.valor));
 
             (DB.barbeiros || []).forEach(barb => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
                 if(vB.length === 0) return;
                 let fatB = 0, comB = 0;
-                let htmlV = '';
-                vB.forEach(v => {
-                    const val = parseFloat(v.valor); fatB += val;
-                    const cV = calcularComissao(v.descricao); comB += cV;
-                    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')} - ${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
-                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
-                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
-                    </div>`;
-                });
+                vB.forEach(v => { fatB += parseFloat(v.valor); comB += calcularComissao(v.descricao); });
                 fatG += fatB; comG += comB;
-                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
-                    <div class="bg-white/5 p-5 flex justify-between items-center border-b border-white/10">
-                        <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-                        <div class="flex gap-4">
-                            <div class="text-right"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p><p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
-                        </div>
-                    </div><div>${htmlV}</div></div>`;
+                logA.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><h4 class="text-white font-black uppercase text-sm">${barb.nome}</h4><p class="text-[10px] text-slate-500">Geração: R$ ${fatB.toFixed(2)}</p></div><div class="text-right"><p class="text-emerald-500 font-black">R$ ${comB.toFixed(2)}</p><p class="text-[8px] uppercase text-slate-500">Pagar Comissão</p></div></div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
             document.getElementById('dash-comissoes').innerText = "R$ " + comG.toFixed(2);
-            document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
-            
-            // Renderiza as outras partes do sistema
-            document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
-            document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
-            document.getElementById('lista-itens-datalist').innerHTML = (DB.estoque || []).map(i => `<option value="${i.nome}">`).join('');
-            
-            renderizarListasSecundarias(); 
+            document.getElementById('dash-despesas').innerText = "R$ " + desG.toFixed(2);
+            document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG - desG).toFixed(2);
+
+            renderizarFinanceiro(desFiltradas);
+            renderizarListasSecundarias();
             lucide.createIcons();
         }
 
-        function renderizarListasSecundarias() {
-            const cliL = document.getElementById('lista-completa-clientes'); 
-            if(cliL) { 
-                cliL.innerHTML = ''; 
-                (DB.clientes || []).forEach(c => { 
-                    const btnWhats = c.whatsapp ? `<a href="https://wa.me/55${c.whatsapp.replace(/\D/g,'')}" target="_blank" class="text-emerald-500"><i data-lucide="message-circle" size="16"></i></a>` : ''; 
-                    cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600 ml-2"><i data-lucide="edit-3" size="16"></i></button></div></div>`; 
-                }); 
-            }
-            const servL = document.getElementById('lista-servicos'); 
-            if(servL) { 
-                servL.innerHTML = ''; 
-                (DB.estoque || []).filter(i => i.tipo === 'Serviço').forEach(i => servL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); 
-            }
-            const prodL = document.getElementById('lista-produtos'); 
-            if(prodL) { 
-                prodL.innerHTML = ''; 
-                (DB.estoque || []).filter(i => i.tipo === 'Produto').forEach(i => { 
-                    const corQtd = (i.quantidade || 0) <= 3 ? 'text-rose-500' : 'text-emerald-500'; 
-                    prodL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><div class="flex items-center gap-4"><div class="text-right leading-none"><p class="text-[8px] text-slate-500 font-bold uppercase">Qtd</p><p class="${corQtd} font-black text-sm">${i.quantidade || 0}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`; 
-                }); 
-            }
-            const equL = document.getElementById('lista-equipe'); 
-            if(equL) { 
-                equL.innerHTML = ''; 
-                (DB.barbeiros || []).forEach((b, idx) => equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); 
-            }
-        }
-
-        document.getElementById('form-venda').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-finalizar-venda');
-            const descInput = document.getElementById('venda-descricao');
-            if(btn.disabled) return;
-            if(carrinhoTemporario.length === 0 && descInput.value) { adicionarItemAoCarrinho(); }
-            if(carrinhoTemporario.length === 0) return;
-            btn.disabled = true;
-            btn.innerText = "SALVANDO...";
-            const dataEscolhida = document.getElementById('venda-data-retroativa').value;
-            const agora = new Date();
-            const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
-            carrinhoTemporario.forEach(item => {
-                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
-                if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
+        function renderizarFinanceiro(lista) {
+            const cont = document.getElementById('lista-despesas'); cont.innerHTML = '';
+            lista.forEach((d, idx) => {
+                cont.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="text-white font-black uppercase text-xs">${d.item}</p><p class="text-[9px] text-slate-500">${d.data.split('-').reverse().join('/')}</p></div><div class="flex items-center gap-4"><p class="text-rose-500 font-black italic">R$ ${parseFloat(d.valor).toFixed(2)}</p><button onclick="abrirEditor('despesa', ${DB.despesas.indexOf(d)})" class="text-slate-600"><i data-lucide="edit-3" size="14"></i></button></div></div>`;
             });
-            DB.vendas.push({
-                barbeiro: document.getElementById('venda-barbeiro').value,
-                cliente: document.getElementById('venda-cliente').value,
-                descricao: carrinhoTemporario.map(i => i.nome).join(', '),
-                valor: document.getElementById('venda-valor').value,
-                pagamento: document.getElementById('venda-pagamento').value,
-                data: dataEscolhida,
-                hora: horaAtual
-            });
-            await salvar();
-            this.reset();
-            carrinhoTemporario = [];
-            document.getElementById('venda-data-retroativa').value = hoje;
-            atualizarVisualCarrinho();
-            renderizarTudo();
-            btn.disabled = false;
-            btn.innerText = "FINALIZAR";
-            alert("Lançamento Realizado!");
-        });
-
-        function calcularComissao(descricao) {
-            let total = 0;
-            descricao.split(',').forEach(p => {
-                let nome = p.trim().toLowerCase();
-                let mult = 1;
-                if (nome.includes('x ')) { const aux = nome.split('x '); mult = parseInt(aux[0]) || 1; nome = aux[1].trim(); }
-                if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
-            });
-            return total;
         }
 
-        function adicionarItemAoCarrinho() {
-            const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
-            if(!d.value) return; const qtd = parseInt(q.value) || 1; const precoUnit = parseFloat(v.value) || 0;
-            carrinhoTemporario.push({ nome: qtd > 1 ? `${qtd}x ${d.value}` : d.value, preco: precoUnit * qtd, original: d.value, qtd: qtd });
-            d.value = ''; q.value = '1'; atualizarVisualCarrinho();
-        }
-
-        function atualizarVisualCarrinho() {
-            const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
-            if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
-            cont.classList.remove('hidden'); let total = 0;
-            cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
-            t.value = total.toFixed(2); lucide.createIcons();
-        }
-        function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
-        function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
-        
-        let abaDestinoPendente = 'vendas';
-        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
-        function executarTrocaTab(t) { 
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); 
-            document.getElementById('tab-' + t).classList.remove('hidden'); 
-            
-            // Remove active-tab de todos e põe no clicado
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab', 'text-slate-500'));
-            const btn = document.getElementById('btn-' + t);
-            if(btn) btn.classList.add('active-tab');
-            
-            fecharModais(); 
-            lucide.createIcons(); 
-        }
-        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
-        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
-        
         function abrirEditor(tipo, idIdx = null) {
-            const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
-            const btnDel = document.getElementById('btn-excluir-item'); const btnSalvar = document.getElementById('btn-salvar-editor');
-            const seletor = document.getElementById('seletor-tipo');
-            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block'; seletor.style.display = 'none';
+            const c = document.getElementById('editor-campos'), t = document.getElementById('editor-titulo'), btnDel = document.getElementById('btn-excluir-item'), btnSalvar = document.getElementById('btn-salvar-editor');
+            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block';
             
-            if (tipo === 'venda') {
+            if (tipo === 'despesa' || tipo === 'nova_despesa') {
+                const isN = idIdx === null; const d = isN ? {item:'', valor:'', data:hoje} : DB.despesas[idIdx];
+                t.innerText = "GASTO / INSUMO"; if(isN) btnDel.style.display='none';
+                c.innerHTML = `<input id="ed-d-i" value="${d.item}" placeholder="Ex: Energia, Gel, Aluguel" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none font-bold"><input type="number" id="ed-d-v" value="${d.valor}" placeholder="Valor R$" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none font-black"><input type="date" id="ed-d-d" value="${d.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none">`;
+                btnSalvar.onclick = async () => { const obj = {item: document.getElementById('ed-d-i').value, valor: document.getElementById('ed-d-v').value, data: document.getElementById('ed-d-d').value}; if(isN) DB.despesas.push(obj); else DB.despesas[idIdx] = obj; fecharModais(); await salvar(); renderizarTudo(); };
+                btnDel.onclick = async () => { if(confirm("Excluir gasto?")) { DB.despesas.splice(idIdx,1); fecharModais(); await salvar(); renderizarTudo(); } };
+            } 
+            else if (tipo === 'venda') {
                 const v = DB.vendas[idIdx]; t.innerText = "EDITAR LANÇAMENTO";
-                c.innerHTML = `<div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Valor</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Data</p><input type="date" id="ed-v-d" value="${v.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+                c.innerHTML = `<input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black"><input type="date" id="ed-v-d" value="${v.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white">`;
                 btnSalvar.onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].data = document.getElementById('ed-v-d').value; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.vendas.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'cliente' || tipo === 'novo_cliente') {
-                const isNovo = idIdx === null; const cli = isNovo ? {nome:'', whatsapp:''} : DB.clientes.find(x => x.id == idIdx);
+                const isN = idIdx === null; const cli = isN ? {nome:'', whatsapp:''} : DB.clientes.find(x => x.id == idIdx);
                 t.innerText = "CLIENTE";
-                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none"><input id="ed-c-w" value="${cli.whatsapp || ''}" placeholder="WhatsApp" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-bold italic outline-none">`;
-                btnSalvar.onclick = async () => { const d = {id: isNovo ? Date.now() : cli.id, nome: document.getElementById('ed-c-n').value, whatsapp: document.getElementById('ed-c-w').value}; if(isNovo) DB.clientes.push(d); else DB.clientes[DB.clientes.findIndex(x=>x.id==idIdx)] = d; fecharModais(); await salvar(); renderizarTudo(); };
+                c.innerHTML = `<input id="ed-c-n" value="${cli.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none"><input id="ed-c-w" value="${cli.whatsapp || ''}" placeholder="WhatsApp" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none">`;
+                btnSalvar.onclick = async () => { const obj = {id: isN ? Date.now() : cli.id, nome: document.getElementById('ed-c-n').value, whatsapp: document.getElementById('ed-c-w').value}; if(isN) DB.clientes.push(obj); else DB.clientes[DB.clientes.findIndex(x=>x.id==idIdx)] = obj; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(x => x.id != idIdx); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'produto' || tipo === 'novo_produto') {
-                seletor.style.display = 'flex'; const isNovo = idIdx === null; const p = isNovo ? {nome:'',preco:'',tipo:'Serviço', quantidade: 0} : DB.estoque.find(x => x.id == idIdx);
-                t.innerText = "ESTOQUE"; if(isNovo) btnDel.style.display = 'none'; else setTipoNovoItem(p.tipo);
-                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"><input type="number" id="ed-p-v" value="${p.preco}" placeholder="Preço" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"><div id="campo-qtd-editor"><input type="number" id="ed-p-q" value="${p.quantidade || 0}" placeholder="Qtd" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
-                btnSalvar.onclick = async () => { const d = {id:isNovo ? Date.now() : idIdx, nome:document.getElementById('ed-p-n').value, preco:document.getElementById('ed-p-v').value, tipo:tipoItemSelecionado, quantidade: parseInt(document.getElementById('ed-p-q').value) || 0}; if(isNovo) DB.estoque.push(d); else DB.estoque[DB.estoque.findIndex(x=>x.id==idIdx)] = d; fecharModais(); await salvar(); renderizarTudo(); };
+                const isN = idIdx === null; const p = isN ? {nome:'',preco:'',tipo:'Serviço'} : DB.estoque.find(x => x.id == idIdx);
+                t.innerText = "ESTOQUE"; if(!isN) setTipoNovoItem(p.tipo); document.getElementById('seletor-tipo').style.display='flex';
+                c.innerHTML = `<input id="ed-p-n" value="${p.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none"><input type="number" id="ed-p-v" value="${p.preco}" placeholder="Preço" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black">`;
+                btnSalvar.onclick = async () => { const obj = {id:isN ? Date.now() : idIdx, nome:document.getElementById('ed-p-n').value, preco:document.getElementById('ed-p-v').value, tipo:tipoItemSelecionado}; if(isN) DB.estoque.push(obj); else DB.estoque[DB.estoque.findIndex(x=>x.id==idIdx)] = obj; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(x => x.id != idIdx); fecharModais(); await salvar(); renderizarTudo(); } };
             }
             else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
-                const isNovo = idIdx === null; const b = isNovo ? {nome:''} : DB.barbeiros[idIdx];
-                t.innerText = "BARBEIRO"; if(isNovo) btnDel.style.display = 'none';
-                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { if(isNovo) DB.barbeiros.push({nome:document.getElementById('ed-b-n').value}); else DB.barbeiros[idIdx].nome=document.getElementById('ed-b-n').value; fecharModais(); await salvar(); renderizarTudo(); };
+                const isN = idIdx === null; const b = isN ? {nome:''} : DB.barbeiros[idIdx];
+                t.innerText = "BARBEIRO";
+                c.innerHTML = `<input id="ed-b-n" value="${b.nome}" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white outline-none font-bold">`;
+                btnSalvar.onclick = async () => { if(isN) DB.barbeiros.push({nome:document.getElementById('ed-b-n').value}); else DB.barbeiros[idIdx].nome=document.getElementById('ed-b-n').value; fecharModais(); await salvar(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.barbeiros.splice(idIdx, 1); fecharModais(); await salvar(); renderizarTudo(); } };
             }
         }
+
+        // --- FUNÇÕES DE NAVEGAÇÃO E SISTEMA ---
+        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes', 'financeiro'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
+        function executarTrocaTab(t) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.getElementById('tab-' + t).classList.remove('hidden'); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab', 'text-slate-500')); const btn = document.getElementById('btn-' + t); if(btn) btn.classList.add('active-tab'); fecharModais(); lucide.createIcons(); }
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
+        function toggleFiltroData() { const m = document.getElementById('filtro-tempo').value; document.getElementById('filtro-data-fim').classList.toggle('hidden', m !== 'periodo'); document.getElementById('area-filtros-data').classList.toggle('hidden', m === 'total'); renderizarTudo(); }
+        function verificarSenhaEntrada() { if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) { document.getElementById('modal-bloqueio-total').style.display = 'none'; } else alert("Senha incorreta!"); }
+        function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); document.getElementById('venda-data-retroativa').disabled = false; executarTrocaTab(abaDestinoPendente); } else alert("Acesso Negado!"); }
+        function logoutAdmin() { sessionStorage.removeItem('is_admin'); document.getElementById('venda-data-retroativa').disabled = true; executarTrocaTab('vendas'); }
+        function calcularComissao(desc) { let t = 0; desc.split(',').forEach(p => { let n = p.trim().toLowerCase(), m = 1; if (n.includes('x ')) { const a = n.split('x '); m = parseInt(a[0]) || 1; n = a[1].trim(); } if (TABELA_GANHOS[n] !== undefined) t += (TABELA_GANHOS[n] * m); }); return t; }
+        function adicionarItemAoCarrinho() { const d = document.getElementById('venda-descricao'), q = 1, v = document.getElementById('venda-valor'); if(!d.value) return; carrinhoTemporario.push({ nome: d.value, preco: parseFloat(v.value) || 0, original: d.value }); d.value = ''; atualizarVisualCarrinho(); }
+        function atualizarVisualCarrinho() { const cont = document.getElementById('carrinho-venda'), t = document.getElementById('venda-valor'); if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; } cont.classList.remove('hidden'); let total = 0; cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join(''); t.value = total.toFixed(2); lucide.createIcons(); }
+        function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
+        function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
+        function renderizarListasSecundarias() { 
+            const cliL = document.getElementById('lista-completa-clientes'); if(cliL) { cliL.innerHTML = ''; DB.clientes.forEach(c => cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); }
+            const equL = document.getElementById('lista-equipe'); if(equL) { equL.innerHTML = ''; DB.barbeiros.forEach((b, idx) => equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); }
+        }
+        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); }
+
+        document.getElementById('form-venda').addEventListener('submit', async function(e) {
+            e.preventDefault(); const btn = document.getElementById('btn-finalizar-venda'); if(btn.disabled) return;
+            if(carrinhoTemporario.length === 0 && document.getElementById('venda-descricao').value) { adicionarItemAoCarrinho(); }
+            if(carrinhoTemporario.length === 0) return;
+            btn.disabled = true; btn.innerText = "SALVANDO...";
+            DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: document.getElementById('venda-data-retroativa').value, hora: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) });
+            await salvar(); this.reset(); carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo();
+            btn.disabled = false; btn.innerText = "FINALIZAR"; alert("Lançamento Realizado!");
+        });
 
         carregar();
     </script>
