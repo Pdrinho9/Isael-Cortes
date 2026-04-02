@@ -74,6 +74,7 @@
             <nav class="space-y-3 flex-1">
                 <button onclick="switchTab('vendas')" id="btn-vendas" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black active-tab"><i data-lucide="plus-square"></i> NOVO</button>
                 <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="bar-chart-3"></i> PAINEL</button>
+                <button onclick="switchTab('financeiro')" id="btn-financeiro" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="wallet"></i> FINANCEIRO</button>
                 <button onclick="switchTab('clientes')" id="btn-clientes" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users"></i> CLIENTES</button>
                 <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> ESTOQUE</button>
                 <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> EQUIPE</button>
@@ -144,6 +145,14 @@
                 <div id="log-vendas-agrupado" class="space-y-8"></div>
             </div>
 
+            <div id="tab-financeiro" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl font-black text-white uppercase italic">Financeiro</h3>
+                    <button onclick="abrirEditor('novo_gasto')" class="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase italic">ADICIONAR GASTO +</button>
+                </div>
+                <div id="lista-gastos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
             <div id="tab-clientes" class="tab-content hidden">
                 <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
                 <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
@@ -166,6 +175,7 @@
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
         <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
         <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
+        <button onclick="switchTab('financeiro')" class="text-slate-600 p-2"><i data-lucide="wallet"></i></button>
         <button onclick="switchTab('clientes')" class="text-slate-600 p-2"><i data-lucide="users"></i></button>
         <button onclick="switchTab('estoque')" class="text-slate-600 p-2"><i data-lucide="package"></i></button>
         <button onclick="switchTab('config')" class="text-slate-600 p-2"><i data-lucide="settings"></i></button>
@@ -177,7 +187,7 @@
         const SENHA_ENTRADA = "cortoupagou";
         const SENHA_ADMIN = "81120824";
 
-        let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [] };
+        let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [], gastos: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
         const hoje = new Date().toISOString().split('T')[0];
@@ -214,11 +224,11 @@
 
         async function carregar() {
             const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-            if (data) { DB = data; renderizarTudo(); }
+            if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
         }
 
         async function salvar() {
-            await _supabase.from('barbearia').update({ vendas: DB.vendas, clientes: DB.clientes, estoque: DB.estoque, barbeiros: DB.barbeiros }).eq('id', 1);
+            await _supabase.from('barbearia').update({ vendas: DB.vendas, clientes: DB.clientes, estoque: DB.estoque, barbeiros: DB.barbeiros, gastos: DB.gastos }).eq('id', 1);
         }
 
         function confirmarSenhaAdmin() {
@@ -312,6 +322,13 @@
                     equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
                 }); 
             }
+            const gastL = document.getElementById('lista-gastos');
+            if(gastL) {
+                gastL.innerHTML = '';
+                (DB.gastos || []).forEach((g, idx) => {
+                    gastL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic text-rose-500">${g.descricao}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(g.valor).toFixed(2)}</p><p class="text-slate-500 text-[8px] uppercase">${g.data.split('-').reverse().join('/')}</p></div><button onclick="abrirEditor('gasto', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`;
+                });
+            }
         }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
@@ -379,7 +396,7 @@
         function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
         
         let abaDestinoPendente = 'vendas';
-        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
+        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes', 'financeiro'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
         function executarTrocaTab(t) { 
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); 
             document.getElementById('tab-' + t).classList.remove('hidden'); 
@@ -443,6 +460,23 @@
                     await salvar(); fecharModais(); renderizarTudo();
                 };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.barbeiros.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
+            }
+
+            else if (tipo === 'gasto' || tipo === 'novo_gasto') {
+                const g = tipo === 'gasto' ? DB.gastos[idIdx] : { descricao: '', valor: '', data: hoje };
+                t.innerText = "GASTO"; if(tipo === 'novo_gasto') btnDel.style.display = 'none';
+                c.innerHTML = `
+                    <input type="text" id="ed-g-d" placeholder="Descrição (Ex: Luz, Água)" value="${g.descricao}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4">
+                    <input type="number" id="ed-g-v" step="0.01" placeholder="Valor R$" value="${g.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4">
+                    <input type="date" id="ed-g-dt" value="${g.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">
+                `;
+                btnSalvar.onclick = async () => {
+                    const d = document.getElementById('ed-g-d').value; const v = document.getElementById('ed-g-v').value; const dt = document.getElementById('ed-g-dt').value;
+                    if(tipo === 'novo_gasto') DB.gastos.push({ descricao: d, valor: v, data: dt });
+                    else { DB.gastos[idIdx] = { descricao: d, valor: v, data: dt }; }
+                    await salvar(); fecharModais(); renderizarTudo();
+                };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.gastos.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
         }
 
