@@ -223,10 +223,8 @@
             sessionStorage.removeItem('is_admin');
             document.getElementById('venda-data-retroativa').disabled = true;
             document.getElementById('msg-lock').style.display = 'inline';
-            
             const btnSair = document.getElementById('btn-logout-admin');
             if(btnSair) btnSair.classList.add('hidden');
-            
             executarTrocaTab('vendas');
             renderizarTudo();
         }
@@ -236,22 +234,32 @@
             if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
         }
 
-        // MELHORIA DE SEGURANÇA: Retorna true/false se conseguiu salvar de fato
+        // FUNÇÃO SALVAR REFORÇADA PARA O ID 1 E COLUNA GASTOS
         async function salvar() {
-            const { error } = await _supabase.from('barbearia').update({ 
-                vendas: DB.vendas, 
-                clientes: DB.clientes, 
-                estoque: DB.estoque, 
-                barbeiros: DB.barbeiros, 
-                gastos: DB.gastos 
-            }).eq('id', 1);
-            
-            if(error) {
-                console.error(error);
-                alert("ERRO DE CONEXÃO: O serviço não foi salvo no banco de dados. Verifique sua internet!");
+            try {
+                const { data, error } = await _supabase
+                    .from('barbearia')
+                    .update({ 
+                        vendas: DB.vendas || [], 
+                        clientes: DB.clientes || [], 
+                        estoque: DB.estoque || [], 
+                        barbeiros: DB.barbeiros || [], 
+                        gastos: DB.gastos || [] 
+                    })
+                    .match({ id: 1 })
+                    .select();
+
+                if(error || !data) {
+                    console.error("Erro Supabase:", error);
+                    alert("ERRO DE CONEXÃO: Não foi possível salvar no banco de dados. Verifique a internet!");
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.error("Erro Crítico:", e);
+                alert("Falha total na conexão. O sistema não conseguiu falar com o servidor.");
                 return false;
             }
-            return true;
         }
 
         function confirmarSenhaAdmin() {
@@ -375,7 +383,6 @@
             const agora = new Date();
             const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
             
-            // Backup por segurança caso falhe
             const backupVendas = JSON.parse(JSON.stringify(DB.vendas));
             const backupEstoque = JSON.parse(JSON.stringify(DB.estoque));
 
@@ -395,7 +402,6 @@
             });
 
             const sucesso = await salvar();
-            
             if (sucesso) {
                 this.reset();
                 carrinhoTemporario = [];
@@ -404,11 +410,9 @@
                 renderizarTudo();
                 alert("Lançamento Realizado!");
             } else {
-                // Se falhar, volta os dados para o que era antes do push
                 DB.vendas = backupVendas;
                 DB.estoque = backupEstoque;
             }
-
             btn.disabled = false;
             btn.innerText = "FINALIZAR";
         });
