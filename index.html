@@ -236,8 +236,22 @@
             if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
         }
 
+        // MELHORIA DE SEGURANÇA: Retorna true/false se conseguiu salvar de fato
         async function salvar() {
-            await _supabase.from('barbearia').update({ vendas: DB.vendas, clientes: DB.clientes, estoque: DB.estoque, barbeiros: DB.barbeiros, gastos: DB.gastos }).eq('id', 1);
+            const { error } = await _supabase.from('barbearia').update({ 
+                vendas: DB.vendas, 
+                clientes: DB.clientes, 
+                estoque: DB.estoque, 
+                barbeiros: DB.barbeiros, 
+                gastos: DB.gastos 
+            }).eq('id', 1);
+            
+            if(error) {
+                console.error(error);
+                alert("ERRO DE CONEXÃO: O serviço não foi salvo no banco de dados. Verifique sua internet!");
+                return false;
+            }
+            return true;
         }
 
         function confirmarSenhaAdmin() {
@@ -356,13 +370,20 @@
             if(carrinhoTemporario.length === 0) return;
             btn.disabled = true;
             btn.innerText = "SALVANDO...";
+            
             const dataEscolhida = document.getElementById('venda-data-retroativa').value;
             const agora = new Date();
             const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+            
+            // Backup por segurança caso falhe
+            const backupVendas = JSON.parse(JSON.stringify(DB.vendas));
+            const backupEstoque = JSON.parse(JSON.stringify(DB.estoque));
+
             carrinhoTemporario.forEach(item => {
                 const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
                 if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
             });
+            
             DB.vendas.push({
                 barbeiro: document.getElementById('venda-barbeiro').value,
                 cliente: document.getElementById('venda-cliente').value,
@@ -372,15 +393,24 @@
                 data: dataEscolhida,
                 hora: horaAtual
             });
-            await salvar();
-            this.reset();
-            carrinhoTemporario = [];
-            document.getElementById('venda-data-retroativa').value = hoje;
-            atualizarVisualCarrinho();
-            renderizarTudo();
+
+            const sucesso = await salvar();
+            
+            if (sucesso) {
+                this.reset();
+                carrinhoTemporario = [];
+                document.getElementById('venda-data-retroativa').value = hoje;
+                atualizarVisualCarrinho();
+                renderizarTudo();
+                alert("Lançamento Realizado!");
+            } else {
+                // Se falhar, volta os dados para o que era antes do push
+                DB.vendas = backupVendas;
+                DB.estoque = backupEstoque;
+            }
+
             btn.disabled = false;
             btn.innerText = "FINALIZAR";
-            alert("Lançamento Realizado!");
         });
 
         function calcularComissao(descricao) {
