@@ -235,43 +235,32 @@
         }
 
         // FUNÇÃO SALVAR REFORÇADA PARA O ID 1 E COLUNA GASTOS
-      async function carregar() {
-    try {
-        const { data, error } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-        if (data) { 
-            // BARREIRA ANTI-SCRIPT NO CARREGAMENTO
-            const raw = JSON.stringify(data);
-            if (raw.includes('<script')) {
-                alert("ERRO: Dados corrompidos detectados no servidor! Ação bloqueada.");
-                return;
+        async function salvar() {
+            try {
+                const { data, error } = await _supabase
+                    .from('barbearia')
+                    .update({ 
+                        vendas: DB.vendas || [], 
+                        clientes: DB.clientes || [], 
+                        estoque: DB.estoque || [], 
+                        barbeiros: DB.barbeiros || [], 
+                        gastos: DB.gastos || [] 
+                    })
+                    .match({ id: 1 })
+                    .select();
+
+                if(error || !data) {
+                    console.error("Erro Supabase:", error);
+                    alert("ERRO DE CONEXÃO: Não foi possível salvar no banco de dados. Verifique a internet!");
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.error("Erro Crítico:", e);
+                alert("Falha total na conexão. O sistema não conseguiu falar com o servidor.");
+                return false;
             }
-            DB = data; 
-            renderizarTudo(); 
         }
-    } catch (e) { console.error(e); }
-}
-
-async function salvar() {
-    try {
-        // Limpeza de segurança: Remove qualquer tag de script que possa estar no objeto DB
-        let dbLimpo = JSON.parse(JSON.stringify(DB).replace(/<script.*?>.*?<\/script>/gi, ""));
-        
-        const { error } = await _supabase
-            .from('barbearia')
-            .update(dbLimpo)
-            .eq('id', 1);
-
-        if (error) {
-            console.error("Erro do Supabase:", error.message);
-            alert("Erro ao gravar: " + error.message);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        console.error("Erro no processo de salvar:", e);
-        return false;
-    }
-}
 
         function confirmarSenhaAdmin() {
             if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
@@ -540,22 +529,26 @@ async function salvar() {
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.gastos.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
         }
+        window.onload = () => {
 
-            window.onload = () => {
             // Limpa os acessos ao carregar para garantir que peça senha no refresh
+
             sessionStorage.removeItem('acesso_concedido');
+
             sessionStorage.removeItem('is_admin');
             
             // Mantém o modal de bloqueio visível
+
             document.getElementById('modal-bloqueio-total').style.display = 'flex';
-            
             carregar();
         };
-
         // Garante a limpeza total ao fechar ou atualizar a aba
         window.onbeforeunload = () => {
+
             sessionStorage.removeItem('acesso_concedido');
+
             sessionStorage.removeItem('is_admin');
+
         };
     </script>
 </body>
