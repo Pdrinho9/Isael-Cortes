@@ -137,10 +137,11 @@
                     </div>
                 </header>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento Bruto</p><h4 id="dash-faturamento" class="text-2xl font-black text-white italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black italic">Total Comissões</p><h4 id="dash-comissoes" class="text-2xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black italic">Lucro da Casa</p><h4 id="dash-casa" class="text-2xl font-black text-rose-500 italic">R$ 0,00</h4></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento Bruto</p><h4 id="dash-faturamento" class="text-xl font-black text-white italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black italic">Total Comissões</p><h4 id="dash-comissoes" class="text-xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl border-blue-500/10"><p class="text-[9px] text-blue-400 uppercase font-black italic">Venda Produtos</p><h4 id="dash-produtos-total" class="text-xl font-black text-blue-400 italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black italic">Lucro da Casa</p><h4 id="dash-casa" class="text-xl font-black text-rose-500 italic">R$ 0,00</h4></div>
                 </div>
                 <div id="log-vendas-agrupado" class="space-y-8"></div>
             </div>
@@ -284,7 +285,7 @@
             const dataF = document.getElementById('filtro-data-fim').value;
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
-            let fatG = 0, comG = 0;
+            let fatG = 0, comG = 0, totalProdutosG = 0; // Inicia totalProdutosG
 
             const vFiltradas = (DB.vendas || []).filter(v => {
                 if(filtroT === 'total') return true;
@@ -292,34 +293,38 @@
                 if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
                 return false;
             });
-
             (DB.barbeiros || []).forEach(barb => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
                 if(vB.length === 0) return;
-                let fatB = 0, comB = 0;
+                let fatB = 0, comB = 0, prodB = 0;
                 let htmlV = '';
                 vB.forEach(v => {
                     const val = parseFloat(v.valor); fatB += val;
                     const cV = calcularComissao(v.descricao); comB += cV;
+                    
+                    // Se a comissão for 0, somamos como venda de produto
+                    if(cV === 0) prodB += val;
+
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
                         <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')} - ${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
                         <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
                         <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
                     </div>`;
                 });
-                fatG += fatB; comG += comB;
+                fatG += fatB; comG += comB; totalProdutosG += prodB;
                 logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
                     <div class="bg-white/5 p-5 flex justify-between items-center border-b border-white/10">
                         <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
                         <div class="flex gap-4">
-                            <div class="text-right"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p><p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p><p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
                         </div>
                     </div><div>${htmlV}</div></div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
             document.getElementById('dash-comissoes').innerText = "R$ " + comG.toFixed(2);
+            document.getElementById('dash-produtos-total').innerText = "R$ " + totalProdutosG.toFixed(2);
             document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
             
             document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
@@ -530,25 +535,14 @@
             }
         }
         window.onload = () => {
-
-            // Limpa os acessos ao carregar para garantir que peça senha no refresh
-
             sessionStorage.removeItem('acesso_concedido');
-
             sessionStorage.removeItem('is_admin');
-            
-            // Mantém o modal de bloqueio visível
-
             document.getElementById('modal-bloqueio-total').style.display = 'flex';
             carregar();
         };
-        // Garante a limpeza total ao fechar ou atualizar a aba
         window.onbeforeunload = () => {
-
             sessionStorage.removeItem('acesso_concedido');
-
             sessionStorage.removeItem('is_admin');
-
         };
     </script>
 </body>
