@@ -235,47 +235,38 @@
         }
 
         // FUNÇÃO SALVAR REFORÇADA PARA O ID 1 E COLUNA GASTOS
-       async function salvar() {
+      async function carregar() {
     try {
-        // PASSO 1: Verificação de Segurança
-        // Se a lista de vendas ou barbeiros estiver totalmente vazia por erro de carregamento,
-        // a gente não deixa salvar para não apagar o que já tem no banco.
-        if (vendas.length === 0 && barbeiros.length === 0) {
-            console.warn("Tentativa de salvar listas vazias bloqueada por segurança.");
-            return false;
+        const { data, error } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
+        if (data) { 
+            // BARREIRA ANTI-SCRIPT NO CARREGAMENTO
+            const raw = JSON.stringify(data);
+            if (raw.includes('<script')) {
+                alert("ERRO: Dados corrompidos detectados no servidor! Ação bloqueada.");
+                return;
+            }
+            DB = data; 
+            renderizarTudo(); 
         }
+    } catch (e) { console.error(e); }
+}
 
-        // PASSO 2: Preparar o que vai ser enviado
-        const dadosParaEnviar = {
-            vendas: vendas,
-            estoque: estoque,
-            barbeiros: barbeiros,
-            gastos: gastos
-        };
-
-        // PASSO 3: Tentar o Update
-        const { error: erroUpdate } = await _supabase
-            .from('barbearia')
-            .update(dadosParaEnviar)
-            .eq('id', 1);
-
-        // PASSO 4: Se der erro, NÃO CONTINUA
-        if (erroUpdate) {
-            console.error("Erro Supabase:", erroUpdate.message);
-            // Avisa o barbeiro, mas os dados continuam na memória do celular/tablet
-            alert("ERRO DE CONEXÃO: O lançamento NÃO foi salvo. Verifique o Wi-Fi e tente de novo!");
-            return false; 
-        }
-
-        // Se chegou aqui, o Supabase confirmou o recebimento
-        console.log("Sincronização concluída com sucesso.");
-        return true;
-
-    } catch (e) {
-        console.error("Erro Crítico Fatal:", e);
-        alert("Erro inesperado no sistema. Tente salvar novamente.");
+async function salvar() {
+    // BARREIRA ANTI-SCRIPT NO SALVAMENTO
+    const strDB = JSON.stringify(DB);
+    if (strDB.includes('<script')) {
+        alert("ERRO: O sistema impediu o salvamento de um código malicioso!");
         return false;
     }
+    
+    // Trava para não salvar se o banco estiver vazio (evita apagar tudo por erro)
+    if (!DB.barbeiros || DB.barbeiros.length === 0) return false;
+
+    try {
+        const { error } = await _supabase.from('barbearia').update(DB).eq('id', 1);
+        if (error) throw error;
+        return true;
+    } catch (e) { return false; }
 }
 
         function confirmarSenhaAdmin() {
