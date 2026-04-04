@@ -235,32 +235,48 @@
         }
 
         // FUNÇÃO SALVAR REFORÇADA PARA O ID 1 E COLUNA GASTOS
-        async function salvar() {
-            try {
-                const { data, error } = await _supabase
-                    .from('barbearia')
-                    .update({ 
-                        vendas: DB.vendas || [], 
-                        clientes: DB.clientes || [], 
-                        estoque: DB.estoque || [], 
-                        barbeiros: DB.barbeiros || [], 
-                        gastos: DB.gastos || [] 
-                    })
-                    .match({ id: 1 })
-                    .select();
-
-                if(error || !data) {
-                    console.error("Erro Supabase:", error);
-                    alert("ERRO DE CONEXÃO: Não foi possível salvar no banco de dados. Verifique a internet!");
-                    return false;
-                }
-                return true;
-            } catch (e) {
-                console.error("Erro Crítico:", e);
-                alert("Falha total na conexão. O sistema não conseguiu falar com o servidor.");
-                return false;
-            }
+       async function salvar() {
+    try {
+        // PASSO 1: Verificação de Segurança
+        // Se a lista de vendas ou barbeiros estiver totalmente vazia por erro de carregamento,
+        // a gente não deixa salvar para não apagar o que já tem no banco.
+        if (vendas.length === 0 && barbeiros.length === 0) {
+            console.warn("Tentativa de salvar listas vazias bloqueada por segurança.");
+            return false;
         }
+
+        // PASSO 2: Preparar o que vai ser enviado
+        const dadosParaEnviar = {
+            vendas: vendas,
+            estoque: estoque,
+            barbeiros: barbeiros,
+            gastos: gastos
+        };
+
+        // PASSO 3: Tentar o Update
+        const { error: erroUpdate } = await _supabase
+            .from('barbearia')
+            .update(dadosParaEnviar)
+            .eq('id', 1);
+
+        // PASSO 4: Se der erro, NÃO CONTINUA
+        if (erroUpdate) {
+            console.error("Erro Supabase:", erroUpdate.message);
+            // Avisa o barbeiro, mas os dados continuam na memória do celular/tablet
+            alert("ERRO DE CONEXÃO: O lançamento NÃO foi salvo. Verifique o Wi-Fi e tente de novo!");
+            return false; 
+        }
+
+        // Se chegou aqui, o Supabase confirmou o recebimento
+        console.log("Sincronização concluída com sucesso.");
+        return true;
+
+    } catch (e) {
+        console.error("Erro Crítico Fatal:", e);
+        alert("Erro inesperado no sistema. Tente salvar novamente.");
+        return false;
+    }
+}
 
         function confirmarSenhaAdmin() {
             if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
@@ -530,11 +546,21 @@
             }
         }
 
-        window.onload = () => {
-            if(sessionStorage.getItem('acesso_concedido') === 'true') {
-                document.getElementById('modal-bloqueio-total').style.display = 'none';
-            }
+            window.onload = () => {
+            // Limpa os acessos ao carregar para garantir que peça senha no refresh
+            sessionStorage.removeItem('acesso_concedido');
+            sessionStorage.removeItem('is_admin');
+            
+            // Mantém o modal de bloqueio visível
+            document.getElementById('modal-bloqueio-total').style.display = 'flex';
+            
             carregar();
+        };
+
+        // Garante a limpeza total ao fechar ou atualizar a aba
+        window.onbeforeunload = () => {
+            sessionStorage.removeItem('acesso_concedido');
+            sessionStorage.removeItem('is_admin');
         };
     </script>
 </body>
