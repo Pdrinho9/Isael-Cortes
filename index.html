@@ -252,21 +252,25 @@
 }
 
 async function salvar() {
-    // BARREIRA ANTI-SCRIPT NO SALVAMENTO
-    const strDB = JSON.stringify(DB);
-    if (strDB.includes('<script')) {
-        alert("ERRO: O sistema impediu o salvamento de um código malicioso!");
+    try {
+        // Limpeza de segurança: Remove qualquer tag de script que possa estar no objeto DB
+        let dbLimpo = JSON.parse(JSON.stringify(DB).replace(/<script.*?>.*?<\/script>/gi, ""));
+        
+        const { error } = await _supabase
+            .from('barbearia')
+            .update(dbLimpo)
+            .eq('id', 1);
+
+        if (error) {
+            console.error("Erro do Supabase:", error.message);
+            alert("Erro ao gravar: " + error.message);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error("Erro no processo de salvar:", e);
         return false;
     }
-    
-    // Trava para não salvar se o banco estiver vazio (evita apagar tudo por erro)
-    if (!DB.barbeiros || DB.barbeiros.length === 0) return false;
-
-    try {
-        const { error } = await _supabase.from('barbearia').update(DB).eq('id', 1);
-        if (error) throw error;
-        return true;
-    } catch (e) { return false; }
 }
 
         function confirmarSenhaAdmin() {
