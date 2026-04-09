@@ -305,7 +305,6 @@
 
             const contagemItensEstoque = {};
 
-            // Filtragem Painel
             const vFiltradas = (DB.vendas || []).filter(v => {
                 if(filtroT === 'total') return true;
                 if(filtroT === 'dia') return v.data === dataS;
@@ -313,7 +312,6 @@
                 return false;
             });
 
-            // Lógica para o Relatório de Estoque (Filtro Independente)
             (DB.vendas || []).forEach(v => {
                 if(v.data >= estoqueS && v.data <= estoqueF) {
                     v.descricao.split(',').forEach(pedaco => {
@@ -330,7 +328,6 @@
                 }
             });
 
-            // Renderizar Painel com Accordion
             (DB.barbeiros || []).forEach((barb, idx) => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
                 if(vB.length === 0) return;
@@ -338,9 +335,27 @@
                 let htmlV = '';
                 
                 vB.forEach(v => {
-                    const val = parseFloat(v.valor); fatB += val;
-                    const cV = calcularComissao(v.descricao); comB += cV;
-                    if(cV === 0) prodB += val;
+    const val = parseFloat(v.valor); 
+    fatB += val;
+    const cV = calcularComissao(v.descricao); 
+    comB += cV;
+
+    v.descricao.split(',').forEach(item => {
+        let nomeItem = item.trim();
+        let qtd = 1;
+
+        if (nomeItem.includes('x ')) {
+            const partes = nomeItem.split('x ');
+            qtd = parseInt(partes[0]) || 1;
+            nomeItem = partes[1].trim();
+        }
+        
+        const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nomeItem.toLowerCase());
+        
+        if (itemEstoque && itemEstoque.tipo === 'Produto') {
+            prodB += (parseFloat(itemEstoque.preco) * qtd);
+        }
+    });
 
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
                         <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span><p class="text-slate-500">${v.descricao}</p></div>
