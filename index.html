@@ -303,32 +303,62 @@
             });
 
             (DB.barbeiros || []).forEach(barb => {
-                const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
-                if(vB.length === 0) return;
-                let fatB = 0, comB = 0, prodB = 0;
-                let htmlV = '';
-                vB.forEach(v => {
-                    const val = parseFloat(v.valor); fatB += val;
-                    const cV = calcularComissao(v.descricao); comB += cV;
-                    if(cV === 0) prodB += val;
+    const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
+    if(vB.length === 0) return;
+    
+    let fatB = 0, comB = 0, prodB = 0;
+    let htmlV = '';
+    
+    vB.forEach(v => {
+        const val = parseFloat(v.valor) || 0; 
+        fatB += val;
+        
+        const cV = calcularComissao(v.descricao); 
+        comB += cV;
+        
+        // Se a comissão é 0, somamos ao total de produtos do barbeiro
+        if(cV === 0) prodB += val;
 
-                    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span><p class="text-slate-500">${v.descricao}</p></div>
-                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
-                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
-                    </div>`;
-                });
-                fatG += fatB; comG += comB; totalProdutosG += prodB;
-                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
-                    <div class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10">
-                        <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-                        <div class="flex gap-4">
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p><p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p><p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
-                        </div>
-                    </div><div>${htmlV}</div></div>`;
-            });
+        htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
+            <div class="text-[10px] italic">
+                <span class="text-white font-black uppercase">${v.cliente}</span> 
+                <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span>
+                <p class="text-slate-500">${v.descricao}</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p>
+                    <p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p>
+                </div>
+                <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button>
+            </div>
+        </div>`;
+    });
+
+    // SOMA DAS VARIÁVEIS GLOBAIS (DASHBOARD)
+    fatG += fatB; 
+    comG += comB; 
+    totalProdutosG += prodB; // Soma os produtos deste barbeiro ao total do painel azul
+
+    logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
+        <div class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10">
+            <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
+            <div class="flex gap-4">
+                <div class="text-right border-l border-white/10 pl-4">
+                    <p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p>
+                    <p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p>
+                </div>
+                <div class="text-right border-l border-white/10 pl-4">
+                    <p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p>
+                    <p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p>
+                </div>
+                <div class="text-right border-l border-white/10 pl-4">
+                    <p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p>
+                    <p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p>
+                </div>
+            </div>
+        </div><div>${htmlV}</div></div>`;
+});
 
             // Renderizar Relatório de Desempenho de Itens
             const relProd = document.getElementById('relatorio-vendas-produtos');
