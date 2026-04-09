@@ -16,6 +16,8 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
         #modal-bloqueio-total { display: flex; z-index: 999; } 
         input[type="date"] { color-scheme: dark; }
+        
+        /* Sistema de Minimizar/Aumentar */
         .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .collapsible-content.open { max-height: 3000px; transition: max-height 0.6s ease-in; }
         .rotate-icon { transition: transform 0.3s; }
@@ -68,7 +70,7 @@
             <nav class="space-y-3 flex-1">
                 <button onclick="switchTab('vendas')" id="btn-vendas" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black active-tab"><i data-lucide="plus-square"></i> NOVO</button>
                 <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="bar-chart-3"></i> PAINEL</button>
-                <button onclick="switchTab('financeiro')" id="btn-financeiro" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="wallet"></i> GASTOS</button>
+                <button onclick="switchTab('financeiro')" id="btn-financeiro" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="wallet"></i> FINANCEIRO</button>
                 <button onclick="switchTab('clientes')" id="btn-clientes" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users"></i> CLIENTES</button>
                 <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> ESTOQUE</button>
                 <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> EQUIPE</button>
@@ -100,7 +102,7 @@
                             </select>
                         </div>
                         <div class="flex flex-col gap-1">
-                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Admin)</span></label>
+                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento</label>
                             <input type="date" id="venda-data-retroativa" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
                         </div>
                         <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
@@ -239,10 +241,8 @@
                     });
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/5 mb-1 rounded-xl italic">
                         <div class="text-[10px]"><span class="text-white font-black uppercase">${v.cliente}</span><p class="text-slate-500">${v.descricao}</p></div>
-                        <div class="flex items-center gap-3">
-                            <p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p>
-                            <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button>
-                        </div>
+                        <div class="flex items-center gap-3"><p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p>
+                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
                     </div>`;
                 });
                 fatG += fatB; comG += comB; prodG += pB;
@@ -255,7 +255,6 @@
                 </div>`;
             });
 
-            // Relatório Produtos Retrátil
             const relProd = document.getElementById('relatorio-vendas-produtos');
             if(relProd) {
                 relProd.innerHTML = ''; const cont = {};
@@ -360,12 +359,11 @@
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault(); if(carrinhoTemporario.length === 0) return;
             DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: document.getElementById('venda-data-retroativa').value || hoje });
-            // Baixar estoque
             carrinhoTemporario.forEach(item => {
                 const iEst = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase() && e.tipo === 'Produto');
                 if(iEst !== -1) DB.estoque[iEst].quantidade = (parseInt(DB.estoque[iEst].quantidade) || 0) - item.qtd;
             });
-            if(await salvar()) { this.reset(); carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo(); alert("Venda Salva!"); }
+            if(await salvar()) { this.reset(); carrinhoTemporario = []; atualizarVisualCarrinho(); renderizarTudo(); alert("Sucesso!"); }
         });
 
         function calcularComissao(desc) {
@@ -375,7 +373,7 @@
             }); return t;
         }
 
-        function verificarSenhaEntrada() { if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) { document.getElementById('modal-bloqueio-total').style.display = 'none'; sessionStorage.setItem('acesso', 'true'); carregar(); } }
+        function verificarSenhaEntrada() { if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) { document.getElementById('modal-bloqueio-total').style.display = 'none'; carregar(); } }
         function confirmarSenhaAdmin() { if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) { sessionStorage.setItem('is_admin', 'true'); document.getElementById('venda-data-retroativa').disabled = false; switchTab(abaDestinoPendente); } }
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
         function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
