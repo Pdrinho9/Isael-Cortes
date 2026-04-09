@@ -18,8 +18,12 @@
         #modal-bloqueio-total { display: flex; z-index: 999; } 
         .brand-logo { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); margin: 0 auto 2rem auto; display: block; }
         input[type="date"] { color-scheme: dark; cursor: pointer; }
-        .accordion-content { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; opacity: 0; }
-        .accordion-content.open { max-height: 2000px; opacity: 1; padding-bottom: 1rem; }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+            cursor: pointer;
+        }
+        input:disabled, select:disabled { opacity: 0.3; cursor: not-allowed; background: rgba(255,255,255,0.02) !important; }
+        @media (max-width: 1024px) { .brand-logo { width: 90px; height: 90px; margin-bottom: 1rem; } }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
     </style>
 </head>
@@ -29,8 +33,9 @@
         <div class="glass p-8 rounded-[2.5rem] w-full max-w-xs text-center border-white/20">
             <img src="Logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-6 rounded-full border border-white/10">
             <h3 class="text-xl font-black text-white mb-2 italic uppercase">Acesso Restrito</h3>
+            <p class="text-[10px] text-slate-500 mb-6 uppercase font-bold">Digite a senha de entrada</p>
             <input type="password" id="input-senha-entrada" placeholder="Senha..." class="w-full bg-black border border-white/10 rounded-2xl p-4 text-white text-center text-xl mb-6 outline-none">
-            <button onclick="verificarSenhaEntrada()" class="w-full py-4 bg-white text-black rounded-xl font-black uppercase text-xs">Entrar</button>
+            <button onclick="verificarSenhaEntrada()" class="w-full py-4 bg-white text-black rounded-xl font-black uppercase text-xs">Acessar Sistema</button>
         </div>
     </div>
 
@@ -68,11 +73,11 @@
             <img src="Logo.png" alt="Logo" class="brand-logo">
             <nav class="space-y-3 flex-1">
                 <button onclick="switchTab('vendas')" id="btn-vendas" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black active-tab"><i data-lucide="plus-square"></i> NOVO</button>
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5"><i data-lucide="bar-chart-3"></i> PAINEL</button>
-                <button onclick="switchTab('financeiro')" id="btn-financeiro" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5"><i data-lucide="wallet"></i> FINANCEIRO</button>
-                <button onclick="switchTab('clientes')" id="btn-clientes" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5"><i data-lucide="users"></i> CLIENTES</button>
-                <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5"><i data-lucide="package"></i> ESTOQUE</button>
-                <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5"><i data-lucide="settings"></i> EQUIPE</button>
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="bar-chart-3"></i> PAINEL</button>
+                <button onclick="switchTab('financeiro')" id="btn-financeiro" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="wallet"></i> FINANCEIRO</button>
+                <button onclick="switchTab('clientes')" id="btn-clientes" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="users"></i> CLIENTES</button>
+                <button onclick="switchTab('estoque')" id="btn-estoque" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="package"></i> ESTOQUE</button>
+                <button onclick="switchTab('config')" id="btn-config" class="nav-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-white/5 text-left"><i data-lucide="settings"></i> EQUIPE</button>
             </nav>
             <button id="btn-logout-admin" onclick="logoutAdmin()" class="mt-auto flex items-center gap-4 px-6 py-4 text-rose-500 font-black text-[10px] uppercase italic hidden"><i data-lucide="log-out"></i> SAIR ADMIN</button>
         </aside>
@@ -103,9 +108,9 @@
                         </div>
                         <div class="flex flex-col gap-1">
                             <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
-                            <input type="date" id="venda-data-retroativa" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
+                            <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
                         </div>
-                        <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl hover:bg-slate-200 transition-all">Finalizar</button>
+                        <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
                     </form>
                 </div>
             </div>
@@ -114,7 +119,7 @@
                 <header class="flex flex-col gap-4 mb-8">
                     <div class="flex justify-between items-center w-full">
                         <h2 class="text-2xl font-black text-white uppercase italic">Painel</h2>
-                        <select id="filtro-tempo" onchange="toggleFiltroData()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic outline-none">
+                        <select id="filtro-tempo" onchange="toggleFiltroData()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic">
                             <option value="dia">Por Data</option>
                             <option value="periodo">Por Período</option>
                             <option value="total">Geral</option>
@@ -122,34 +127,67 @@
                     </div>
                     <div id="area-filtros-data" class="flex flex-wrap gap-2 items-center bg-white/5 p-4 rounded-2xl">
                         <div id="box-data-inicio" class="flex-1 min-w-[140px]">
-                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Início</p>
-                            <input type="date" id="filtro-data" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none">
+                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Data / Início</p>
+                            <input type="date" id="filtro-data" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
                         </div>
                         <div id="box-data-fim" class="flex-1 min-w-[140px] hidden">
                             <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Fim</p>
-                            <input type="date" id="filtro-data-fim" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none">
+                            <input type="date" id="filtro-data-fim" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
                         </div>
                     </div>
                 </header>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Bruto</p><h4 id="dash-faturamento" class="text-xl font-black text-white italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black">Comissões</p><h4 id="dash-comissoes" class="text-xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl border-blue-500/10"><p class="text-[9px] text-blue-400 uppercase font-black">Produtos</p><h4 id="dash-produtos-total" class="text-xl font-black text-blue-400 italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black">Casa</p><h4 id="dash-casa" class="text-xl font-black text-rose-500 italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento Bruto</p><h4 id="dash-faturamento" class="text-xl font-black text-white italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black italic">Total Comissões</p><h4 id="dash-comissoes" class="text-xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl border-blue-500/10"><p class="text-[9px] text-blue-400 uppercase font-black italic">Venda Produtos</p><h4 id="dash-produtos-total" class="text-xl font-black text-blue-400 italic">R$ 0,00</h4></div>
+                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black italic">Lucro da Casa</p><h4 id="dash-casa" class="text-xl font-black text-rose-500 italic">R$ 0,00</h4></div>
                 </div>
-                <div id="log-vendas-agrupado" class="space-y-4"></div>
+                <div id="log-vendas-agrupado" class="space-y-8"></div>
             </div>
 
-            <div id="tab-clientes" class="tab-content hidden"><div class="flex justify-between mb-6"> <h2 class="text-white font-black italic uppercase">Clientes</h2> <button onclick="abrirEditor('novo_cliente')" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded-lg">NOVO</button> </div><div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
-            <div id="tab-estoque" class="tab-content hidden"><div class="flex justify-between mb-6"> <h2 class="text-white font-black italic uppercase">Estoque</h2> <button onclick="abrirEditor('novo_produto')" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded-lg">NOVO</button> </div><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div id="lista-servicos" class="space-y-3"></div><div id="lista-produtos" class="space-y-3"></div></div></div>
-            <div id="tab-config" class="tab-content hidden"><div class="flex justify-between mb-6"> <h2 class="text-white font-black italic uppercase">Equipe</h2> <button onclick="abrirEditor('novo_barbeiro')" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded-lg">NOVO</button> </div><div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
-            <div id="tab-financeiro" class="tab-content hidden"><div class="flex justify-between mb-6"> <h2 class="text-white font-black italic uppercase">Financeiro</h2> <button onclick="abrirEditor('novo_gasto')" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded-lg">NOVO GASTO</button> </div><div id="lista-gastos" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
+            <div id="tab-financeiro" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl font-black text-white uppercase italic">Financeiro</h3>
+                    <button onclick="abrirEditor('novo_gasto')" class="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase italic">ADICIONAR GASTO +</button>
+                </div>
+                <div id="lista-gastos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
 
+            <div id="tab-clientes" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
+                <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div id="tab-estoque" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
+                
+                <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Serviços</p>
+                <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
+                
+                <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Produtos</p>
+                <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div id="tab-config" class="tab-content hidden">
+                <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
+                <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+                <button onclick="abrirEditor('novo_barbeiro')" class="w-full max-w-md mx-auto block py-4 border border-white/10 rounded-xl font-black text-[10px] text-white uppercase italic">ADICIONAR BARBEIRO</button>
+            </div>
         </main>
     </div>
+
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
+        <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
+        <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
+        <button onclick="switchTab('financeiro')" class="text-slate-600 p-2"><i data-lucide="wallet"></i></button>
+        <button onclick="switchTab('clientes')" class="text-slate-600 p-2"><i data-lucide="users"></i></button>
+        <button onclick="switchTab('estoque')" class="text-slate-600 p-2"><i data-lucide="package"></i></button>
+        <button onclick="switchTab('config')" class="text-slate-600 p-2"><i data-lucide="settings"></i></button>
+    </div>
+
     <script>
-        // CONFIGURAÇÕES E ESTADO GLOBAL
+        lucide.createIcons();
         const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
         const SENHA_ENTRADA = "cortoupagou";
         const SENHA_ADMIN = "81120824";
@@ -157,8 +195,10 @@
         let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [], gastos: [] };
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
-        let abaDestinoPendente = 'vendas';
         const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('filtro-data').value = hoje;
+        document.getElementById('filtro-data-fim').value = hoje;
+        document.getElementById('venda-data-retroativa').value = hoje;
 
         const TABELA_GANHOS = {
             "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
@@ -166,29 +206,11 @@
             "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
         };
 
-        // FUNÇÕES DE UI
-        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
-
         function toggleFiltroData() {
             const modo = document.getElementById('filtro-tempo').value;
             document.getElementById('box-data-fim').classList.toggle('hidden', modo !== 'periodo');
             document.getElementById('area-filtros-data').classList.toggle('hidden', modo === 'total');
             renderizarTudo();
-        }
-
-        function toggleBarbeiro(id) {
-            const content = document.getElementById('content-' + id);
-            const icon = document.getElementById('icon-' + id);
-            const isOpen = content.classList.contains('open');
-            
-            // Fecha todos antes de abrir (opcional, para ficar mais limpo)
-            document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('open'));
-            document.querySelectorAll('[id^="icon-"]').forEach(i => i.style.transform = 'rotate(0deg)');
-
-            if(!isOpen) {
-                content.classList.add('open');
-                icon.style.transform = 'rotate(180deg)';
-            }
         }
 
         function verificarSenhaEntrada() {
@@ -198,6 +220,49 @@
             } else { alert("Senha incorreta!"); }
         }
 
+        function logoutAdmin() {
+            sessionStorage.removeItem('is_admin');
+            document.getElementById('venda-data-retroativa').disabled = true;
+            document.getElementById('msg-lock').style.display = 'inline';
+            const btnSair = document.getElementById('btn-logout-admin');
+            if(btnSair) btnSair.classList.add('hidden');
+            executarTrocaTab('vendas');
+            renderizarTudo();
+        }
+
+        async function carregar() {
+            const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
+            if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
+        }
+
+        // FUNÇÃO SALVAR REFORÇADA PARA O ID 1 E COLUNA GASTOS
+        async function salvar() {
+            try {
+                const { data, error } = await _supabase
+                    .from('barbearia')
+                    .update({ 
+                        vendas: DB.vendas || [], 
+                        clientes: DB.clientes || [], 
+                        estoque: DB.estoque || [], 
+                        barbeiros: DB.barbeiros || [], 
+                        gastos: DB.gastos || [] 
+                    })
+                    .match({ id: 1 })
+                    .select();
+
+                if(error || !data) {
+                    console.error("Erro Supabase:", error);
+                    alert("ERRO DE CONEXÃO: Não foi possível salvar no banco de dados. Verifique a internet!");
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.error("Erro Crítico:", e);
+                alert("Falha total na conexão. O sistema não conseguiu falar com o servidor.");
+                return false;
+            }
+        }
+
         function confirmarSenhaAdmin() {
             if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
                 sessionStorage.setItem('is_admin', 'true');
@@ -205,43 +270,22 @@
                 document.getElementById('msg-lock').style.display = 'none';
                 executarTrocaTab(abaDestinoPendente);
                 renderizarTudo();
-            } else { alert("Senha incorreta!"); }
+            } else { alert("Acesso Negado!"); }
         }
 
-        function logoutAdmin() {
-            sessionStorage.removeItem('is_admin');
-            location.reload();
-        }
-
-        // COMUNICAÇÃO DATABASE
-        async function carregar() {
-            const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-            if (data) { 
-                DB = data; 
-                if(!DB.gastos) DB.gastos = []; 
-                document.getElementById('filtro-data').value = hoje;
-                document.getElementById('filtro-data-fim').value = hoje;
-                document.getElementById('venda-data-retroativa').value = hoje;
-                renderizarTudo(); 
-            }
-        }
-
-        async function salvar() {
-            const { data, error } = await _supabase.from('barbearia').update({ 
-                vendas: DB.vendas, clientes: DB.clientes, estoque: DB.estoque, barbeiros: DB.barbeiros, gastos: DB.gastos 
-            }).match({ id: 1 }).select();
-            return !error;
-        }
-
-        // RENDERIZAÇÃO
         function renderizarTudo() {
+            const btnSair = document.getElementById('btn-logout-admin');
+            if(btnSair) {
+                if(sessionStorage.getItem('is_admin') === 'true') btnSair.classList.remove('hidden');
+                else btnSair.classList.add('hidden');
+            }
+
             const filtroT = document.getElementById('filtro-tempo').value;
             const dataS = document.getElementById('filtro-data').value;
             const dataF = document.getElementById('filtro-data-fim').value;
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
-
-            let fatG = 0, comG = 0, totalProdutosG = 0;
+            let fatG = 0, comG = 0, totalProdutosG = 0; // Inicia totalProdutosG
 
             const vFiltradas = (DB.vendas || []).filter(v => {
                 if(filtroT === 'total') return true;
@@ -249,47 +293,34 @@
                 if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
                 return false;
             });
-
-            (DB.barbeiros || []).forEach((barb, idx) => {
+            (DB.barbeiros || []).forEach(barb => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
                 if(vB.length === 0) return;
-
-                let fatB = 0, comB = 0, prodB = 0, htmlV = '';
-
+                let fatB = 0, comB = 0, prodB = 0;
+                let htmlV = '';
                 vB.forEach(v => {
                     const val = parseFloat(v.valor); fatB += val;
                     const cV = calcularComissao(v.descricao); comB += cV;
-                    
-                    // LÓGICA DE PRODUTOS (AZUL)
-                    v.descricao.split(',').forEach(itemDesc => {
-                        let nomeLimpo = itemDesc.trim().toLowerCase();
-                        if (nomeLimpo.includes('x ')) nomeLimpo = nomeLimpo.split('x ')[1].trim();
-                        const isProd = DB.estoque.find(e => e.nome.toLowerCase() === nomeLimpo && e.tipo === 'Produto');
-                        if(isProd && cV === 0) prodB += (parseFloat(isProd.preco) * (parseInt(itemDesc) || 1));
-                        else if(isProd) prodB += (parseFloat(isProd.preco) * (parseInt(itemDesc) || 1));
-                    });
+                    if(cV === 0) prodB += val;
 
                     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <p class="text-slate-500">${v.descricao}</p></div>
-                        <div class="text-right"><p class="font-black text-white text-xs">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black">Com: R$ ${cV.toFixed(2)}</p></div>
+                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')} - ${v.hora || ''}</span><p class="text-slate-500">${v.descricao}</p></div>
+                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
+                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
                     </div>`;
                 });
-
                 fatG += fatB; comG += comB; totalProdutosG += prodB;
-
-                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-2">
-                    <div onclick="toggleBarbeiro(${idx})" class="bg-white/5 p-5 flex justify-between items-center cursor-pointer">
-                        <div class="flex items-center gap-3"><i data-lucide="chevron-down" id="icon-${idx}" class="text-slate-500 transition-all"></i><h4 class="text-white font-black italic uppercase">${barb.nome}</h4></div>
+                
+                // MÓDULO VISUAL POR BARBEIRO ATUALIZADO
+                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
+                    <div class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10">
+                        <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
                         <div class="flex gap-4">
-                            <div class="text-right"><p class="text-[8px] text-blue-400 font-bold uppercase">Produtos</p><p class="text-blue-400 font-black italic">R$ ${prodB.toFixed(2)}</p></div>
-                            <div class="text-right"><p class="text-[8px] text-emerald-500 font-bold uppercase">Pagar</p><p class="text-emerald-500 font-black italic">R$ ${comB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p><p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p><p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
                         </div>
-                    </div>
-                    <div id="content-${idx}" class="accordion-content">
-                        ${htmlV}
-                        <div class="p-4 text-right border-t border-white/5"><span class="text-[10px] uppercase font-bold text-rose-500">Lucro Casa: R$ ${(fatB - comB).toFixed(2)}</span></div>
-                    </div>
-                </div>`;
+                    </div><div>${htmlV}</div></div>`;
             });
 
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
@@ -297,77 +328,100 @@
             document.getElementById('dash-produtos-total').innerText = "R$ " + totalProdutosG.toFixed(2);
             document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
             
-            // Atualizar Selects
             document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
             document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             document.getElementById('lista-itens-datalist').innerHTML = (DB.estoque || []).map(i => `<option value="${i.nome}">`).join('');
             
-            renderizarListasSecundarias(vFiltradas);
+            renderizarListasSecundarias(); 
             lucide.createIcons();
         }
 
-        function renderizarListasSecundarias(vendasNoPeriodo) {
-            // Clientes
+        function renderizarListasSecundarias() {
             const cliL = document.getElementById('lista-completa-clientes'); 
             if(cliL) { 
-                cliL.innerHTML = (DB.clientes || []).map(c => `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`).join('');
+                cliL.innerHTML = ''; 
+                (DB.clientes || []).forEach(c => { 
+                    const btnWhats = c.whatsapp ? `<a href="https://wa.me/55${c.whatsapp.replace(/\D/g,'')}" target="_blank" class="text-emerald-500"><i data-lucide="message-circle" size="16"></i></a>` : ''; 
+                    cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600 ml-2"><i data-lucide="edit-3" size="16"></i></button></div></div>`; 
+                }); 
             }
-
-            // Estoque com Rendimento
             const servL = document.getElementById('lista-servicos'); 
-            if(servL) {
-                servL.innerHTML = (DB.estoque || []).filter(i => i.tipo === 'Serviço').map(i => {
-                    let totalRendido = 0;
-                    vendasNoPeriodo.forEach(v => { if(v.descricao.toLowerCase().includes(i.nome.toLowerCase())) totalRendido += parseFloat(v.valor); });
-                    return `<div class="glass p-4 rounded-2xl flex justify-between"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><div class="text-right"><p class="text-[8px] text-slate-500 uppercase">Rendimento</p><p class="text-emerald-500 font-black text-xs">R$ ${totalRendido.toFixed(2)}</p></div></div>`;
-                }).join('');
+            if(servL) { 
+                servL.innerHTML = ''; 
+                (DB.estoque || []).filter(i => i.tipo === 'Serviço').forEach(i => servL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`); 
             }
-
-            const prodL = document.getElementById('lista-produtos');
-            if(prodL) {
-                prodL.innerHTML = (DB.estoque || []).filter(i => i.tipo === 'Produto').map(i => {
-                    let qtdVendida = 0;
-                    vendasNoPeriodo.forEach(v => {
-                        v.descricao.split(',').forEach(d => {
-                            if(d.toLowerCase().includes(i.nome.toLowerCase())) {
-                                let mult = parseInt(d) || 1;
-                                qtdVendida += mult;
-                            }
-                        });
-                    });
-                    const rendimento = qtdVendida * parseFloat(i.preco);
+            const prodL = document.getElementById('lista-produtos'); 
+            if(prodL) { 
+                prodL.innerHTML = ''; 
+                (DB.estoque || []).filter(i => i.tipo === 'Produto').forEach(i => { 
                     const corQtd = (i.quantidade || 0) <= 3 ? 'text-rose-500' : 'text-emerald-500'; 
-                    return `<div class="glass p-4 rounded-2xl flex justify-between items-center">
-                        <div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-blue-400 text-[9px] font-bold mt-1">Vendidos: ${qtdVendida} (R$ ${rendimento.toFixed(2)})</p></div>
-                        <div class="text-right leading-none"><p class="text-[8px] text-slate-500 uppercase">Estoque</p><p class="${corQtd} font-black text-sm">${i.quantidade || 0}</p></div>
-                    </div>`;
-                }).join('');
+                    prodL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><div class="flex items-center gap-4"><div class="text-right leading-none"><p class="text-[8px] text-slate-500 font-bold uppercase">Qtd</p><p class="${corQtd} font-black text-sm">${i.quantidade || 0}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`; 
+                }); 
+            }
+            const equL = document.getElementById('lista-equipe'); 
+            if(equL) { 
+                equL.innerHTML = ''; 
+                (DB.barbeiros || []).forEach((b, idx) => {
+                    const btnWhats = b.whatsapp ? `<a href="https://wa.me/55${b.whatsapp.replace(/\D/g,'')}" target="_blank" class="text-emerald-500"><i data-lucide="message-circle" size="16"></i></a>` : '';
+                    equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
+                }); 
+            }
+            const gastL = document.getElementById('lista-gastos');
+            if(gastL) {
+                gastL.innerHTML = '';
+                (DB.gastos || []).forEach((g, idx) => {
+                    gastL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic text-rose-500">${g.descricao}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(g.valor).toFixed(2)}</p><p class="text-slate-500 text-[8px] uppercase">${g.data.split('-').reverse().join('/')}</p></div><button onclick="abrirEditor('gasto', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`;
+                });
             }
         }
 
-        // LÓGICA DE VENDAS E CARRINHO
-        function adicionarItemAoCarrinho() {
-            const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
-            if(!d.value) return; 
-            const qtd = parseInt(q.value) || 1; 
-            const precoUnit = parseFloat(v.value) || 0;
-            carrinhoTemporario.push({ nome: qtd > 1 ? `${qtd}x ${d.value}` : d.value, preco: precoUnit * qtd, original: d.value, qtd: qtd });
-            d.value = ''; q.value = '1'; atualizarVisualCarrinho();
-        }
+        document.getElementById('form-venda').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-finalizar-venda');
+            const descInput = document.getElementById('venda-descricao');
+            if(btn.disabled) return;
+            if(carrinhoTemporario.length === 0 && descInput.value) { adicionarItemAoCarrinho(); }
+            if(carrinhoTemporario.length === 0) return;
+            btn.disabled = true;
+            btn.innerText = "SALVANDO...";
+            
+            const dataEscolhida = document.getElementById('venda-data-retroativa').value;
+            const agora = new Date();
+            const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+            
+            const backupVendas = JSON.parse(JSON.stringify(DB.vendas));
+            const backupEstoque = JSON.parse(JSON.stringify(DB.estoque));
 
-        function atualizarVisualCarrinho() {
-            const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
-            if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
-            cont.classList.remove('hidden'); 
-            let total = 0;
-            cont.innerHTML = carrinhoTemporario.map((item, idx) => { 
-                total += item.preco; 
-                return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; 
-            }).join('');
-            t.value = total.toFixed(2); lucide.createIcons();
-        }
+            carrinhoTemporario.forEach(item => {
+                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
+                if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
+            });
+            
+            DB.vendas.push({
+                barbeiro: document.getElementById('venda-barbeiro').value,
+                cliente: document.getElementById('venda-cliente').value,
+                descricao: carrinhoTemporario.map(i => i.nome).join(', '),
+                valor: document.getElementById('venda-valor').value,
+                pagamento: document.getElementById('venda-pagamento').value,
+                data: dataEscolhida,
+                hora: horaAtual
+            });
 
-        function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
+            const sucesso = await salvar();
+            if (sucesso) {
+                this.reset();
+                carrinhoTemporario = [];
+                document.getElementById('venda-data-retroativa').value = hoje;
+                atualizarVisualCarrinho();
+                renderizarTudo();
+                alert("Lançamento Realizado!");
+            } else {
+                DB.vendas = backupVendas;
+                DB.estoque = backupEstoque;
+            }
+            btn.disabled = false;
+            btn.innerText = "FINALIZAR";
+        });
 
         function calcularComissao(descricao) {
             let total = 0;
@@ -380,62 +434,117 @@
             return total;
         }
 
-        function atualizarPrecoAutomatico() { 
-            const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); 
-            if(i) document.getElementById('venda-valor').value = i.preco; 
+        function adicionarItemAoCarrinho() {
+            const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
+            if(!d.value) return; const qtd = parseInt(q.value) || 1; const precoUnit = parseFloat(v.value) || 0;
+            carrinhoTemporario.push({ nome: qtd > 1 ? `${qtd}x ${d.value}` : d.value, preco: precoUnit * qtd, original: d.value, qtd: qtd });
+            d.value = ''; q.value = '1'; atualizarVisualCarrinho();
         }
 
-        function switchTab(t) { 
-            if(['dashboard', 'estoque', 'config', 'financeiro'].includes(t)) { 
-                if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); 
-                else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } 
-            } else executarTrocaTab(t); 
+        function atualizarVisualCarrinho() {
+            const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
+            if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
+            cont.classList.remove('hidden'); let total = 0;
+            cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
+            t.value = total.toFixed(2); lucide.createIcons();
         }
-
+        function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
+        function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
+        
+        let abaDestinoPendente = 'vendas';
+        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes', 'financeiro'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
         function executarTrocaTab(t) { 
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); 
             document.getElementById('tab-' + t).classList.remove('hidden'); 
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
-            if(document.getElementById('btn-' + t)) document.getElementById('btn-' + t).classList.add('active-tab');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab', 'text-slate-500'));
+            const btn = document.getElementById('btn-' + t);
+            if(btn) btn.classList.add('active-tab');
             fecharModais(); 
             lucide.createIcons(); 
         }
+        function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
+        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
+        
+        function abrirEditor(tipo, idIdx = null) {
+            const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
+            const btnDel = document.getElementById('btn-excluir-item'); const btnSalvar = document.getElementById('btn-salvar-editor');
+            const seletor = document.getElementById('seletor-tipo');
+            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block'; seletor.style.display = 'none';
 
-        // EVENTOS
-        document.getElementById('form-venda').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-finalizar-venda');
-            if(carrinhoTemporario.length === 0) return;
-            
-            btn.disabled = true; btn.innerText = "SALVANDO...";
-            
-            carrinhoTemporario.forEach(item => {
-                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
-                if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
-            });
-
-            DB.vendas.push({
-                barbeiro: document.getElementById('venda-barbeiro').value,
-                cliente: document.getElementById('venda-cliente').value,
-                descricao: carrinhoTemporario.map(i => i.nome).join(', '),
-                valor: document.getElementById('venda-valor').value,
-                pagamento: document.getElementById('venda-pagamento').value,
-                data: document.getElementById('venda-data-retroativa').value,
-                hora: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
-            });
-
-            if (await salvar()) {
-                this.reset();
-                carrinhoTemporario = [];
-                document.getElementById('venda-data-retroativa').value = hoje;
-                atualizarVisualCarrinho();
-                renderizarTudo();
-                alert("Sucesso!");
+            if (tipo === 'venda') {
+                const v = DB.vendas[idIdx]; t.innerText = "EDITAR LANÇAMENTO";
+                c.innerHTML = `<div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Valor</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Data</p><input type="date" id="ed-v-d" value="${v.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+                btnSalvar.onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].data = document.getElementById('ed-v-d').value; await salvar(); fecharModais(); renderizarTudo(); };
+                btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
-            btn.disabled = false; btn.innerText = "FINALIZAR";
-        });
 
-        window.onload = carregar;
+            else if (tipo === 'cliente' || tipo === 'novo_cliente') {
+                const cli = tipo === 'cliente' ? DB.clientes.find(c => c.id === idIdx) : { nome: '', whatsapp: '' };
+                t.innerText = "CLIENTE"; if(tipo === 'novo_cliente') btnDel.style.display = 'none';
+                c.innerHTML = `<input type="text" id="ed-c-n" placeholder="Nome" value="${cli.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-c-w" placeholder="WhatsApp" value="${cli.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
+                btnSalvar.onclick = async () => { 
+                    const n = document.getElementById('ed-c-n').value; const w = document.getElementById('ed-c-w').value;
+                    if(tipo === 'novo_cliente') { const id = DB.clientes.length > 0 ? Math.max(...DB.clientes.map(c => c.id)) + 1 : 1; DB.clientes.push({ id, nome: n, whatsapp: w }); }
+                    else { const idx = DB.clientes.findIndex(c => c.id === idIdx); DB.clientes[idx].nome = n; DB.clientes[idx].whatsapp = w; }
+                    await salvar(); fecharModais(); renderizarTudo(); 
+                };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(c => c.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
+            }
+
+            else if (tipo === 'produto' || tipo === 'novo_produto') {
+                seletor.style.display = 'flex'; const p = tipo === 'produto' ? DB.estoque.find(i => i.id === idIdx) : { nome: '', preco: '', tipo: 'Serviço', quantidade: 0 };
+                t.innerText = "ESTOQUE"; if(tipo === 'novo_produto') btnDel.style.display = 'none';
+                c.innerHTML = `<input type="text" id="ed-p-n" placeholder="Nome" value="${p.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="number" id="ed-p-p" step="0.01" placeholder="Preço" value="${p.preco}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><div id="campo-qtd-editor"><input type="number" id="ed-p-q" value="${p.quantidade || 0}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+                setTipoNovoItem(p.tipo);
+                btnSalvar.onclick = async () => {
+                    const n = document.getElementById('ed-p-n').value; const pr = document.getElementById('ed-p-p').value; const q = document.getElementById('ed-p-q').value;
+                    if(tipo === 'novo_produto') { const id = DB.estoque.length > 0 ? Math.max(...DB.estoque.map(i => i.id)) + 1 : 1; DB.estoque.push({ id, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }); }
+                    else { const idx = DB.estoque.findIndex(i => i.id === idIdx); DB.estoque[idx] = { id: idIdx, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }; }
+                    await salvar(); fecharModais(); renderizarTudo();
+                };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(i => i.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
+            }
+
+            else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
+                const b = tipo === 'barbeiro' ? DB.barbeiros[idIdx] : { nome: '', whatsapp: '' };
+                t.innerText = "BARBEIRO"; if(tipo === 'novo_barbeiro') btnDel.style.display = 'none';
+                c.innerHTML = `<input type="text" id="ed-b-n" placeholder="Nome" value="${b.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-b-w" placeholder="WhatsApp (DDD+Número)" value="${b.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
+                btnSalvar.onclick = async () => {
+                    const n = document.getElementById('ed-b-n').value; const w = document.getElementById('ed-b-w').value;
+                    if(tipo === 'novo_barbeiro') DB.barbeiros.push({ nome: n, whatsapp: w });
+                    else { DB.barbeiros[idIdx].nome = n; DB.barbeiros[idIdx].whatsapp = w; }
+                    await salvar(); fecharModais(); renderizarTudo();
+                };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.barbeiros.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
+            }
+
+            else if (tipo === 'gasto' || tipo === 'novo_gasto') {
+                const g = tipo === 'gasto' ? DB.gastos[idIdx] : { descricao: '', valor: '', data: hoje };
+                t.innerText = "GASTO"; if(tipo === 'novo_gasto') btnDel.style.display = 'none';
+                c.innerHTML = `
+                    <input type="text" id="ed-g-d" placeholder="Descrição (Ex: Luz, Água)" value="${g.descricao}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4">
+                    <input type="number" id="ed-g-v" step="0.01" placeholder="Valor R$" value="${g.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4">
+                    <input type="date" id="ed-g-dt" value="${g.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">
+                `;
+                btnSalvar.onclick = async () => {
+                    const d = document.getElementById('ed-g-d').value; const v = document.getElementById('ed-g-v').value; const dt = document.getElementById('ed-g-dt').value;
+                    if(tipo === 'novo_gasto') DB.gastos.push({ descricao: d, valor: v, data: dt });
+                    else { DB.gastos[idIdx] = { descricao: d, valor: v, data: dt }; }
+                    await salvar(); fecharModais(); renderizarTudo();
+                };
+                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.gastos.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
+            }
+        }
+        window.onload = () => {
+            sessionStorage.removeItem('acesso_concedido');
+            sessionStorage.removeItem('is_admin');
+            document.getElementById('modal-bloqueio-total').style.display = 'flex';
+            carregar();
+        };
+        window.onbeforeunload = () => {
+            sessionStorage.removeItem('acesso_concedido');
+            sessionStorage.removeItem('is_admin');
+        };
     </script>
 </body>
 </html>
