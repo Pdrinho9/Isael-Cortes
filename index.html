@@ -268,9 +268,14 @@
 
         async function salvar() {
             try {
-                const { data, error } = await _supabase.from('barbearia').update({ vendas: DB.vendas || [], clientes: DB.clientes || [], estoque: DB.estoque || [], barbeiros: DB.barbeiros || [], gastos: DB.gastos || [] }).match({ id: 1 }).select();
-                if(error || !data) return false;
-                return true;
+                const { data, error } = await _supabase.from('barbearia').update({ 
+                    vendas: DB.vendas || [], 
+                    clientes: DB.clientes || [], 
+                    estoque: DB.estoque || [], 
+                    barbeiros: DB.barbeiros || [], 
+                    gastos: DB.gastos || [] 
+                }).match({ id: 1 }).select();
+                return !error;
             } catch (e) { return false; }
         }
 
@@ -294,8 +299,6 @@
             const filtroT = document.getElementById('filtro-tempo').value;
             const dataS = document.getElementById('filtro-data').value;
             const dataF = document.getElementById('filtro-data-fim').value;
-            
-            // Datas do Estoque (Filtro Independente)
             const estoqueS = document.getElementById('estoque-data-inicio').value;
             const estoqueF = document.getElementById('estoque-data-fim').value;
 
@@ -305,7 +308,6 @@
 
             const contagemItensEstoque = {};
 
-            // Filtragem Painel
             const vFiltradas = (DB.vendas || []).filter(v => {
                 if(filtroT === 'total') return true;
                 if(filtroT === 'dia') return v.data === dataS;
@@ -313,24 +315,27 @@
                 return false;
             });
 
-            // Lógica para o Relatório de Estoque (Filtro Independente)
+            // Lógica unificada para Relatório de Estoque (Evita duplicados por espaço ou letra maiúscula)
             (DB.vendas || []).forEach(v => {
                 if(v.data >= estoqueS && v.data <= estoqueF) {
                     v.descricao.split(',').forEach(pedaco => {
-                        let nome = pedaco.trim();
+                        let nomeOriginal = pedaco.trim();
+                        let nomeLimpo = nomeOriginal.toLowerCase().replace(/\s+/g, ' ').trim();
                         let qtd = 1;
-                        if(nome.includes('x ')) {
-                            const partes = nome.split('x ');
+                        if(nomeLimpo.includes('x ')) {
+                            const partes = nomeLimpo.split('x ');
                             qtd = parseInt(partes[0]) || 1;
-                            nome = partes[1].trim();
+                            nomeLimpo = partes[1].trim();
                         }
-                        if(!contagemItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
-                        contagemItensEstoque[nome].qtd += qtd;
+                        const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase().trim() === nomeLimpo);
+                        const nomeChave = itemEstoque ? itemEstoque.nome : nomeOriginal;
+                        if(!contagemItensEstoque[nomeChave]) contagemItensEstoque[nomeChave] = { qtd: 0 };
+                        contagemItensEstoque[nomeChave].qtd += qtd;
                     });
                 }
             });
 
-            // Renderizar Painel com Accordion
+            // Renderização do Painel (Accordions dos Barbeiros)
             (DB.barbeiros || []).forEach((barb, idx) => {
                 const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
                 if(vB.length === 0) return;
@@ -342,10 +347,20 @@
                     const cV = calcularComissao(v.descricao); comB += cV;
                     if(cV === 0) prodB += val;
 
-                    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span><p class="text-slate-500">${v.descricao}</p></div>
-                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
-                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
+                    htmlV += `
+                    <div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
+                        <div class="text-[10px] italic">
+                            <span class="text-white font-black uppercase">${v.cliente}</span> 
+                            <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span>
+                            <p class="text-slate-500">${v.descricao}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p>
+                                <p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p>
+                            </div>
+                            <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button>
+                        </div>
                     </div>`;
                 });
                 fatG += fatB; comG += comB; totalProdutosG += prodB;
@@ -353,10 +368,7 @@
                 logA.innerHTML += `
                 <div id="acc-${idx}" class="glass overflow-hidden rounded-[2rem] mb-4">
                     <div onclick="toggleAccordion('acc-${idx}')" class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10 cursor-pointer hover:bg-white/[0.07] transition-all">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="chevron-down" class="text-slate-500 rotate-icon"></i>
-                            <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-                        </div>
+                        <div class="flex items-center gap-3"><i data-lucide="chevron-down" class="text-slate-500 rotate-icon"></i><h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4></div>
                         <div class="flex gap-4">
                             <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p><p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p></div>
                             <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
@@ -367,7 +379,7 @@
                 </div>`;
             });
 
-            // Relatório de Desempenho (Estoque)
+            // Relatório de Desempenho de Produtos
             const relProd = document.getElementById('relatorio-vendas-produtos');
             if(relProd) {
                 relProd.innerHTML = '';
@@ -375,28 +387,23 @@
                 if(itensOrdenados.length === 0) relProd.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase">Sem vendas neste período</p>';
                 itensOrdenados.forEach(nome => {
                     const info = contagemItensEstoque[nome];
-                    const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nome.toLowerCase());
+                    const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase().trim() === nome.toLowerCase().trim());
                     const rendimento = itemEstoque ? (parseFloat(itemEstoque.preco) * info.qtd) : 0;
-                    
                     relProd.innerHTML += `
                         <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                            <div>
-                                <p class="text-white font-black text-xs uppercase italic">${nome}</p>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase italic">${info.qtd} Unidade(s) vendida(s)</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[8px] text-slate-500 uppercase font-black">Rendimento</p>
-                                <p class="text-blue-400 font-black italic">R$ ${rendimento.toFixed(2)}</p>
-                            </div>
+                            <div><p class="text-white font-black text-xs uppercase italic">${nome}</p><p class="text-[10px] text-slate-500 font-bold uppercase italic">${info.qtd} Unidade(s) vendida(s)</p></div>
+                            <div class="text-right"><p class="text-[8px] text-slate-500 uppercase font-black">Rendimento</p><p class="text-blue-400 font-black italic">R$ ${rendimento.toFixed(2)}</p></div>
                         </div>`;
                 });
             }
 
+            // Atualização do Dashboard Geral
             document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
             document.getElementById('dash-comissoes').innerText = "R$ " + comG.toFixed(2);
             document.getElementById('dash-produtos-total').innerText = "R$ " + totalProdutosG.toFixed(2);
             document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
             
+            // Popula Selects
             document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
             document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             document.getElementById('lista-itens-datalist').innerHTML = (DB.estoque || []).map(i => `<option value="${i.nome}">`).join('');
@@ -405,9 +412,8 @@
             lucide.createIcons();
         }
 
-        // --- AS DEMAIS FUNÇÕES (abrirEditor, salvar, carregar, etc) CONTINUAM IGUAIS ---
-        
         function renderizarListasSecundarias() {
+            // Clientes
             const cliL = document.getElementById('lista-completa-clientes'); 
             if(cliL) { 
                 cliL.innerHTML = ''; 
@@ -416,6 +422,7 @@
                     cliL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${c.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('cliente', ${c.id})" class="text-slate-600 ml-2"><i data-lucide="edit-3" size="16"></i></button></div></div>`; 
                 }); 
             }
+            // Serviços e Produtos
             const servL = document.getElementById('lista-servicos'); 
             if(servL) { 
                 servL.innerHTML = ''; 
@@ -429,6 +436,7 @@
                     prodL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic">${i.nome}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(i.preco).toFixed(2)}</p></div><div class="flex items-center gap-4"><div class="text-right leading-none"><p class="text-[8px] text-slate-500 font-bold uppercase">Qtd</p><p class="${corQtd} font-black text-sm">${i.quantidade || 0}</p></div><button onclick="abrirEditor('produto', ${i.id})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`; 
                 }); 
             }
+            // Equipe
             const equL = document.getElementById('lista-equipe'); 
             if(equL) { 
                 equL.innerHTML = ''; 
@@ -437,6 +445,7 @@
                     equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
                 }); 
             }
+            // Gastos
             const gastL = document.getElementById('lista-gastos');
             if(gastL) {
                 gastL.innerHTML = '';
@@ -446,6 +455,8 @@
             }
         }
 
+        // --- FUNÇÕES DE VENDAS E CARRINHO ---
+
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-finalizar-venda');
@@ -453,20 +464,38 @@
             if(btn.disabled) return;
             if(carrinhoTemporario.length === 0 && descInput.value) { adicionarItemAoCarrinho(); }
             if(carrinhoTemporario.length === 0) return;
+            
             btn.disabled = true; btn.innerText = "SALVANDO...";
             const dataEscolhida = document.getElementById('venda-data-retroativa').value;
             const agora = new Date();
             const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+            
             const backupVendas = JSON.parse(JSON.stringify(DB.vendas));
             const backupEstoque = JSON.parse(JSON.stringify(DB.estoque));
+
             carrinhoTemporario.forEach(item => {
-                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
+                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase().trim() === item.original.toLowerCase().trim());
                 if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
             });
-            DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: dataEscolhida, hora: horaAtual });
-            const sucesso = await salvar();
-            if (sucesso) { this.reset(); carrinhoTemporario = []; document.getElementById('venda-data-retroativa').value = hoje; atualizarVisualCarrinho(); renderizarTudo(); alert("Lançamento Realizado!"); }
-            else { DB.vendas = backupVendas; DB.estoque = backupEstoque; }
+
+            DB.vendas.push({ 
+                barbeiro: document.getElementById('venda-barbeiro').value, 
+                cliente: document.getElementById('venda-cliente').value, 
+                descricao: carrinhoTemporario.map(i => i.nome).join(', '), 
+                valor: document.getElementById('venda-valor').value, 
+                pagamento: document.getElementById('venda-pagamento').value, 
+                data: dataEscolhida, 
+                hora: horaAtual 
+            });
+
+            if (await salvar()) { 
+                this.reset(); carrinhoTemporario = []; 
+                document.getElementById('venda-data-retroativa').value = hoje; 
+                atualizarVisualCarrinho(); renderizarTudo(); alert("Lançamento Realizado!"); 
+            } else { 
+                DB.vendas = backupVendas; DB.estoque = backupEstoque; 
+                alert("Erro ao salvar.");
+            }
             btn.disabled = false; btn.innerText = "FINALIZAR";
         });
 
@@ -492,14 +521,30 @@
             const cont = document.getElementById('carrinho-venda'); const t = document.getElementById('venda-valor');
             if(carrinhoTemporario.length === 0) { cont.classList.add('hidden'); t.value = ''; return; }
             cont.classList.remove('hidden'); let total = 0;
-            cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
+            cont.innerHTML = carrinhoTemporario.map((item, idx) => { 
+                total += item.preco; 
+                return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; 
+            }).join('');
             t.value = total.toFixed(2); lucide.createIcons();
         }
+
         function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
-        function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
         
+        function atualizarPrecoAutomatico() { 
+            const i = DB.estoque.find(i => i.nome.toLowerCase().trim() === document.getElementById('venda-descricao').value.toLowerCase().trim()); 
+            if(i) document.getElementById('venda-valor').value = i.preco; 
+        }
+
+        // --- SISTEMA DE NAVEGAÇÃO E MODAIS ---
+
         let abaDestinoPendente = 'vendas';
-        function switchTab(t) { if(['dashboard', 'estoque', 'config', 'clientes', 'financeiro'].includes(t)) { if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } } else executarTrocaTab(t); }
+        function switchTab(t) { 
+            if(['dashboard', 'estoque', 'config', 'clientes', 'financeiro'].includes(t)) { 
+                if(sessionStorage.getItem('is_admin') === 'true') executarTrocaTab(t); 
+                else { abaDestinoPendente = t; document.getElementById('modal-senha').style.display = 'flex'; } 
+            } else executarTrocaTab(t); 
+        }
+
         function executarTrocaTab(t) { 
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); 
             document.getElementById('tab-' + t).classList.remove('hidden'); 
@@ -507,9 +552,19 @@
             const btn = document.getElementById('btn-' + t); if(btn) btn.classList.add('active-tab');
             fecharModais(); lucide.createIcons(); 
         }
+
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
-        function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
         
+        function setTipoNovoItem(t) { 
+            tipoItemSelecionado = t; 
+            document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); 
+            document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); 
+            const q = document.getElementById('campo-qtd-editor'); 
+            if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; 
+        }
+
+        // --- EDITOR CENTRALIZADO ---
+
         function abrirEditor(tipo, idIdx = null) {
             const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
             const btnDel = document.getElementById('btn-excluir-item'); const btnSalvar = document.getElementById('btn-salvar-editor');
@@ -526,7 +581,18 @@
                 const cli = tipo === 'cliente' ? DB.clientes.find(c => c.id === idIdx) : { nome: '', whatsapp: '' };
                 t.innerText = "CLIENTE"; if(tipo === 'novo_cliente') btnDel.style.display = 'none';
                 c.innerHTML = `<input type="text" id="ed-c-n" placeholder="Nome" value="${cli.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-c-w" placeholder="WhatsApp" value="${cli.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { const n = document.getElementById('ed-c-n').value; const w = document.getElementById('ed-c-w').value; if(tipo === 'novo_cliente') { const id = DB.clientes.length > 0 ? Math.max(...DB.clientes.map(c => c.id)) + 1 : 1; DB.clientes.push({ id, nome: n, whatsapp: w }); } else { const idx = DB.clientes.findIndex(c => c.id === idIdx); DB.clientes[idx].nome = n; DB.clientes[idx].whatsapp = w; } await salvar(); fecharModais(); renderizarTudo(); };
+                btnSalvar.onclick = async () => { 
+                    const n = document.getElementById('ed-c-n').value; 
+                    const w = document.getElementById('ed-c-w').value; 
+                    if(tipo === 'novo_cliente') { 
+                        const id = DB.clientes.length > 0 ? Math.max(...DB.clientes.map(c => c.id)) + 1 : 1; 
+                        DB.clientes.push({ id, nome: n, whatsapp: w }); 
+                    } else { 
+                        const idx = DB.clientes.findIndex(c => c.id === idIdx); 
+                        DB.clientes[idx].nome = n; DB.clientes[idx].whatsapp = w; 
+                    } 
+                    await salvar(); fecharModais(); renderizarTudo(); 
+                };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(c => c.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
             }
             else if (tipo === 'produto' || tipo === 'novo_produto') {
@@ -534,26 +600,54 @@
                 t.innerText = "ESTOQUE"; if(tipo === 'novo_produto') btnDel.style.display = 'none';
                 c.innerHTML = `<input type="text" id="ed-p-n" placeholder="Nome" value="${p.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="number" id="ed-p-p" step="0.01" placeholder="Preço" value="${p.preco}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><div id="campo-qtd-editor"><input type="number" id="ed-p-q" value="${p.quantidade || 0}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
                 setTipoNovoItem(p.tipo);
-                btnSalvar.onclick = async () => { const n = document.getElementById('ed-p-n').value; const pr = document.getElementById('ed-p-p').value; const q = document.getElementById('ed-p-q').value; if(tipo === 'novo_produto') { const id = DB.estoque.length > 0 ? Math.max(...DB.estoque.map(i => i.id)) + 1 : 1; DB.estoque.push({ id, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }); } else { const idx = DB.estoque.findIndex(i => i.id === idIdx); DB.estoque[idx] = { id: idIdx, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }; } await salvar(); fecharModais(); renderizarTudo(); };
+                btnSalvar.onclick = async () => { 
+                    const n = document.getElementById('ed-p-n').value; 
+                    const pr = document.getElementById('ed-p-p').value; 
+                    const q = document.getElementById('ed-p-q').value; 
+                    if(tipo === 'novo_produto') { 
+                        const id = DB.estoque.length > 0 ? Math.max(...DB.estoque.map(i => i.id)) + 1 : 1; 
+                        DB.estoque.push({ id, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }); 
+                    } else { 
+                        const idx = DB.estoque.findIndex(i => i.id === idIdx); 
+                        DB.estoque[idx] = { id: idIdx, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }; 
+                    } 
+                    await salvar(); fecharModais(); renderizarTudo(); 
+                };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(i => i.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
             }
             else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
                 const b = tipo === 'barbeiro' ? DB.barbeiros[idIdx] : { nome: '', whatsapp: '' };
                 t.innerText = "BARBEIRO"; if(tipo === 'novo_barbeiro') btnDel.style.display = 'none';
                 c.innerHTML = `<input type="text" id="ed-b-n" placeholder="Nome" value="${b.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-b-w" placeholder="WhatsApp" value="${b.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { const n = document.getElementById('ed-b-n').value; const w = document.getElementById('ed-b-w').value; if(tipo === 'novo_barbeiro') DB.barbeiros.push({ nome: n, whatsapp: w }); else { DB.barbeiros[idIdx].nome = n; DB.barbeiros[idIdx].whatsapp = w; } await salvar(); fecharModais(); renderizarTudo(); };
+                btnSalvar.onclick = async () => { 
+                    const n = document.getElementById('ed-b-n').value; 
+                    const w = document.getElementById('ed-b-w').value; 
+                    if(tipo === 'novo_barbeiro') DB.barbeiros.push({ nome: n, whatsapp: w }); 
+                    else { DB.barbeiros[idIdx].nome = n; DB.barbeiros[idIdx].whatsapp = w; } 
+                    await salvar(); fecharModais(); renderizarTudo(); 
+                };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.barbeiros.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
             else if (tipo === 'gasto' || tipo === 'novo_gasto') {
                 const g = tipo === 'gasto' ? DB.gastos[idIdx] : { descricao: '', valor: '', data: hoje };
                 t.innerText = "GASTO"; if(tipo === 'novo_gasto') btnDel.style.display = 'none';
                 c.innerHTML = `<input type="text" id="ed-g-d" placeholder="Descrição" value="${g.descricao}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="number" id="ed-g-v" step="0.01" placeholder="Valor" value="${g.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="date" id="ed-g-dt" value="${g.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { const d = document.getElementById('ed-g-d').value; const v = document.getElementById('ed-g-v').value; const dt = document.getElementById('ed-g-dt').value; if(tipo === 'novo_gasto') DB.gastos.push({ descricao: d, valor: v, data: dt }); else { DB.gastos[idIdx] = { descricao: d, valor: v, data: dt }; } await salvar(); fecharModais(); renderizarTudo(); };
+                btnSalvar.onclick = async () => { 
+                    const d = document.getElementById('ed-g-d').value; 
+                    const v = document.getElementById('ed-g-v').value; 
+                    const dt = document.getElementById('ed-g-dt').value; 
+                    if(tipo === 'novo_gasto') DB.gastos.push({ descricao: d, valor: v, data: dt }); 
+                    else { DB.gastos[idIdx] = { descricao: d, valor: v, data: dt }; } 
+                    await salvar(); fecharModais(); renderizarTudo(); 
+                };
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.gastos.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
         }
-        window.onload = () => { sessionStorage.removeItem('acesso_concedido'); sessionStorage.removeItem('is_admin'); document.getElementById('modal-bloqueio-total').style.display = 'flex'; carregar(); };
+        window.onload = () => { 
+            sessionStorage.removeItem('acesso_concedido'); 
+            sessionStorage.removeItem('is_admin'); 
+            document.getElementById('modal-bloqueio-total').style.display = 'flex'; 
+            carregar(); 
+        };
         window.onbeforeunload = () => { sessionStorage.removeItem('acesso_concedido'); sessionStorage.removeItem('is_admin'); };
     </script>
-</body>
-</html>
