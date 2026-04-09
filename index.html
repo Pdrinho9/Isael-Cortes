@@ -160,7 +160,10 @@
             </div>
 
             <div id="tab-estoque" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3>
+                    <button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button>
+                </div>
                 
                 <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Serviços</p>
                 <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
@@ -169,11 +172,17 @@
                 <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
 
                 <div class="mt-16 glass p-8 rounded-[2.5rem] border-blue-500/10">
-                    <div class="flex items-center gap-3 mb-6">
-                        <i data-lucide="trending-up" class="text-blue-400"></i>
-                        <h3 class="text-xl font-black text-white uppercase italic">Desempenho de Vendas</h3>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="trending-up" class="text-blue-400"></i>
+                            <h3 class="text-xl font-black text-white uppercase italic">Desempenho de Vendas</h3>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <input type="date" id="filtro-estoque-inicio" onchange="renderizarTudo()" class="bg-black border border-white/10 text-white text-[10px] font-black rounded-xl px-3 py-2 outline-none italic">
+                            <input type="date" id="filtro-estoque-fim" onchange="renderizarTudo()" class="bg-black border border-white/10 text-white text-[10px] font-black rounded-xl px-3 py-2 outline-none italic">
+                        </div>
                     </div>
-                    <p class="text-[9px] text-slate-500 mb-6 uppercase font-bold italic tracking-widest">Baseado no período selecionado no Painel</p>
+                    <p class="text-[9px] text-slate-500 mb-6 uppercase font-bold italic tracking-widest text-center md:text-left">Selecione o período acima para filtrar os produtos</p>
                     <div id="relatorio-vendas-produtos" class="space-y-3"></div>
                 </div>
             </div>
@@ -185,6 +194,7 @@
             </div>
         </main>
     </div>
+
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
         <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
         <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
@@ -204,15 +214,36 @@
         let carrinhoTemporario = [];
         let tipoItemSelecionado = 'Serviço';
         const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('filtro-data').value = hoje;
-        document.getElementById('filtro-data-fim').value = hoje;
-        document.getElementById('venda-data-retroativa').value = hoje;
+        
+        // Inicializar datas
+        ['filtro-data', 'filtro-data-fim', 'venda-data-retroativa', 'filtro-estoque-inicio', 'filtro-estoque-fim'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = hoje;
+        });
 
         const TABELA_GANHOS = {
             "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
             "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
             "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
         };
+
+        async function carregar() {
+            const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
+            if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
+        }
+
+        async function salvar() {
+            try {
+                const { data, error } = await _supabase.from('barbearia').update({ 
+                    vendas: DB.vendas || [], 
+                    clientes: DB.clientes || [], 
+                    estoque: DB.estoque || [], 
+                    barbeiros: DB.barbeiros || [], 
+                    gastos: DB.gastos || [] 
+                }).match({ id: 1 }).select();
+                return !(error || !data);
+            } catch (e) { return false; }
+        }
 
         function toggleFiltroData() {
             const modo = document.getElementById('filtro-tempo').value;
@@ -228,29 +259,6 @@
             } else { alert("Senha incorreta!"); }
         }
 
-        function logoutAdmin() {
-            sessionStorage.removeItem('is_admin');
-            document.getElementById('venda-data-retroativa').disabled = true;
-            document.getElementById('msg-lock').style.display = 'inline';
-            const btnSair = document.getElementById('btn-logout-admin');
-            if(btnSair) btnSair.classList.add('hidden');
-            executarTrocaTab('vendas');
-            renderizarTudo();
-        }
-
-        async function carregar() {
-            const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-            if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
-        }
-
-        async function salvar() {
-            try {
-                const { data, error } = await _supabase.from('barbearia').update({ vendas: DB.vendas || [], clientes: DB.clientes || [], estoque: DB.estoque || [], barbeiros: DB.barbeiros || [], gastos: DB.gastos || [] }).match({ id: 1 }).select();
-                if(error || !data) return false;
-                return true;
-            } catch (e) { return false; }
-        }
-
         function confirmarSenhaAdmin() {
             if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
                 sessionStorage.setItem('is_admin', 'true');
@@ -259,6 +267,16 @@
                 executarTrocaTab(abaDestinoPendente);
                 renderizarTudo();
             } else { alert("Acesso Negado!"); }
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('is_admin');
+            document.getElementById('venda-data-retroativa').disabled = true;
+            document.getElementById('msg-lock').style.display = 'inline';
+            const btnSair = document.getElementById('btn-logout-admin');
+            if(btnSair) btnSair.classList.add('hidden');
+            executarTrocaTab('vendas');
+            renderizarTudo();
         }
 
         function renderizarTudo() {
@@ -273,19 +291,75 @@
             const dataF = document.getElementById('filtro-data-fim').value;
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
+            
             let fatG = 0, comG = 0, totalProdutosG = 0;
 
-            // Dicionário para contar vendas de itens específicos
-            const contagemItens = {};
-
+            // Filtragem Painel Principal
             const vFiltradas = (DB.vendas || []).filter(v => {
-                let match = false;
-                if(filtroT === 'total') match = true;
-                else if(filtroT === 'dia') match = v.data === dataS;
-                else if(filtroT === 'periodo') match = v.data >= dataS && v.data <= dataF;
+                if(filtroT === 'total') return true;
+                if(filtroT === 'dia') return v.data === dataS;
+                if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
+                return false;
+            });
+
+            // Lógica de Agrupamento por Barbeiro e Soma de Produtos
+            (DB.barbeiros || []).forEach(barb => {
+                const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
+                if(vB.length === 0) return;
                 
-                if(match) {
-                    // Extrair itens da descrição (ex: "2x Coca, Corte")
+                let fatB = 0, comB = 0, prodB = 0;
+                let htmlV = '';
+
+                vB.forEach(v => {
+                    const val = parseFloat(v.valor); fatB += val;
+                    const cV = calcularComissao(v.descricao); comB += cV;
+                    
+                    // Identifica se é produto para somar no totalProdutosG
+                    v.descricao.split(',').forEach(pedaco => {
+                        let nomeItem = pedaco.trim();
+                        if(nomeItem.includes('x ')) nomeItem = nomeItem.split('x ')[1].trim();
+                        
+                        const itemNoEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nomeItem.toLowerCase());
+                        if(itemNoEstoque && itemNoEstoque.tipo === 'Produto') {
+                           // Se for produto, somamos o valor proporcional à venda
+                           // Para simplificar: se o item é identificado como produto, adicionamos o valor da venda (ou parte dele se for misto)
+                           // Como o sistema lança valor total, se houver produto na descrição, contabilizamos aqui.
+                           prodB += val; 
+                        }
+                    });
+
+                    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
+                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span><p class="text-slate-500">${v.descricao}</p></div>
+                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
+                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
+                    </div>`;
+                });
+
+                fatG += fatB; comG += comB; totalProdutosG += prodB;
+                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
+                    <div class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10">
+                        <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
+                        <div class="flex gap-4">
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-blue-400 font-bold uppercase italic">Vendas</p><p class="text-blue-400 font-black italic text-xl">R$ ${fatB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
+                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p><p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
+                        </div>
+                    </div><div>${htmlV}</div></div>`;
+            });
+
+            // --- RELATÓRIO DE ESTOQUE (CALENDÁRIO INDEPENDENTE) ---
+            const estInicio = document.getElementById('filtro-estoque-inicio').value;
+            const estFim = document.getElementById('filtro-estoque-fim').value;
+            const relProd = document.getElementById('relatorio-vendas-produtos');
+            
+            if(relProd) {
+                relProd.innerHTML = '';
+                const contagemItens = {};
+                
+                // Filtra vendas baseado no calendário do estoque
+                const vEstoque = (DB.vendas || []).filter(v => v.data >= estInicio && v.data <= estFim);
+                
+                vEstoque.forEach(v => {
                     v.descricao.split(',').forEach(pedaco => {
                         let nome = pedaco.trim();
                         let qtd = 1;
@@ -294,66 +368,31 @@
                             qtd = parseInt(partes[0]) || 1;
                             nome = partes[1].trim();
                         }
-                        if(!contagemItens[nome]) contagemItens[nome] = { qtd: 0, valor: 0 };
+                        if(!contagemItens[nome]) contagemItens[nome] = { qtd: 0 };
                         contagemItens[nome].qtd += qtd;
-                        // Valor proporcional se for possível calcular, se não usa o valor total da venda para itens únicos
                     });
-                }
-                return match;
-            });
-
-            (DB.barbeiros || []).forEach(barb => {
-                const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
-                if(vB.length === 0) return;
-                let fatB = 0, comB = 0, prodB = 0;
-                let htmlV = '';
-                vB.forEach(v => {
-                    const val = parseFloat(v.valor); fatB += val;
-                    const cV = calcularComissao(v.descricao); comB += cV;
-                    if(cV === 0) prodB += val;
-
-                    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-                        <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span><p class="text-slate-500">${v.descricao}</p></div>
-                        <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
-                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
-                    </div>`;
                 });
-                fatG += fatB; comG += comB; totalProdutosG += prodB;
-                logA.innerHTML += `<div class="glass overflow-hidden rounded-[2rem] mb-4">
-                    <div class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10">
-                        <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-                        <div class="flex gap-4">
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p><p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p><p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p></div>
-                            <div class="text-right border-l border-white/10 pl-4"><p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p><p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p></div>
-                        </div>
-                    </div><div>${htmlV}</div></div>`;
-            });
 
-            // Renderizar Relatório de Desempenho de Itens
-            const relProd = document.getElementById('relatorio-vendas-produtos');
-            if(relProd) {
-                relProd.innerHTML = '';
                 const itensOrdenados = Object.keys(contagemItens).sort((a,b) => contagemItens[b].qtd - contagemItens[a].qtd);
-                if(itensOrdenados.length === 0) relProd.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase">Nenhuma venda no período</p>';
+                if(itensOrdenados.length === 0) relProd.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Sem vendas neste período</p>';
+                
                 itensOrdenados.forEach(nome => {
                     const info = contagemItens[nome];
-                    // Tenta achar o preço no estoque para calcular o rendimento estimado
                     const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nome.toLowerCase());
-                    const rendimento = itemEstoque ? (parseFloat(itemEstoque.preco) * info.qtd) : 0;
+                    const preco = itemEstoque ? parseFloat(itemEstoque.preco) : 0;
+                    const rendimento = preco * info.qtd;
                     
                     relProd.innerHTML += `
                         <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                             <div>
                                 <p class="text-white font-black text-xs uppercase italic">${nome}</p>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase italic">${info.qtd} Unidade(s) vendida(s)</p>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase italic">${info.qtd} un. vendidas</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[8px] text-slate-500 uppercase font-black">Rendimento</p>
+                                <p class="text-[8px] text-slate-500 uppercase font-black">Total</p>
                                 <p class="text-blue-400 font-black italic">R$ ${rendimento.toFixed(2)}</p>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             }
 
@@ -422,14 +461,17 @@
             const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
             const backupVendas = JSON.parse(JSON.stringify(DB.vendas));
             const backupEstoque = JSON.parse(JSON.stringify(DB.estoque));
+            
             carrinhoTemporario.forEach(item => {
                 const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
                 if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
             });
+
             DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: dataEscolhida, hora: horaAtual });
+            
             const sucesso = await salvar();
             if (sucesso) { this.reset(); carrinhoTemporario = []; document.getElementById('venda-data-retroativa').value = hoje; atualizarVisualCarrinho(); renderizarTudo(); alert("Lançamento Realizado!"); }
-            else { DB.vendas = backupVendas; DB.estoque = backupEstoque; }
+            else { DB.vendas = backupVendas; DB.estoque = backupEstoque; alert("Erro ao salvar!"); }
             btn.disabled = false; btn.innerText = "FINALIZAR";
         });
 
@@ -458,6 +500,7 @@
             cont.innerHTML = carrinhoTemporario.map((item, idx) => { total += item.preco; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl italic text-[10px]"><span>${item.nome}</span><button type="button" onclick="removerItemCarrinho(${idx})" class="text-rose-500"><i data-lucide="x" size="14"></i></button></div>`; }).join('');
             t.value = total.toFixed(2); lucide.createIcons();
         }
+
         function removerItemCarrinho(idx) { carrinhoTemporario.splice(idx, 1); atualizarVisualCarrinho(); }
         function atualizarPrecoAutomatico() { const i = DB.estoque.find(i => i.nome.toLowerCase() === document.getElementById('venda-descricao').value.toLowerCase()); if(i) document.getElementById('venda-valor').value = i.preco; }
         
@@ -515,6 +558,7 @@
                 btnDel.onclick = async () => { if(confirm("Remover?")) { DB.gastos.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
         }
+
         window.onload = () => { sessionStorage.removeItem('acesso_concedido'); sessionStorage.removeItem('is_admin'); document.getElementById('modal-bloqueio-total').style.display = 'flex'; carregar(); };
         window.onbeforeunload = () => { sessionStorage.removeItem('acesso_concedido'); sessionStorage.removeItem('is_admin'); };
     </script>
