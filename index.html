@@ -166,16 +166,7 @@
                 <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
                 
                 <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Produtos</p>
-                <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
-
-                <div class="mt-16 glass p-8 rounded-[2.5rem] border-blue-500/10">
-                    <div class="flex items-center gap-3 mb-6">
-                        <i data-lucide="trending-up" class="text-blue-400"></i>
-                        <h3 class="text-xl font-black text-white uppercase italic">Desempenho de Vendas</h3>
-                    </div>
-                    <p class="text-[9px] text-slate-500 mb-6 uppercase font-bold italic tracking-widest">Baseado no período selecionado no Painel</p>
-                    <div id="relatorio-vendas-produtos" class="space-y-3"></div>
-                </div>
+                <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div id="tab-config" class="tab-content hidden">
@@ -185,6 +176,7 @@
             </div>
         </main>
     </div>
+
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
         <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
         <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
@@ -243,12 +235,32 @@
             if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
         }
 
+        // FUNÇÃO SALVAR REFORÇADA PARA O ID 1 E COLUNA GASTOS
         async function salvar() {
             try {
-                const { data, error } = await _supabase.from('barbearia').update({ vendas: DB.vendas || [], clientes: DB.clientes || [], estoque: DB.estoque || [], barbeiros: DB.barbeiros || [], gastos: DB.gastos || [] }).match({ id: 1 }).select();
-                if(error || !data) return false;
+                const { data, error } = await _supabase
+                    .from('barbearia')
+                    .update({ 
+                        vendas: DB.vendas || [], 
+                        clientes: DB.clientes || [], 
+                        estoque: DB.estoque || [], 
+                        barbeiros: DB.barbeiros || [], 
+                        gastos: DB.gastos || [] 
+                    })
+                    .match({ id: 1 })
+                    .select();
+
+                if(error || !data) {
+                    console.error("Erro Supabase:", error);
+                    alert("ERRO DE CONEXÃO: Não foi possível salvar no banco de dados. Verifique a internet!");
+                    return false;
+                }
                 return true;
-            } catch (e) { return false; }
+            } catch (e) {
+                console.error("Erro Crítico:", e);
+                alert("Falha total na conexão. O sistema não conseguiu falar com o servidor.");
+                return false;
+            }
         }
 
         function confirmarSenhaAdmin() {
@@ -273,33 +285,13 @@
             const dataF = document.getElementById('filtro-data-fim').value;
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
-            let fatG = 0, comG = 0, totalProdutosG = 0;
-
-            // Dicionário para contar vendas de itens específicos
-            const contagemItens = {};
+            let fatG = 0, comG = 0, totalProdutosG = 0; // Inicia totalProdutosG
 
             const vFiltradas = (DB.vendas || []).filter(v => {
-                let match = false;
-                if(filtroT === 'total') match = true;
-                else if(filtroT === 'dia') match = v.data === dataS;
-                else if(filtroT === 'periodo') match = v.data >= dataS && v.data <= dataF;
-                
-                if(match) {
-                    // Extrair itens da descrição (ex: "2x Coca, Corte")
-                    v.descricao.split(',').forEach(pedaco => {
-                        let nome = pedaco.trim();
-                        let qtd = 1;
-                        if(nome.includes('x ')) {
-                            const partes = nome.split('x ');
-                            qtd = parseInt(partes[0]) || 1;
-                            nome = partes[1].trim();
-                        }
-                        if(!contagemItens[nome]) contagemItens[nome] = { qtd: 0, valor: 0 };
-                        contagemItens[nome].qtd += qtd;
-                        // Valor proporcional se for possível calcular, se não usa o valor total da venda para itens únicos
-                    });
-                }
-                return match;
+                if(filtroT === 'total') return true;
+                if(filtroT === 'dia') return v.data === dataS;
+                if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
+                return false;
             });
 
            (DB.barbeiros || []).forEach(barb => {
