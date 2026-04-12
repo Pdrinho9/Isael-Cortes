@@ -353,7 +353,7 @@
             prodB += (parseFloat(itemEstoque.preco) * qtd);
         }
     });
-    
+
     const dataPartes = v.data.split(' '); 
     const dataFormatada = dataPartes[0].split('-').reverse().join('/');
     const horaFormatada = dataPartes[1] ? `às ${dataPartes[1]}` : '';
@@ -517,23 +517,48 @@
                 const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
                 if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
             });
-            DB.vendas.push({ barbeiro: document.getElementById('venda-barbeiro').value, cliente: document.getElementById('venda-cliente').value, descricao: carrinhoTemporario.map(i => i.nome).join(', '), valor: document.getElementById('venda-valor').value, pagamento: document.getElementById('venda-pagamento').value, data: dataEscolhida, hora: horaAtual });
-            const sucesso = await salvar();
-            if (sucesso) { this.reset(); carrinhoTemporario = []; document.getElementById('venda-data-retroativa').value = hoje; atualizarVisualCarrinho(); renderizarTudo(); alert("Lançamento Realizado!"); }
-            else { DB.vendas = backupVendas; DB.estoque = backupEstoque; }
-            btn.disabled = false; btn.innerText = "FINALIZAR";
-        });
+        DB.vendas.push({ 
+    barbeiro: document.getElementById('venda-barbeiro').value, 
+    cliente: document.getElementById('venda-cliente').value, 
+    descricao: carrinhoTemporario.map(i => i.nome).join(', '), 
+    valor: document.getElementById('venda-valor').value, 
+    pagamento: document.getElementById('venda-pagamento').value, 
+   
+    data: `${dataEscolhida} ${horaAtual}` 
+});
 
-        function calcularComissao(descricao) {
-            let total = 0;
-            descricao.split(',').forEach(p => {
-                let nome = p.trim().toLowerCase();
-                let mult = 1;
-                if (nome.includes('x ')) { const aux = nome.split('x '); mult = parseInt(aux[0]) || 1; nome = aux[1].trim(); }
-                if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
-            });
-            return total;
+    const sucesso = await salvar();
+
+if (sucesso) { 
+    this.reset(); 
+    carrinhoTemporario = []; 
+    document.getElementById('venda-data-retroativa').value = hoje; 
+    atualizarVisualCarrinho(); 
+    renderizarTudo(); 
+    alert("Lançamento Realizado!"); 
+} else { 
+    DB.vendas = backupVendas; 
+    DB.estoque = backupEstoque; 
+}
+
+btn.disabled = false; 
+btn.innerText = "FINALIZAR";
+}); 
+
+function calcularComissao(descricao) {
+    let total = 0;
+    descricao.split(',').forEach(p => {
+        let nome = p.trim().toLowerCase();
+        let mult = 1;
+        if (nome.includes('x ')) { 
+            const aux = nome.split('x '); 
+            mult = parseInt(aux[0]) || 1; 
+            nome = aux[1].trim(); 
         }
+        if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
+    });
+    return total;
+}
 
         function adicionarItemAoCarrinho() {
             const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
