@@ -335,31 +335,46 @@
     let htmlV = '';
     
     vB.forEach(v => {
-        const val = parseFloat(v.valor); 
-        fatB += val;
-        const cV = calcularComissao(v.descricao); 
-        comB += cV;
+    const val = parseFloat(v.valor); 
+    fatB += val;
+    const cV = calcularComissao(v.descricao); 
+    comB += cV;
 
-        v.descricao.split(',').forEach(item => {
-            let nomeItem = item.trim();
-            let qtd = 1;
-            if (nomeItem.includes('x ')) {
-                const partes = nomeItem.split('x ');
-                qtd = parseInt(partes[0]) || 1;
-                nomeItem = partes[1].trim();
-            }
-            const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nomeItem.toLowerCase());
-            if (itemEstoque && itemEstoque.tipo === 'Produto') {
-                prodB += (parseFloat(itemEstoque.preco) * qtd);
-            }
-        });
-
-        htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-            <div class="text-[10px] italic"><span class="text-white font-black uppercase">${v.cliente}</span> <span class="text-slate-500 text-[8px]">${v.data.split('-').reverse().join('/')}</span><p class="text-slate-500">${v.descricao}</p></div>
-            <div class="flex items-center gap-3"><div class="text-right"><p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p><p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p></div>
-            <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700"><i data-lucide="edit-3" size="14"></i></button></div>
-        </div>`;
+    v.descricao.split(',').forEach(item => {
+        let nomeItem = item.trim();
+        let qtd = 1;
+        if (nomeItem.includes('x ')) {
+            const partes = nomeItem.split('x ');
+            qtd = parseInt(partes[0]) || 1;
+            nomeItem = partes[1].trim();
+        }
+        const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nomeItem.toLowerCase());
+        if (itemEstoque && itemEstoque.tipo === 'Produto') {
+            prodB += (parseFloat(itemEstoque.preco) * qtd);
+        }
     });
+    
+    const dataPartes = v.data.split(' '); 
+    const dataFormatada = dataPartes[0].split('-').reverse().join('/');
+    const horaFormatada = dataPartes[1] ? `às ${dataPartes[1]}` : '';
+
+    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
+        <div class="text-[10px] italic">
+            <span class="text-white font-black uppercase">${v.cliente}</span> 
+            <span class="text-slate-500 text-[8px]">${dataFormatada} ${horaFormatada}</span>
+            <p class="text-slate-500">${v.descricao}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="text-right">
+                <p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p>
+                <p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p>
+            </div>
+            <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700">
+                <i data-lucide="edit-3" size="14"></i>
+            </button>
+        </div>
+    </div>`;
+});
 
     fatG += fatB; comG += comB; totalProdutosG += prodB;
 
