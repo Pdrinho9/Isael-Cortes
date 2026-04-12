@@ -305,14 +305,18 @@
             const contagemItensEstoque = {};
 
             const vFiltradas = (DB.vendas || []).filter(v => {
+                
+                const dataPuraVenda = v.data.split(' ')[0];
+
                 if(filtroT === 'total') return true;
-                if(filtroT === 'dia') return v.data === dataS;
-                if(filtroT === 'periodo') return v.data >= dataS && v.data <= dataF;
+                if(filtroT === 'dia') return dataPuraVenda === dataS;
+                if(filtroT === 'periodo') return dataPuraVenda >= dataS && dataPuraVenda <= dataF;
                 return false;
             });
-
             (DB.vendas || []).forEach(v => {
-                if(v.data >= estoqueS && v.data <= estoqueF) {
+                const dataPuraEstoque = v.data.split(' ')[0];
+                
+                if(dataPuraEstoque >= estoqueS && dataPuraEstoque <= estoqueF) {
                     v.descricao.split(',').forEach(pedaco => {
                         let nome = pedaco.trim();
                         let qtd = 1;
