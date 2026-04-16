@@ -227,11 +227,11 @@
         document.getElementById('estoque-data-fim').value = hoje;
 
         const TABELA_GANHOS = {
-            "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
-            "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
-            "luzes": 25.00, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50, "corte luzes": 42.50, "corte + luzes": 42.50
-        };
-
+    "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
+    "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
+    "luzes": 25.00, "corte luzes": 42.50, "corte + luzes": 42.50, "corte com relaxamento": 32.50,
+    "corte pigmentado ou com alisante": 32.50, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50
+};
         function toggleFiltroData() {
             const modo = document.getElementById('filtro-tempo').value;
             document.getElementById('box-data-fim').classList.toggle('hidden', modo !== 'periodo');
