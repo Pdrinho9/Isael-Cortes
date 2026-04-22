@@ -200,6 +200,21 @@
         </main>
     </div>
 
+<div class="flex gap-4 p-4 glass rounded-2xl mb-4 overflow-x-auto">
+    <label class="text-white text-[10px] font-black italic uppercase flex items-center gap-2">
+        <input type="checkbox" id="check-pix" onchange="renderizarTudo()"> Pix
+    </label>
+    <label class="text-white text-[10px] font-black italic uppercase flex items-center gap-2">
+        <input type="checkbox" id="check-dinheiro" onchange="renderizarTudo()"> Dinheiro
+    </label>
+    <label class="text-white text-[10px] font-black italic uppercase flex items-center gap-2">
+        <input type="checkbox" id="check-debito" onchange="renderizarTudo()"> Débito
+    </label>
+    <label class="text-white text-[10px] font-black italic uppercase flex items-center gap-2">
+        <input type="checkbox" id="check-credito" onchange="renderizarTudo()"> Crédito
+    </label>
+</div>
+
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
         <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
         <button onclick="switchTab('dashboard')" class="text-slate-600 p-2"><i data-lucide="layout-grid"></i></button>
@@ -298,19 +313,43 @@
             const estoqueS = document.getElementById('estoque-data-inicio').value;
             const estoqueF = document.getElementById('estoque-data-fim').value;
 
+            // NOVA LÓGICA: Captura quais formas de pagamento estão marcadas no filtro
+            const metodosSelecionados = [];
+            if(document.getElementById('check-pix')?.checked) metodosSelecionados.push('Pix');
+            if(document.getElementById('check-dinheiro')?.checked) metodosSelecionados.push('Dinheiro');
+            if(document.getElementById('check-debito')?.checked) metodosSelecionados.push('Débito');
+            if(document.getElementById('check-credito')?.checked) metodosSelecionados.push('Crédito');
+
             const logA = document.getElementById('log-vendas-agrupado');
             logA.innerHTML = '';
             let fatG = 0, comG = 0, totalProdutosG = 0;
 
+            const totaisPagamento = { Dinheiro: 0, Pix: 0, Débito: 0, Crédito: 0 };
             const contagemItensEstoque = {};
 
             const vFiltradas = (DB.vendas || []).filter(v => {
                 const dataPuraVenda = v.data.split(' ')[0];
-                if(filtroT === 'total') return true;
-                if(filtroT === 'dia') return dataPuraVenda === dataS;
-                if(filtroT === 'periodo') return dataPuraVenda >= dataS && dataPuraVenda <= dataF;
-                return false;
+                const tipoPagamento = v.pagamento || 'Dinheiro';
+
+                // Filtro de Tempo
+                let passaTempo = false;
+                if(filtroT === 'total') passaTempo = true;
+                else if(filtroT === 'dia') passaTempo = (dataPuraVenda === dataS);
+                else if(filtroT === 'periodo') passaTempo = (dataPuraVenda >= dataS && dataPuraVenda <= dataF);
+
+                // Filtro de Método de Pagamento (Multi-seleção)
+                // Se nada estiver marcado, mostra tudo. Se algo estiver marcado, filtra.
+                let passaPagamento = metodosSelecionados.length === 0 || metodosSelecionados.includes(tipoPagamento);
+
+                return passaTempo && passaPagamento;
             });
+
+            vFiltradas.forEach(v => {
+                const valorVenda = parseFloat(v.valor) || 0;
+                const tipo = v.pagamento || 'Dinheiro';
+                if(totaisPagamento[tipo] !== undefined) totaisPagamento[tipo] += valorVenda;
+            });
+
             (DB.vendas || []).forEach(v => {
                 const dataPuraEstoque = v.data.split(' ')[0];
                 if(dataPuraEstoque >= estoqueS && dataPuraEstoque <= estoqueF) {
@@ -322,7 +361,7 @@
                             qtd = parseInt(partes[0]) || 1;
                             nome = partes[1].trim();
                         }
-                        if(!contagemItageItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
+                        if(!contagemItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
                         contagemItensEstoque[nome].qtd += qtd;
                     });
                 }
@@ -453,6 +492,10 @@
             document.getElementById('dash-produtos-total').innerText = "R$ " + totalProdutosG.toFixed(2);
             document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
             
+            if(document.getElementById('total-pix')) document.getElementById('total-pix').innerText = "R$ " + totaisPagamento.Pix.toFixed(2);
+            if(document.getElementById('total-dinheiro')) document.getElementById('total-dinheiro').innerText = "R$ " + totaisPagamento.Dinheiro.toFixed(2);
+            if(document.getElementById('total-cartao')) document.getElementById('total-cartao').innerText = "R$ " + (totaisPagamento.Débito + totaisPagamento.Crédito).toFixed(2);
+
             document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
             document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
             document.getElementById('lista-itens-datalist').innerHTML = (DB.estoque || []).map(i => `<option value="${i.nome}">`).join('');
