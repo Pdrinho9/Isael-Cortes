@@ -305,9 +305,7 @@
             const contagemItensEstoque = {};
 
             const vFiltradas = (DB.vendas || []).filter(v => {
-                
                 const dataPuraVenda = v.data.split(' ')[0];
-
                 if(filtroT === 'total') return true;
                 if(filtroT === 'dia') return dataPuraVenda === dataS;
                 if(filtroT === 'periodo') return dataPuraVenda >= dataS && dataPuraVenda <= dataF;
@@ -315,7 +313,6 @@
             });
             (DB.vendas || []).forEach(v => {
                 const dataPuraEstoque = v.data.split(' ')[0];
-                
                 if(dataPuraEstoque >= estoqueS && dataPuraEstoque <= estoqueF) {
                     v.descricao.split(',').forEach(pedaco => {
                         let nome = pedaco.trim();
@@ -325,7 +322,7 @@
                             qtd = parseInt(partes[0]) || 1;
                             nome = partes[1].trim();
                         }
-                        if(!contagemItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
+                        if(!contagemItageItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
                         contagemItensEstoque[nome].qtd += qtd;
                     });
                 }
@@ -364,7 +361,10 @@
 
     htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
         <div class="text-[10px] italic">
-            <span class="text-white font-black uppercase">${v.cliente}</span> 
+            <div class="flex items-center gap-2">
+                <span class="text-white font-black uppercase">${v.cliente}</span> 
+                <span class="bg-white/10 text-slate-400 text-[7px] px-1.5 py-0.5 rounded font-bold uppercase">${v.pagamento || '---'}</span>
+            </div>
             <span class="text-slate-500 text-[8px]">${dataFormatada} ${horaFormatada}</span>
             <p class="text-slate-500">${v.descricao}</p>
         </div>
@@ -425,7 +425,6 @@
     </div>`;
 });
 
-            // Relatório de Desempenho (Estoque)
             const relProd = document.getElementById('relatorio-vendas-produtos');
             if(relProd) {
                 relProd.innerHTML = '';
@@ -435,7 +434,6 @@
                     const info = contagemItensEstoque[nome];
                     const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nome.toLowerCase());
                     const rendimento = itemEstoque ? (parseFloat(itemEstoque.preco) * info.qtd) : 0;
-                    
                     relProd.innerHTML += `
                         <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                             <div>
@@ -462,8 +460,6 @@
             renderizarListasSecundarias(); 
             lucide.createIcons();
         }
-
-        // --- AS DEMAIS FUNÇÕES (abrirEditor, salvar, carregar, etc) CONTINUAM IGUAIS ---
         
         function renderizarListasSecundarias() {
             const cliL = document.getElementById('lista-completa-clientes'); 
@@ -521,48 +517,44 @@
                 const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
                 if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
             });
-        DB.vendas.push({ 
-    barbeiro: document.getElementById('venda-barbeiro').value, 
-    cliente: document.getElementById('venda-cliente').value, 
-    descricao: carrinhoTemporario.map(i => i.nome).join(', '), 
-    valor: document.getElementById('venda-valor').value, 
-    pagamento: document.getElementById('venda-pagamento').value, 
-   
-    data: `${dataEscolhida} ${horaAtual}` 
-});
+            DB.vendas.push({ 
+                barbeiro: document.getElementById('venda-barbeiro').value, 
+                cliente: document.getElementById('venda-cliente').value, 
+                descricao: carrinhoTemporario.map(i => i.nome).join(', '), 
+                valor: document.getElementById('venda-valor').value, 
+                pagamento: document.getElementById('venda-pagamento').value, 
+                data: `${dataEscolhida} ${horaAtual}` 
+            });
+            const sucesso = await salvar();
+            if (sucesso) { 
+                this.reset(); 
+                carrinhoTemporario = []; 
+                document.getElementById('venda-data-retroativa').value = hoje; 
+                atualizarVisualCarrinho(); 
+                renderizarTudo(); 
+                alert("Lançamento Realizado!"); 
+            } else { 
+                DB.vendas = backupVendas; 
+                DB.estoque = backupEstoque; 
+            }
+            btn.disabled = false; 
+            btn.innerText = "FINALIZAR";
+        }); 
 
-    const sucesso = await salvar();
-
-if (sucesso) { 
-    this.reset(); 
-    carrinhoTemporario = []; 
-    document.getElementById('venda-data-retroativa').value = hoje; 
-    atualizarVisualCarrinho(); 
-    renderizarTudo(); 
-    alert("Lançamento Realizado!"); 
-} else { 
-    DB.vendas = backupVendas; 
-    DB.estoque = backupEstoque; 
-}
-
-btn.disabled = false; 
-btn.innerText = "FINALIZAR";
-}); 
-
-function calcularComissao(descricao) {
-    let total = 0;
-    descricao.split(',').forEach(p => {
-        let nome = p.trim().toLowerCase();
-        let mult = 1;
-        if (nome.includes('x ')) { 
-            const aux = nome.split('x '); 
-            mult = parseInt(aux[0]) || 1; 
-            nome = aux[1].trim(); 
+        function calcularComissao(descricao) {
+            let total = 0;
+            descricao.split(',').forEach(p => {
+                let nome = p.trim().toLowerCase();
+                let mult = 1;
+                if (nome.includes('x ')) { 
+                    const aux = nome.split('x '); 
+                    mult = parseInt(aux[0]) || 1; 
+                    nome = aux[1].trim(); 
+                }
+                if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
+            });
+            return total;
         }
-        if (TABELA_GANHOS[nome] !== undefined) total += (TABELA_GANHOS[nome] * mult);
-    });
-    return total;
-}
 
         function adicionarItemAoCarrinho() {
             const d = document.getElementById('venda-descricao'); const q = document.getElementById('venda-qtd'); const v = document.getElementById('venda-valor');
@@ -601,8 +593,8 @@ function calcularComissao(descricao) {
 
             if (tipo === 'venda') {
                 const v = DB.vendas[idIdx]; t.innerText = "EDITAR LANÇAMENTO";
-                c.innerHTML = `<div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Valor</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Data</p><input type="date" id="ed-v-d" value="${v.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
-                btnSalvar.onclick = async () => { DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].data = document.getElementById('ed-v-d').value; await salvar(); fecharModais(); renderizarTudo(); };
+                c.innerHTML = `<div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Valor</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Pagamento</p><select id="ed-v-p" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><option value="Dinheiro" ${v.pagamento === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option><option value="Pix" ${v.pagamento === 'Pix' ? 'selected' : ''}>Pix</option><option value="Débito" ${v.pagamento === 'Débito' ? 'selected' : ''}>Débito</option><option value="Crédito" ${v.pagamento === 'Crédito' ? 'selected' : ''}>Crédito</option></select></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Data</p><input type="date" id="ed-v-d" value="${v.data.split(' ')[0]}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+                btnSalvar.onclick = async () => { const hOrig = v.data.includes(' ') ? v.data.split(' ')[1] : ""; const nData = document.getElementById('ed-v-d').value; DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].pagamento = document.getElementById('ed-v-p').value; DB.vendas[idIdx].data = hOrig ? `${nData} ${hOrig}` : nData; await salvar(); fecharModais(); renderizarTudo(); };
                 btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
             }
             else if (tipo === 'cliente' || tipo === 'novo_cliente') {
