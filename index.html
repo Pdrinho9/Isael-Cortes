@@ -32,6 +32,35 @@
 
         @media (max-width: 1024px) { .brand-logo { width: 90px; height: 90px; margin-bottom: 1rem; } }
         @media (min-width: 1024px) { body { padding-bottom: 0; } }
+        
+        .filter-chip {
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 9px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+        .filter-chip.inactive {
+            background: rgba(255, 255, 255, 0.03);
+            color: #64748b;
+        }
+        .filter-chip.active {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+        }
+        .filter-container {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -209,285 +238,315 @@
         <button onclick="switchTab('config')" class="text-slate-600 p-2"><i data-lucide="settings"></i></button>
     </div>
     <script>
-        lucide.createIcons();
-        const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
-        const SENHA_ENTRADA = "cortoupagou";
-        const SENHA_ADMIN = "81120824";
+    lucide.createIcons();
+    const _supabase = supabase.createClient("https://uijaesuqgnchafnrvnih.supabase.co", "sb_publishable_Ukmk4J2mCb_CRhdgs_qKWA_Z0c5WIgG");
+    const SENHA_ENTRADA = "cortoupagou";
+    const SENHA_ADMIN = "81120824";
 
-        let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [], gastos: [] };
-        let carrinhoTemporario = [];
-        let tipoItemSelecionado = 'Serviço';
-        const hoje = new Date().toISOString().split('T')[0];
-        
-        // Inicialização de datas
-        document.getElementById('filtro-data').value = hoje;
-        document.getElementById('filtro-data-fim').value = hoje;
-        document.getElementById('venda-data-retroativa').value = hoje;
-        document.getElementById('estoque-data-inicio').value = hoje;
-        document.getElementById('estoque-data-fim').value = hoje;
+    let DB = { vendas: [], clientes: [], estoque: [], barbeiros: [], gastos: [] };
+    let carrinhoTemporario = [];
+    let tipoItemSelecionado = 'Serviço';
+    const hoje = new Date().toISOString().split('T')[0];
 
-        const TABELA_GANHOS = {
-    "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
-    "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
-    "luzes": 25.00, "corte luzes": 42.50, "corte + luzes": 42.50, "corte com relaxamento": 32.50,
-    "corte pigmentado ou com alisante": 32.50, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50
-};
-        function toggleFiltroData() {
-            const modo = document.getElementById('filtro-tempo').value;
-            document.getElementById('box-data-fim').classList.toggle('hidden', modo !== 'periodo');
-            document.getElementById('area-filtros-data').classList.toggle('hidden', modo === 'total');
-            renderizarTudo();
+    // --- NOVA VARIÁVEL PARA OS FILTROS POR BARBEIRO ---
+    let filtrosPagamentoBarbeiros = {};
+
+    // Inicialização de datas
+    document.getElementById('filtro-data').value = hoje;
+    document.getElementById('filtro-data-fim').value = hoje;
+    document.getElementById('venda-data-retroativa').value = hoje;
+    document.getElementById('estoque-data-inicio').value = hoje;
+    document.getElementById('estoque-data-fim').value = hoje;
+
+    const TABELA_GANHOS = {
+        "corte": 20.00, "corte barba": 32.50, "corte + barba": 32.50, "corte sobrancelha": 25.00, "corte + sobrancelha": 25.00,
+        "pezinho": 10.00, "barba": 15.00, "sobrancelha": 7.50, "alisante": 12.50, "corte sombra alisante": 35.00, "corte + sombra + alisante": 35.00,
+        "luzes": 25.00, "corte luzes": 42.50, "corte + luzes": 42.50, "corte com relaxamento": 32.50,
+        "corte pigmentado ou com alisante": 32.50, "corte alisante/ pigmentado": 32.50, "corte + alisante/ pigmentado": 32.50
+    };
+
+    // --- NOVA FUNÇÃO PARA ALTERNAR OS FILTROS ---
+    function toggleFiltroPagamento(nomeBarbeiro, metodo) {
+        if (!filtrosPagamentoBarbeiros[nomeBarbeiro]) {
+            filtrosPagamentoBarbeiros[nomeBarbeiro] = [];
         }
-
-        function toggleAccordion(id) {
-            const el = document.getElementById(id);
-            el.classList.toggle('accordion-open');
+        const index = filtrosPagamentoBarbeiros[nomeBarbeiro].indexOf(metodo);
+        if (index > -1) {
+            filtrosPagamentoBarbeiros[nomeBarbeiro].splice(index, 1);
+        } else {
+            filtrosPagamentoBarbeiros[nomeBarbeiro].push(metodo);
         }
-
-        function verificarSenhaEntrada() {
-            if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) {
-                document.getElementById('modal-bloqueio-total').style.display = 'none';
-                sessionStorage.setItem('acesso_concedido', 'true');
-            } else { alert("Senha incorreta!"); }
-        }
-
-        function logoutAdmin() {
-            sessionStorage.removeItem('is_admin');
-            document.getElementById('venda-data-retroativa').disabled = true;
-            document.getElementById('msg-lock').style.display = 'inline';
-            const btnSair = document.getElementById('btn-logout-admin');
-            if(btnSair) btnSair.classList.add('hidden');
-            executarTrocaTab('vendas');
-            renderizarTudo();
-        }
-
-        async function carregar() {
-            const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
-            if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
-        }
-
-        async function salvar() {
-            try {
-                const { data, error } = await _supabase.from('barbearia').update({ vendas: DB.vendas || [], clientes: DB.clientes || [], estoque: DB.estoque || [], barbeiros: DB.barbeiros || [], gastos: DB.gastos || [] }).match({ id: 1 }).select();
-                if(error || !data) return false;
-                return true;
-            } catch (e) { return false; }
-        }
-
-        function confirmarSenhaAdmin() {
-            if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
-                sessionStorage.setItem('is_admin', 'true');
-                document.getElementById('venda-data-retroativa').disabled = false;
-                document.getElementById('msg-lock').style.display = 'none';
-                executarTrocaTab(abaDestinoPendente);
-                renderizarTudo();
-            } else { alert("Acesso Negado!"); }
-        }
-
-        function renderizarTudo() {
-            const btnSair = document.getElementById('btn-logout-admin');
-            if(btnSair) {
-                if(sessionStorage.getItem('is_admin') === 'true') btnSair.classList.remove('hidden');
-                else btnSair.classList.add('hidden');
-            }
-
-            const filtroT = document.getElementById('filtro-tempo').value;
-            const dataS = document.getElementById('filtro-data').value;
-            const dataF = document.getElementById('filtro-data-fim').value;
-        
-            const estoqueS = document.getElementById('estoque-data-inicio').value;
-            const estoqueF = document.getElementById('estoque-data-fim').value;
-
-            // NOVA LÓGICA: Captura quais formas de pagamento estão marcadas no filtro
-            const metodosSelecionados = [];
-            if(document.getElementById('check-pix')?.checked) metodosSelecionados.push('Pix');
-            if(document.getElementById('check-dinheiro')?.checked) metodosSelecionados.push('Dinheiro');
-            if(document.getElementById('check-debito')?.checked) metodosSelecionados.push('Débito');
-            if(document.getElementById('check-credito')?.checked) metodosSelecionados.push('Crédito');
-
-            const logA = document.getElementById('log-vendas-agrupado');
-            logA.innerHTML = '';
-            let fatG = 0, comG = 0, totalProdutosG = 0;
-
-            const totaisPagamento = { Dinheiro: 0, Pix: 0, Débito: 0, Crédito: 0 };
-            const contagemItensEstoque = {};
-
-            const vFiltradas = (DB.vendas || []).filter(v => {
-                const dataPuraVenda = v.data.split(' ')[0];
-                const tipoPagamento = v.pagamento || 'Dinheiro';
-
-                // Filtro de Tempo
-                let passaTempo = false;
-                if(filtroT === 'total') passaTempo = true;
-                else if(filtroT === 'dia') passaTempo = (dataPuraVenda === dataS);
-                else if(filtroT === 'periodo') passaTempo = (dataPuraVenda >= dataS && dataPuraVenda <= dataF);
-
-                // Filtro de Método de Pagamento (Multi-seleção)
-                // Se nada estiver marcado, mostra tudo. Se algo estiver marcado, filtra.
-                let passaPagamento = metodosSelecionados.length === 0 || metodosSelecionados.includes(tipoPagamento);
-
-                return passaTempo && passaPagamento;
-            });
-
-            vFiltradas.forEach(v => {
-                const valorVenda = parseFloat(v.valor) || 0;
-                const tipo = v.pagamento || 'Dinheiro';
-                if(totaisPagamento[tipo] !== undefined) totaisPagamento[tipo] += valorVenda;
-            });
-
-            (DB.vendas || []).forEach(v => {
-                const dataPuraEstoque = v.data.split(' ')[0];
-                if(dataPuraEstoque >= estoqueS && dataPuraEstoque <= estoqueF) {
-                    v.descricao.split(',').forEach(pedaco => {
-                        let nome = pedaco.trim();
-                        let qtd = 1;
-                        if(nome.includes('x ')) {
-                            const partes = nome.split('x ');
-                            qtd = parseInt(partes[0]) || 1;
-                            nome = partes[1].trim();
-                        }
-                        if(!contagemItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
-                        contagemItensEstoque[nome].qtd += qtd;
-                    });
-                }
-            });
-
-            (DB.barbeiros || []).forEach((barb, idx) => {
-    const vB = vFiltradas.filter(v => v.barbeiro === barb.nome);
-    if(vB.length === 0) return;
-    
-    let fatB = 0, comB = 0, prodB = 0;
-    let htmlV = '';
-    
-    vB.forEach(v => {
-    const val = parseFloat(v.valor); 
-    fatB += val;
-    const cV = calcularComissao(v.descricao); 
-    comB += cV;
-
-    v.descricao.split(',').forEach(item => {
-        let nomeItem = item.trim();
-        let qtd = 1;
-        if (nomeItem.includes('x ')) {
-            const partes = nomeItem.split('x ');
-            qtd = parseInt(partes[0]) || 1;
-            nomeItem = partes[1].trim();
-        }
-        const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nomeItem.toLowerCase());
-        if (itemEstoque && itemEstoque.tipo === 'Produto') {
-            prodB += (parseFloat(itemEstoque.preco) * qtd);
-        }
-    });
-
-    const dataPartes = v.data.split(' '); 
-    const dataFormatada = dataPartes[0].split('-').reverse().join('/');
-    const horaFormatada = dataPartes[1] ? `às ${dataPartes[1]}` : '';
-
-    htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
-        <div class="text-[10px] italic">
-            <div class="flex items-center gap-2">
-                <span class="text-white font-black uppercase">${v.cliente}</span> 
-                <span class="bg-white/10 text-slate-400 text-[7px] px-1.5 py-0.5 rounded font-bold uppercase">${v.pagamento || '---'}</span>
-            </div>
-            <span class="text-slate-500 text-[8px]">${dataFormatada} ${horaFormatada}</span>
-            <p class="text-slate-500">${v.descricao}</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <div class="text-right">
-                <p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p>
-                <p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p>
-            </div>
-            <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700">
-                <i data-lucide="edit-3" size="14"></i>
-            </button>
-        </div>
-    </div>`;
-});
-
-    fatG += fatB; comG += comB; totalProdutosG += prodB;
-
-    let colunasFinanceiras = '';
-    
-    if (barb.nome.trim().toUpperCase() === "ISAEL") {
-        colunasFinanceiras = `
-            <div class="text-right border-l border-white/10 pl-4">
-                <p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p>
-                <p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p>
-            </div>
-            <div class="text-right border-l border-white/10 pl-4">
-                <p class="text-[8px] text-emerald-500 font-bold uppercase italic">Total Geral</p>
-                <p class="text-emerald-500 font-black italic text-xl">R$ ${fatB.toFixed(2)}</p>
-            </div>`;
-    } else {
-        colunasFinanceiras = `
-            <div class="text-right border-l border-white/10 pl-4">
-                <p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p>
-                <p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p>
-            </div>
-            <div class="text-right border-l border-white/10 pl-4">
-                <p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p>
-                <p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p>
-            </div>
-            <div class="text-right border-l border-white/10 pl-4">
-                <p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p>
-                <p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p>
-            </div>`;
+        renderizarTudo();
     }
 
-    logA.innerHTML += `
-    <div id="acc-${idx}" class="glass overflow-hidden rounded-[2rem] mb-4">
-        <div onclick="toggleAccordion('acc-${idx}')" class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10 cursor-pointer hover:bg-white/[0.07] transition-all">
-            <div class="flex items-center gap-3">
-                <i data-lucide="chevron-down" class="text-slate-500 rotate-icon"></i>
-                <h4 class="text-white font-black italic uppercase text-lg">${barb.nome}</h4>
-            </div>
-            <div class="flex gap-4">
-                ${colunasFinanceiras}
-            </div>
-        </div>
-        <div class="accordion-content">${htmlV}</div>
-    </div>`;
-});
+    function toggleFiltroData() {
+        const modo = document.getElementById('filtro-tempo').value;
+        document.getElementById('box-data-fim').classList.toggle('hidden', modo !== 'periodo');
+        document.getElementById('area-filtros-data').classList.toggle('hidden', modo === 'total');
+        renderizarTudo();
+    }
 
-            const relProd = document.getElementById('relatorio-vendas-produtos');
-            if(relProd) {
-                relProd.innerHTML = '';
-                const itensOrdenados = Object.keys(contagemItensEstoque).sort((a,b) => contagemItensEstoque[b].qtd - contagemItensEstoque[a].qtd);
-                if(itensOrdenados.length === 0) relProd.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase">Sem vendas neste período</p>';
-                itensOrdenados.forEach(nome => {
-                    const info = contagemItensEstoque[nome];
-                    const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nome.toLowerCase());
-                    const rendimento = itemEstoque ? (parseFloat(itemEstoque.preco) * info.qtd) : 0;
-                    relProd.innerHTML += `
-                        <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                            <div>
-                                <p class="text-white font-black text-xs uppercase italic">${nome}</p>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase italic">${info.qtd} Unidade(s) vendida(s)</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[8px] text-slate-500 uppercase font-black">Rendimento</p>
-                                <p class="text-blue-400 font-black italic">R$ ${rendimento.toFixed(2)}</p>
-                            </div>
-                        </div>`;
+    function toggleAccordion(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle('accordion-open');
+    }
+
+    function verificarSenhaEntrada() {
+        if(document.getElementById('input-senha-entrada').value === SENHA_ENTRADA) {
+            document.getElementById('modal-bloqueio-total').style.display = 'none';
+            sessionStorage.setItem('acesso_concedido', 'true');
+        } else { alert("Senha incorreta!"); }
+    }
+
+    function logoutAdmin() {
+        sessionStorage.removeItem('is_admin');
+        document.getElementById('venda-data-retroativa').disabled = true;
+        document.getElementById('msg-lock').style.display = 'inline';
+        const btnSair = document.getElementById('btn-logout-admin');
+        if(btnSair) btnSair.classList.add('hidden');
+        executarTrocaTab('vendas');
+        renderizarTudo();
+    }
+
+    async function carregar() {
+        const { data } = await _supabase.from('barbearia').select('*').eq('id', 1).single();
+        if (data) { DB = data; if(!DB.gastos) DB.gastos = []; renderizarTudo(); }
+    }
+
+    async function salvar() {
+        try {
+            const { data, error } = await _supabase.from('barbearia').update({ vendas: DB.vendas || [], clientes: DB.clientes || [], estoque: DB.estoque || [], barbeiros: DB.barbeiros || [], gastos: DB.gastos || [] }).match({ id: 1 }).select();
+            if(error || !data) return false;
+            return true;
+        } catch (e) { return false; }
+    }
+
+    function confirmarSenhaAdmin() {
+        if(document.getElementById('input-senha-admin').value === SENHA_ADMIN) {
+            sessionStorage.setItem('is_admin', 'true');
+            document.getElementById('venda-data-retroativa').disabled = false;
+            document.getElementById('msg-lock').style.display = 'none';
+            executarTrocaTab(abaDestinoPendente);
+            renderizarTudo();
+        } else { alert("Acesso Negado!"); }
+    }
+
+    function renderizarTudo() {
+        const btnSair = document.getElementById('btn-logout-admin');
+        if(btnSair) {
+            if(sessionStorage.getItem('is_admin') === 'true') btnSair.classList.remove('hidden');
+            else btnSair.classList.add('hidden');
+        }
+
+        const filtroT = document.getElementById('filtro-tempo').value;
+        const dataS = document.getElementById('filtro-data').value;
+        const dataF = document.getElementById('filtro-data-fim').value;
+        const estoqueS = document.getElementById('estoque-data-inicio').value;
+        const estoqueF = document.getElementById('estoque-data-fim').value;
+
+        const metodosSelecionadosGerais = [];
+        if(document.getElementById('check-pix')?.checked) metodosSelecionadosGerais.push('Pix');
+        if(document.getElementById('check-dinheiro')?.checked) metodosSelecionadosGerais.push('Dinheiro');
+        if(document.getElementById('check-debito')?.checked) metodosSelecionadosGerais.push('Débito');
+        if(document.getElementById('check-credito')?.checked) metodosSelecionadosGerais.push('Crédito');
+
+        const logA = document.getElementById('log-vendas-agrupado');
+        logA.innerHTML = '';
+        let fatG = 0, comG = 0, totalProdutosG = 0;
+
+        const totaisPagamento = { Dinheiro: 0, Pix: 0, Débito: 0, Crédito: 0 };
+        const contagemItensEstoque = {};
+
+        const vFiltradas = (DB.vendas || []).filter(v => {
+            const dataPuraVenda = v.data.split(' ')[0];
+            const tipoPagamento = v.pagamento || 'Dinheiro';
+            let passaTempo = false;
+            if(filtroT === 'total') passaTempo = true;
+            else if(filtroT === 'dia') passaTempo = (dataPuraVenda === dataS);
+            else if(filtroT === 'periodo') passaTempo = (dataPuraVenda >= dataS && dataPuraVenda <= dataF);
+
+            let passaPagamentoGeral = metodosSelecionadosGerais.length === 0 || metodosSelecionadosGerais.includes(tipoPagamento);
+            return passaTempo && passaPagamentoGeral;
+        });
+
+        vFiltradas.forEach(v => {
+            const valorVenda = parseFloat(v.valor) || 0;
+            const tipo = v.pagamento || 'Dinheiro';
+            if(totaisPagamento[tipo] !== undefined) totaisPagamento[tipo] += valorVenda;
+        });
+
+        (DB.vendas || []).forEach(v => {
+            const dataPuraEstoque = v.data.split(' ')[0];
+            if(dataPuraEstoque >= estoqueS && dataPuraEstoque <= estoqueF) {
+                v.descricao.split(',').forEach(pedaco => {
+                    let nome = pedaco.trim();
+                    let qtd = 1;
+                    if(nome.includes('x ')) {
+                        const partes = nome.split('x ');
+                        qtd = parseInt(partes[0]) || 1;
+                        nome = partes[1].trim();
+                    }
+                    if(!contagemItensEstoque[nome]) contagemItensEstoque[nome] = { qtd: 0 };
+                    contagemItensEstoque[nome].qtd += qtd;
                 });
             }
+        });
 
-            document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
-            document.getElementById('dash-comissoes').innerText = "R$ " + comG.toFixed(2);
-            document.getElementById('dash-produtos-total').innerText = "R$ " + totalProdutosG.toFixed(2);
-            document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
+        (DB.barbeiros || []).forEach((barb, idx) => {
+            const filtrosAtivos = filtrosPagamentoBarbeiros[barb.nome] || [];
             
-            if(document.getElementById('total-pix')) document.getElementById('total-pix').innerText = "R$ " + totaisPagamento.Pix.toFixed(2);
-            if(document.getElementById('total-dinheiro')) document.getElementById('total-dinheiro').innerText = "R$ " + totaisPagamento.Dinheiro.toFixed(2);
-            if(document.getElementById('total-cartao')) document.getElementById('total-cartao').innerText = "R$ " + (totaisPagamento.Débito + totaisPagamento.Crédito).toFixed(2);
+            // Filtra as vendas do barbeiro aplicando o filtro de chips (Dinheiro, Pix, etc)
+            const vB = vFiltradas.filter(v => {
+                const éDesteBarbeiro = v.barbeiro === barb.nome;
+                const passaNoFiltroChip = filtrosAtivos.length === 0 || filtrosAtivos.includes(v.pagamento || 'Dinheiro');
+                return éDesteBarbeiro && passaNoFiltroChip;
+            });
 
-            document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
-            document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
-            document.getElementById('lista-itens-datalist').innerHTML = (DB.estoque || []).map(i => `<option value="${i.nome}">`).join('');
-            
-            renderizarListasSecundarias(); 
-            lucide.createIcons();
+            if(vFiltradas.filter(v => v.barbeiro === barb.nome).length === 0) return;
+
+            // Gera os Chips de Filtro
+            const metodos = ['Dinheiro', 'Pix', 'Débito', 'Crédito'];
+            const htmlFiltros = `<div class="filter-container">` + 
+                metodos.map(m => {
+                    const ativo = filtrosAtivos.includes(m);
+                    return `<span class="filter-chip ${ativo ? 'active' : 'inactive'}" 
+                            onclick="event.stopPropagation(); toggleFiltroPagamento('${barb.nome}', '${m}')">${m}</span>`;
+                }).join('') + `</div>`;
+
+            let fatB = 0, comB = 0, prodB = 0;
+            let htmlV = '';
+
+            vB.forEach(v => {
+                const val = parseFloat(v.valor); 
+                fatB += val;
+                const cV = calcularComissao(v.descricao); 
+                comB += cV;
+
+                v.descricao.split(',').forEach(item => {
+                    let nomeItem = item.trim();
+                    let qtd = 1;
+                    if (nomeItem.includes('x ')) {
+                        const partes = nomeItem.split('x ');
+                        qtd = parseInt(partes[0]) || 1;
+                        nomeItem = partes[1].trim();
+                    }
+                    const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nomeItem.toLowerCase());
+                    if (itemEstoque && itemEstoque.tipo === 'Produto') {
+                        prodB += (parseFloat(itemEstoque.preco) * qtd);
+                    }
+                });
+
+                const dataPartes = v.data.split(' '); 
+                const dataFormatada = dataPartes[0].split('-').reverse().join('/');
+                const horaFormatada = dataPartes[1] ? `às ${dataPartes[1]}` : '';
+
+                htmlV += `<div class="flex justify-between items-center p-4 bg-white/[0.02] border-b border-white/5 last:border-0">
+                    <div class="text-[10px] italic">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-black uppercase">${v.cliente}</span> 
+                            <span class="bg-white/10 text-slate-400 text-[7px] px-1.5 py-0.5 rounded font-bold uppercase">${v.pagamento || '---'}</span>
+                        </div>
+                        <span class="text-slate-500 text-[8px]">${dataFormatada} ${horaFormatada}</span>
+                        <p class="text-slate-500">${v.descricao}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <p class="font-black text-white text-xs italic">R$ ${val.toFixed(2)}</p>
+                            <p class="text-emerald-500 text-[8px] font-black italic">Com: R$ ${cV.toFixed(2)}</p>
+                        </div>
+                        <button onclick="abrirEditor('venda', ${DB.vendas.indexOf(v)})" class="text-slate-700">
+                            <i data-lucide="edit-3" size="14"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            fatG += fatB; comG += comB; totalProdutosG += prodB;
+
+            let colunasFinanceiras = '';
+            if (barb.nome.trim().toUpperCase() === "ISAEL") {
+                colunasFinanceiras = `
+                    <div class="text-right border-l border-white/10 pl-4">
+                        <p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p>
+                        <p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p>
+                    </div>
+                    <div class="text-right border-l border-white/10 pl-4">
+                        <p class="text-[8px] text-emerald-500 font-bold uppercase italic">Total Geral</p>
+                        <p class="text-emerald-500 font-black italic text-xl">R$ ${fatB.toFixed(2)}</p>
+                    </div>`;
+            } else {
+                colunasFinanceiras = `
+                    <div class="text-right border-l border-white/10 pl-4">
+                        <p class="text-[8px] text-blue-400 font-bold uppercase italic">Produtos</p>
+                        <p class="text-blue-400 font-black italic text-xl">R$ ${prodB.toFixed(2)}</p>
+                    </div>
+                    <div class="text-right border-l border-white/10 pl-4">
+                        <p class="text-[8px] text-emerald-500 font-bold uppercase italic">Pagar</p>
+                        <p class="text-emerald-500 font-black italic text-xl">R$ ${comB.toFixed(2)}</p>
+                    </div>
+                    <div class="text-right border-l border-white/10 pl-4">
+                        <p class="text-[8px] text-rose-500 font-bold uppercase italic">Casa</p>
+                        <p class="text-rose-500 font-black italic text-xl">R$ ${(fatB - comB).toFixed(2)}</p>
+                    </div>`;
+            }
+
+            logA.innerHTML += `
+            <div id="acc-${idx}" class="glass overflow-hidden rounded-[2rem] mb-4">
+                <div onclick="toggleAccordion('acc-${idx}')" class="bg-white/5 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-white/10 cursor-pointer hover:bg-white/[0.07] transition-all">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="chevron-down" class="text-slate-500 rotate-icon"></i>
+                        <div class="flex flex-col">
+                            <h4 class="text-white font-black italic uppercase text-lg leading-none">${barb.nome}</h4>
+                            ${htmlFiltros}
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        ${colunasFinanceiras}
+                    </div>
+                </div>
+                <div class="accordion-content">${htmlV}</div>
+            </div>`;
+        });
+
+        const relProd = document.getElementById('relatorio-vendas-produtos');
+        if(relProd) {
+            relProd.innerHTML = '';
+            const itensOrdenados = Object.keys(contagemItensEstoque).sort((a,b) => contagemItensEstoque[b].qtd - contagemItensEstoque[a].qtd);
+            if(itensOrdenados.length === 0) relProd.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase">Sem vendas neste período</p>';
+            itensOrdenados.forEach(nome => {
+                const info = contagemItensEstoque[nome];
+                const itemEstoque = DB.estoque.find(e => e.nome.toLowerCase() === nome.toLowerCase());
+                const rendimento = itemEstoque ? (parseFloat(itemEstoque.preco) * info.qtd) : 0;
+                relProd.innerHTML += `
+                    <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                        <div>
+                            <p class="text-white font-black text-xs uppercase italic">${nome}</p>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase italic">${info.qtd} Unidade(s) vendida(s)</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[8px] text-slate-500 uppercase font-black">Rendimento</p>
+                            <p class="text-blue-400 font-black italic">R$ ${rendimento.toFixed(2)}</p>
+                        </div>
+                    </div>`;
+            });
         }
+
+        document.getElementById('dash-faturamento').innerText = "R$ " + fatG.toFixed(2);
+        document.getElementById('dash-comissoes').innerText = "R$ " + comG.toFixed(2);
+        document.getElementById('dash-produtos-total').innerText = "R$ " + totalProdutosG.toFixed(2);
+        document.getElementById('dash-casa').innerText = "R$ " + (fatG - comG).toFixed(2);
+        
+        if(document.getElementById('total-pix')) document.getElementById('total-pix').innerText = "R$ " + totaisPagamento.Pix.toFixed(2);
+        if(document.getElementById('total-dinheiro')) document.getElementById('total-dinheiro').innerText = "R$ " + totaisPagamento.Dinheiro.toFixed(2);
+        if(document.getElementById('total-cartao')) document.getElementById('total-cartao').innerText = "R$ " + (totaisPagamento.Débito + totaisPagamento.Crédito).toFixed(2);
+
+        document.getElementById('venda-barbeiro').innerHTML = '<option value="">Barbeiro...</option>' + DB.barbeiros.map(b => `<option value="${b.nome}">${b.nome}</option>`).join('');
+        document.getElementById('venda-cliente').innerHTML = '<option value="Consumidor">Cliente...</option>' + DB.clientes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+        document.getElementById('lista-itens-datalist').innerHTML = (DB.estoque || []).map(i => `<option value="${i.nome}">`).join('');
+        
+        renderizarListasSecundarias(); 
+        lucide.createIcons();
+    }
         
         function renderizarListasSecundarias() {
             const cliL = document.getElementById('lista-completa-clientes'); 
