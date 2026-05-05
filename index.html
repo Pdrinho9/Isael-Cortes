@@ -581,8 +581,34 @@
             const gastL = document.getElementById('lista-gastos');
             if(gastL) {
                 gastL.innerHTML = '';
-                (DB.gastos || []).forEach((g, idx) => {
-                    gastL.innerHTML += `<div class="glass p-4 rounded-2xl flex justify-between items-center"><div><p class="text-[10px] font-black uppercase italic text-rose-500">${g.descricao}</p><p class="text-white font-bold text-xs">R$ ${parseFloat(g.valor).toFixed(2)}</p><p class="text-slate-500 text-[8px] uppercase">${g.data.split('-').reverse().join('/')}</p></div><button onclick="abrirEditor('gasto', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div>`;
+                
+                const agora = new Date();
+                const mesAtual = agora.getMonth(); 
+                const anoAtual = agora.getFullYear();
+
+                const gastosExibidos = (DB.gastos || []).filter(g => {
+                    const dataGasto = new Date(g.data + 'T00:00:00');
+                    return dataGasto.getMonth() === mesAtual && dataGasto.getFullYear() === anoAtual;
+                });
+
+                if (gastosExibidos.length === 0) {
+                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto registrado neste mês</p>';
+                }
+
+                gastosExibidos.forEach((g) => {
+                    const realIdx = DB.gastos.indexOf(g);
+                    
+                    gastL.innerHTML += `
+                        <div class="glass p-4 rounded-2xl flex justify-between items-center mb-2">
+                            <div>
+                                <p class="text-[10px] font-black uppercase italic text-rose-500">${g.descricao}</p>
+                                <p class="text-white font-bold text-xs">R$ ${parseFloat(g.valor).toFixed(2)}</p>
+                                <p class="text-slate-500 text-[8px] uppercase">${g.data.split('-').reverse().join('/')}</p>
+                            </div>
+                            <button onclick="abrirEditor('gasto', ${realIdx})" class="text-slate-600">
+                                <i data-lucide="edit-3" size="16"></i>
+                            </button>
+                        </div>`;
                 });
             }
         }
