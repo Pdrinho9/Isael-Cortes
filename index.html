@@ -578,26 +578,41 @@
                     equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
                 }); 
             }
-            const gastL = document.getElementById('lista-gastos');
+          const gastL = document.getElementById('lista-gastos');
             if(gastL) {
                 gastL.innerHTML = '';
                 
+                // Pegamos as datas dos filtros globais que você já tem no sistema
+                const filtroT = document.getElementById('filtro-tempo').value;
+                const dataS = document.getElementById('filtro-data').value;
+                const dataF = document.getElementById('filtro-data-fim').value;
+
                 const agora = new Date();
                 const mesAtual = agora.getMonth(); 
                 const anoAtual = agora.getFullYear();
 
                 const gastosExibidos = (DB.gastos || []).filter(g => {
-                    const dataGasto = new Date(g.data + 'T00:00:00');
-                    return dataGasto.getMonth() === mesAtual && dataGasto.getFullYear() === anoAtual;
+                    const dataGastoStr = g.data.split(' ')[0]; // Pega só a data YYYY-MM-DD
+                    
+                    // Se o filtro global estiver em "Período", filtramos pelas datas selecionadas
+                    if(filtroT === 'periodo') {
+                        return dataGastoStr >= dataS && dataGastoStr <= dataF;
+                    }
+                    // Se o filtro global estiver em "Dia", filtramos por aquele dia específico
+                    if(filtroT === 'dia') {
+                        return dataGastoStr === dataS;
+                    }
+                    // Padrão: Se estiver em "Total" ou sem filtro, mostra apenas o Mês Atual
+                    const dataObj = new Date(g.data + 'T00:00:00');
+                    return dataObj.getMonth() === mesAtual && dataObj.getFullYear() === anoAtual;
                 });
 
                 if (gastosExibidos.length === 0) {
-                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto registrado neste mês</p>';
+                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto encontrado para este filtro</p>';
                 }
 
                 gastosExibidos.forEach((g) => {
                     const realIdx = DB.gastos.indexOf(g);
-                    
                     gastL.innerHTML += `
                         <div class="glass p-4 rounded-2xl flex justify-between items-center mb-2">
                             <div>
