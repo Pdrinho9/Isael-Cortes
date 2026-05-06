@@ -578,13 +578,14 @@
                     equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
                 }); 
             }
-            const gastL = document.getElementById('lista-gastos');
+           const gastL = document.getElementById('lista-gastos');
             if(gastL) {
                 gastL.innerHTML = '';
                 
-                const filtroT = document.getElementById('filtro-tempo').value;
-                const dataS = document.getElementById('filtro-data').value;
-                const dataF = document.getElementById('filtro-data-fim').value;
+                // Filtros EXCLUSIVOS da aba financeira
+                const filtroT = document.getElementById('filtro-tempo-gastos')?.value || 'mes';
+                const dataS = document.getElementById('filtro-data-gastos')?.value;
+                const dataF = document.getElementById('filtro-data-fim-gastos')?.value;
 
                 const agora = new Date();
                 const mesAtual = agora.getMonth(); 
@@ -593,18 +594,24 @@
                 const gastosExibidos = (DB.gastos || []).filter(g => {
                     const dataGastoStr = g.data.split(' ')[0]; 
                     
-                    if(filtroT === 'periodo') {
+                    // Lógica de filtro independente
+                    if(filtroT === 'periodo' && dataS && dataF) {
                         return dataGastoStr >= dataS && dataGastoStr <= dataF;
                     }
-                    if(filtroT === 'dia') {
+                    if(filtroT === 'dia' && dataS) {
                         return dataGastoStr === dataS;
                     }
+                    
+                    // Padrão: Mês Atual (Novo mês, novos gastos)
                     const dataObj = new Date(g.data + 'T00:00:00');
                     return dataObj.getMonth() === mesAtual && dataObj.getFullYear() === anoAtual;
                 });
 
+                // Ordenar por data (mais recentes primeiro)
+                gastosExibidos.sort((a, b) => new Date(b.data) - new Date(a.data));
+
                 if (gastosExibidos.length === 0) {
-                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto encontrado para este filtro</p>';
+                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto neste período</p>';
                 }
 
                 gastosExibidos.forEach((g) => {
@@ -621,6 +628,8 @@
                             </button>
                         </div>`;
                 });
+                
+                if(window.lucide) lucide.createIcons();
             }
         }
 
