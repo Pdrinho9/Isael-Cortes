@@ -582,22 +582,33 @@
             if(gastL) {
                 gastL.innerHTML = '';
                 
+                const filtroT = document.getElementById('filtro-tempo').value;
+                const dataS = document.getElementById('filtro-data').value;
+                const dataF = document.getElementById('filtro-data-fim').value;
+
                 const agora = new Date();
                 const mesAtual = agora.getMonth(); 
                 const anoAtual = agora.getFullYear();
 
                 const gastosExibidos = (DB.gastos || []).filter(g => {
-                    const dataGasto = new Date(g.data + 'T00:00:00');
-                    return dataGasto.getMonth() === mesAtual && dataGasto.getFullYear() === anoAtual;
+                    const dataGastoStr = g.data.split(' ')[0]; 
+                    
+                    if(filtroT === 'periodo') {
+                        return dataGastoStr >= dataS && dataGastoStr <= dataF;
+                    }
+                    if(filtroT === 'dia') {
+                        return dataGastoStr === dataS;
+                    }
+                    const dataObj = new Date(g.data + 'T00:00:00');
+                    return dataObj.getMonth() === mesAtual && dataObj.getFullYear() === anoAtual;
                 });
 
                 if (gastosExibidos.length === 0) {
-                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto registrado neste mês</p>';
+                    gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto encontrado para este filtro</p>';
                 }
 
                 gastosExibidos.forEach((g) => {
                     const realIdx = DB.gastos.indexOf(g);
-                    
                     gastL.innerHTML += `
                         <div class="glass p-4 rounded-2xl flex justify-between items-center mb-2">
                             <div>
