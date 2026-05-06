@@ -766,48 +766,130 @@
         function fecharModais() { document.querySelectorAll('.modal').forEach(m => { if(m.id !== 'modal-bloqueio-total') m.style.display = 'none'; }); }
         function setTipoNovoItem(t) { tipoItemSelecionado = t; document.getElementById('tipo-servico').classList.toggle('active-tab', t === 'Serviço'); document.getElementById('tipo-produto').classList.toggle('active-tab', t === 'Produto'); const q = document.getElementById('campo-qtd-editor'); if(q) q.style.display = t === 'Produto' ? 'block' : 'none'; }
         
-        function abrirEditor(tipo, idIdx = null) {
-            const c = document.getElementById('editor-campos'); const t = document.getElementById('editor-titulo');
-            const btnDel = document.getElementById('btn-excluir-item'); const btnSalvar = document.getElementById('btn-salvar-editor');
-            const seletor = document.getElementById('seletor-tipo');
-            c.innerHTML = ''; document.getElementById('modal-editor').style.display = 'flex'; btnDel.style.display = 'block'; seletor.style.display = 'none';
+      function abrirEditor(tipo, idIdx = null) {
+    const c = document.getElementById('editor-campos'); 
+    const t = document.getElementById('editor-titulo');
+    const btnDel = document.getElementById('btn-excluir-item'); 
+    const btnSalvar = document.getElementById('btn-salvar-editor');
+    const seletor = document.getElementById('seletor-tipo');
 
-            if (tipo === 'venda') {
-                const v = DB.vendas[idIdx]; t.innerText = "EDITAR LANÇAMENTO";
-                c.innerHTML = `<div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Valor</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Pagamento</p><select id="ed-v-p" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><option value="Dinheiro" ${v.pagamento === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option><option value="Pix" ${v.pagamento === 'Pix' ? 'selected' : ''}>Pix</option><option value="Débito" ${v.pagamento === 'Débito' ? 'selected' : ''}>Débito</option><option value="Crédito" ${v.pagamento === 'Crédito' ? 'selected' : ''}>Crédito</option></select></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Data</p><input type="date" id="ed-v-d" value="${v.data.split(' ')[0]}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
-                btnSalvar.onclick = async () => { const hOrig = v.data.includes(' ') ? v.data.split(' ')[1] : ""; const nData = document.getElementById('ed-v-d').value; DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; DB.vendas[idIdx].pagamento = document.getElementById('ed-v-p').value; DB.vendas[idIdx].data = hOrig ? `${nData} ${hOrig}` : nData; await salvar(); fecharModais(); renderizarTudo(); };
-                btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
-            }
-            else if (tipo === 'cliente' || tipo === 'novo_cliente') {
-                const cli = tipo === 'cliente' ? DB.clientes.find(c => c.id === idIdx) : { nome: '', whatsapp: '' };
-                t.innerText = "CLIENTE"; if(tipo === 'novo_cliente') btnDel.style.display = 'none';
-                c.innerHTML = `<input type="text" id="ed-c-n" placeholder="Nome" value="${cli.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-c-w" placeholder="WhatsApp" value="${cli.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { const n = document.getElementById('ed-c-n').value; const w = document.getElementById('ed-c-w').value; if(tipo === 'novo_cliente') { const id = DB.clientes.length > 0 ? Math.max(...DB.clientes.map(c => c.id)) + 1 : 1; DB.clientes.push({ id, nome: n, whatsapp: w }); } else { const idx = DB.clientes.findIndex(c => c.id === idIdx); DB.clientes[idx].nome = n; DB.clientes[idx].whatsapp = w; } await salvar(); fecharModais(); renderizarTudo(); };
-                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(c => c.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
-            }
-            else if (tipo === 'produto' || tipo === 'novo_produto') {
-                seletor.style.display = 'flex'; const p = tipo === 'produto' ? DB.estoque.find(i => i.id === idIdx) : { nome: '', preco: '', tipo: 'Serviço', quantidade: 0 };
-                t.innerText = "ESTOQUE"; if(tipo === 'novo_produto') btnDel.style.display = 'none';
-                c.innerHTML = `<input type="text" id="ed-p-n" placeholder="Nome" value="${p.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="number" id="ed-p-p" step="0.01" placeholder="Preço" value="${p.preco}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><div id="campo-qtd-editor"><input type="number" id="ed-p-q" value="${p.quantidade || 0}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
-                setTipoNovoItem(p.tipo);
-                btnSalvar.onclick = async () => { const n = document.getElementById('ed-p-n').value; const pr = document.getElementById('ed-p-p').value; const q = document.getElementById('ed-p-q').value; if(tipo === 'novo_produto') { const id = DB.estoque.length > 0 ? Math.max(...DB.estoque.map(i => i.id)) + 1 : 1; DB.estoque.push({ id, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }); } else { const idx = DB.estoque.findIndex(i => i.id === idIdx); DB.estoque[idx] = { id: idIdx, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }; } await salvar(); fecharModais(); renderizarTudo(); };
-                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(i => i.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
-            }
-            else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
-                const b = tipo === 'barbeiro' ? DB.barbeiros[idIdx] : { nome: '', whatsapp: '' };
-                t.innerText = "BARBEIRO"; if(tipo === 'novo_barbeiro') btnDel.style.display = 'none';
-                c.innerHTML = `<input type="text" id="ed-b-n" placeholder="Nome" value="${b.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-b-w" placeholder="WhatsApp" value="${b.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { const n = document.getElementById('ed-b-n').value; const w = document.getElementById('ed-b-w').value; if(tipo === 'novo_barbeiro') DB.barbeiros.push({ nome: n, whatsapp: w }); else { DB.barbeiros[idIdx].nome = n; DB.barbeiros[idIdx].whatsapp = w; } await salvar(); fecharModais(); renderizarTudo(); };
-                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.barbeiros.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
-            }
-            else if (tipo === 'gasto' || tipo === 'novo_gasto') {
-                const g = tipo === 'gasto' ? DB.gastos[idIdx] : { descricao: '', valor: '', data: hoje };
-                t.innerText = "GASTO"; if(tipo === 'novo_gasto') btnDel.style.display = 'none';
-                c.innerHTML = `<input type="text" id="ed-g-d" placeholder="Descrição" value="${g.descricao}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="number" id="ed-g-v" step="0.01" placeholder="Valor" value="${g.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="date" id="ed-g-dt" value="${g.data}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
-                btnSalvar.onclick = async () => { const d = document.getElementById('ed-g-d').value; const v = document.getElementById('ed-g-v').value; const dt = document.getElementById('ed-g-dt').value; if(tipo === 'novo_gasto') DB.gastos.push({ descricao: d, valor: v, data: dt }); else { DB.gastos[idIdx] = { descricao: d, valor: v, data: dt }; } await salvar(); fecharModais(); renderizarTudo(); };
-                btnDel.onclick = async () => { if(confirm("Remover?")) { DB.gastos.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
-            }
-        }
+    c.innerHTML = ''; 
+    document.getElementById('modal-editor').style.display = 'flex'; 
+    btnDel.style.display = 'block'; 
+    seletor.style.display = 'none';
+
+    if (tipo === 'venda') {
+        const v = DB.vendas[idIdx]; 
+        t.innerText = "EDITAR LANÇAMENTO";
+        c.innerHTML = `<div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Valor</p><input type="number" id="ed-v-v" value="${v.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Pagamento</p><select id="ed-v-p" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><option value="Dinheiro" ${v.pagamento === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option><option value="Pix" ${v.pagamento === 'Pix' ? 'selected' : ''}>Pix</option><option value="Débito" ${v.pagamento === 'Débito' ? 'selected' : ''}>Débito</option><option value="Crédito" ${v.pagamento === 'Crédito' ? 'selected' : ''}>Crédito</option></select></div><div><p class="text-[8px] text-slate-500 font-black uppercase mb-1">Data</p><input type="date" id="ed-v-d" value="${v.data.split(' ')[0]}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+        btnSalvar.onclick = async () => { 
+            const hOrig = v.data.includes(' ') ? v.data.split(' ')[1] : ""; 
+            const nData = document.getElementById('ed-v-d').value; 
+            DB.vendas[idIdx].valor = document.getElementById('ed-v-v').value; 
+            DB.vendas[idIdx].pagamento = document.getElementById('ed-v-p').value; 
+            DB.vendas[idIdx].data = hOrig ? `${nData} ${hOrig}` : nData; 
+            await salvar(); fecharModais(); renderizarTudo(); 
+        };
+        btnDel.onclick = async () => { if(confirm("Excluir?")) { DB.vendas.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
+    }
+    else if (tipo === 'cliente' || tipo === 'novo_cliente') {
+        const cli = tipo === 'cliente' ? DB.clientes.find(c => c.id === idIdx) : { nome: '', whatsapp: '' };
+        t.innerText = "CLIENTE"; if(tipo === 'novo_cliente') btnDel.style.display = 'none';
+        c.innerHTML = `<input type="text" id="ed-c-n" placeholder="Nome" value="${cli.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-c-w" placeholder="WhatsApp" value="${cli.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
+        btnSalvar.onclick = async () => { 
+            const n = document.getElementById('ed-c-n').value; 
+            const w = document.getElementById('ed-c-w').value; 
+            if(tipo === 'novo_cliente') { 
+                const id = DB.clientes.length > 0 ? Math.max(...DB.clientes.map(c => c.id)) + 1 : 1; 
+                DB.clientes.push({ id, nome: n, whatsapp: w }); 
+            } else { 
+                const idx = DB.clientes.findIndex(c => c.id === idIdx); 
+                DB.clientes[idx].nome = n; DB.clientes[idx].whatsapp = w; 
+            } 
+            await salvar(); fecharModais(); renderizarTudo(); 
+        };
+        btnDel.onclick = async () => { if(confirm("Remover?")) { DB.clientes = DB.clientes.filter(c => c.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
+    }
+    else if (tipo === 'produto' || tipo === 'novo_produto') {
+        seletor.style.display = 'flex'; 
+        const p = tipo === 'produto' ? DB.estoque.find(i => i.id === idIdx) : { nome: '', preco: '', tipo: 'Serviço', quantidade: 0 };
+        t.innerText = "ESTOQUE"; if(tipo === 'novo_produto') btnDel.style.display = 'none';
+        c.innerHTML = `<input type="text" id="ed-p-n" placeholder="Nome" value="${p.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="number" id="ed-p-p" step="0.01" placeholder="Preço" value="${p.preco}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><div id="campo-qtd-editor"><input type="number" id="ed-p-q" value="${p.quantidade || 0}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none"></div>`;
+        setTipoNovoItem(p.tipo);
+        btnSalvar.onclick = async () => { 
+            const n = document.getElementById('ed-p-n').value; 
+            const pr = document.getElementById('ed-p-p').value; 
+            const q = document.getElementById('ed-p-q').value; 
+            if(tipo === 'novo_produto') { 
+                const id = DB.estoque.length > 0 ? Math.max(...DB.estoque.map(i => i.id)) + 1 : 1; 
+                DB.estoque.push({ id, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }); 
+            } else { 
+                const idx = DB.estoque.findIndex(i => i.id === idIdx); 
+                DB.estoque[idx] = { id: idIdx, nome: n, preco: pr, tipo: tipoItemSelecionado, quantidade: q }; 
+            } 
+            await salvar(); fecharModais(); renderizarTudo(); 
+        };
+        btnDel.onclick = async () => { if(confirm("Remover?")) { DB.estoque = DB.estoque.filter(i => i.id !== idIdx); await salvar(); fecharModais(); renderizarTudo(); } };
+    }
+    else if (tipo === 'barbeiro' || tipo === 'novo_barbeiro') {
+        const b = tipo === 'barbeiro' ? DB.barbeiros[idIdx] : { nome: '', whatsapp: '' };
+        t.innerText = "BARBEIRO"; if(tipo === 'novo_barbeiro') btnDel.style.display = 'none';
+        c.innerHTML = `<input type="text" id="ed-b-n" placeholder="Nome" value="${b.nome}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4"><input type="text" id="ed-b-w" placeholder="WhatsApp" value="${b.whatsapp || ''}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">`;
+        btnSalvar.onclick = async () => { 
+            const n = document.getElementById('ed-b-n').value; 
+            const w = document.getElementById('ed-b-w').value; 
+            if(tipo === 'novo_barbeiro') DB.barbeiros.push({ nome: n, whatsapp: w }); 
+            else { DB.barbeiros[idIdx].nome = n; DB.barbeiros[idIdx].whatsapp = w; } 
+            await salvar(); fecharModais(); renderizarTudo(); 
+        };
+        btnDel.onclick = async () => { if(confirm("Remover?")) { DB.barbeiros.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
+    }
+    // --- SEÇÃO DE GASTOS CORRIGIDA ---
+    else if (tipo === 'gasto' || tipo === 'novo_gasto') {
+        // Busca pelo ID real para não dar erro de índice
+        const g = tipo === 'gasto' ? DB.gastos.find(item => item.id == idIdx) : { descricao: '', valor: '', data: new Date().toISOString().split('T')[0] };
+        
+        t.innerText = "GASTO"; 
+        if(tipo === 'novo_gasto') btnDel.style.display = 'none';
+
+        // Garante que a data esteja no formato YYYY-MM-DD para o input
+        const dataFormatada = g.data ? g.data.split(' ')[0] : '';
+
+        c.innerHTML = `
+            <input type="text" id="ed-g-d" placeholder="Descrição" value="${g.descricao}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4">
+            <input type="number" id="ed-g-v" step="0.01" placeholder="Valor" value="${g.valor}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none mb-4">
+            <input type="date" id="ed-g-dt" value="${dataFormatada}" class="w-full bg-black border border-white/10 p-4 rounded-xl text-white font-black italic outline-none">
+        `;
+
+        btnSalvar.onclick = async () => { 
+            const d = document.getElementById('ed-g-d').value; 
+            const v = parseFloat(document.getElementById('ed-g-v').value) || 0; 
+            const dt = document.getElementById('ed-g-dt').value; 
+
+            if(tipo === 'novo_gasto') { 
+                const novoId = Date.now();
+                DB.gastos.push({ id: novoId, descricao: d, valor: v, data: dt }); 
+            } else { 
+                const idx = DB.gastos.findIndex(item => item.id == idIdx);
+                if(idx !== -1) {
+                    DB.gastos[idx] = { ...DB.gastos[idx], descricao: d, valor: v, data: dt }; 
+                }
+            } 
+            await salvar(); 
+            fecharModais(); 
+            renderizarTudo(); 
+        };
+
+        btnDel.onclick = async () => { 
+            if(confirm("Remover este gasto?")) { 
+                DB.gastos = DB.gastos.filter(item => item.id != idIdx); 
+                await salvar(); 
+                fecharModais(); 
+                renderizarTudo(); 
+            } 
+        };
+    }
+}
         window.onload = () => { sessionStorage.removeItem('acesso_concedido'); sessionStorage.removeItem('is_admin'); document.getElementById('modal-bloqueio-total').style.display = 'flex'; carregar(); };
         window.onbeforeunload = () => { sessionStorage.removeItem('acesso_concedido'); sessionStorage.removeItem('is_admin'); };
     </script>
