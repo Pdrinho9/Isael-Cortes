@@ -119,115 +119,118 @@
         </aside>
 
         <main class="flex-1 p-4 lg:p-16">
-            <div id="tab-vendas" class="tab-content">
-                <div class="max-w-xl mx-auto glass p-8 lg:p-14 rounded-[3rem]">
-                    <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Novo Lançamento</h3>
-                    <form id="form-venda" class="space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <select id="venda-barbeiro" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold" required></select>
-                            <select id="venda-cliente" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none italic"></select>
-                        </div>
-                        <div class="flex flex-col md:flex-row gap-2">
-                            <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="Item ou Serviço..." class="flex-1 bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold">
-                            <div class="flex gap-2">
-                                <input type="number" id="venda-qtd" value="1" min="1" class="w-20 bg-black border border-white/10 p-4 rounded-2xl text-white text-center font-bold outline-none">
-                                <button type="button" onclick="adicionarItemAoCarrinho()" class="bg-white text-black px-6 py-4 rounded-2xl font-black text-xl">+</button>
-                            </div>
-                        </div>
-                        <datalist id="lista-itens-datalist"></datalist>
-                        <div id="carrinho-venda" class="space-y-2 hidden border-y border-white/5 py-4"></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="number" id="venda-valor" placeholder="R$ Total" step="0.01" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-black" required>
-                            <select id="venda-pagamento" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold" required>
-                                <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
-                            <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
-                        </div>
-                        <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
-                    </form>
+    <div id="tab-vendas" class="tab-content">
+        <div class="max-w-xl mx-auto glass p-8 lg:p-14 rounded-[3rem]">
+            <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Novo Lançamento</h3>
+            <form id="form-venda" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select id="venda-barbeiro" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold" required></select>
+                    <select id="venda-cliente" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none italic"></select>
                 </div>
-            </div>
-
-            <div id="tab-dashboard" class="tab-content hidden">
-                <header class="flex flex-col gap-4 mb-8">
-                    <div class="flex justify-between items-center w-full">
-                        <h2 class="text-2xl font-black text-white uppercase italic">Painel</h2>
-                        <select id="filtro-tempo" onchange="toggleFiltroData()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic">
-                            <option value="dia">Por Data</option>
-                            <option value="periodo">Por Período</option>
-                            <option value="total">Geral</option>
-                        </select>
+                <div class="flex flex-col md:flex-row gap-2">
+                    <input type="text" id="venda-descricao" list="lista-itens-datalist" oninput="atualizarPrecoAutomatico()" placeholder="Item ou Serviço..." class="flex-1 bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold">
+                    <div class="flex gap-2">
+                        <input type="number" id="venda-qtd" value="1" min="1" class="w-20 bg-black border border-white/10 p-4 rounded-2xl text-white text-center font-bold outline-none">
+                        <button type="button" onclick="adicionarItemAoCarrinho()" class="bg-white text-black px-6 py-4 rounded-2xl font-black text-xl">+</button>
                     </div>
-                    <div id="area-filtros-data" class="flex flex-wrap gap-2 items-center bg-white/5 p-4 rounded-2xl">
-                        <div id="box-data-inicio" class="flex-1 min-w-[140px]">
-                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Data / Início</p>
-                            <input type="date" id="filtro-data" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
-                        </div>
-                        <div id="box-data-fim" class="flex-1 min-w-[140px] hidden">
-                            <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Fim</p>
-                            <input type="date" id="filtro-data-fim" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
-                        </div>
-                    </div>
-                </header>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento Bruto</p><h4 id="dash-faturamento" class="text-xl font-black text-white italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black italic">Total Comissões</p><h4 id="dash-comissoes" class="text-xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl border-blue-500/10"><p class="text-[9px] text-blue-400 uppercase font-black italic">Venda Produtos</p><h4 id="dash-produtos-total" class="text-xl font-black text-blue-400 italic">R$ 0,00</h4></div>
-                    <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black italic">Lucro da Casa</p><h4 id="dash-casa" class="text-xl font-black text-rose-500 italic">R$ 0,00</h4></div>
                 </div>
-                <div id="log-vendas-agrupado" class="space-y-8"></div>
-            </div>
-
-            <div id="tab-financeiro" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-2xl font-black text-white uppercase italic">Financeiro</h3>
-                    <button onclick="abrirEditor('novo_gasto')" class="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase italic">ADICIONAR GASTO +</button>
+                <datalist id="lista-itens-datalist"></datalist>
+                <div id="carrinho-venda" class="space-y-2 hidden border-y border-white/5 py-4"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="venda-valor" placeholder="R$ Total" step="0.01" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-black" required>
+                    <select id="venda-pagamento" class="bg-black border border-white/10 p-4 rounded-2xl text-white outline-none font-bold" required>
+                        <option value="">Pagamento...</option><option value="Pix">Pix</option><option value="Cartão">Cartão</option><option value="Dinheiro">Dinheiro</option>
+                    </select>
                 </div>
-                <div id="lista-gastos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <div id="tab-clientes" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
-                <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </div>
-
-            <div id="tab-estoque" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
-                
-                <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Serviços</p>
-                <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
-                
-                <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Produtos</p>
-                <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
-
-                <div class="mt-16 glass p-8 rounded-[2.5rem] border-blue-500/10">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="trending-up" class="text-blue-400"></i>
-                            <h3 class="text-xl font-black text-white uppercase italic">Desempenho de Vendas</h3>
-                        </div>
-                        <div class="flex gap-2 bg-black/40 p-2 rounded-2xl border border-white/5">
-                            <input type="date" id="estoque-data-inicio" onchange="renderizarTudo()" class="bg-transparent text-[10px] font-black text-white outline-none uppercase italic">
-                            <span class="text-slate-700 font-black">/</span>
-                            <input type="date" id="estoque-data-fim" onchange="renderizarTudo()" class="bg-transparent text-[10px] font-black text-white outline-none uppercase italic">
-                        </div>
-                    </div>
-                    <p class="text-[9px] text-slate-500 mb-6 uppercase font-bold italic tracking-widest">Relatório por período personalizado</p>
-                    <div id="relatorio-vendas-produtos" class="space-y-3"></div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[9px] text-slate-500 font-black uppercase ml-2 italic">Data do Lançamento <span id="msg-lock" class="text-rose-500">(Somente Admin)</span></label>
+                    <input type="date" id="venda-data-retroativa" onclick="this.showPicker()" disabled class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white font-bold outline-none italic">
                 </div>
-            </div>
-
-            <div id="tab-config" class="tab-content hidden">
-                <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
-                <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-                <button onclick="abrirEditor('novo_barbeiro')" class="w-full max-w-md mx-auto block py-4 border border-white/10 rounded-xl font-black text-[10px] text-white uppercase italic">ADICIONAR BARBEIRO</button>
-            </div>
-        </main>
+                <button type="submit" id="btn-finalizar-venda" class="w-full py-5 bg-white text-black font-black rounded-2xl uppercase shadow-xl">Finalizar</button>
+            </form>
+        </div>
     </div>
+
+    <div id="tab-dashboard" class="tab-content hidden">
+        <header class="flex flex-col gap-4 mb-8">
+            <div class="flex justify-between items-center w-full">
+                <h2 class="text-2xl font-black text-white uppercase italic">Painel</h2>
+                <select id="filtro-tempo" onchange="toggleFiltroData()" class="bg-white text-black text-[10px] font-black rounded-xl px-4 py-2 uppercase italic">
+                    <option value="dia">Por Data</option>
+                    <option value="periodo">Por Período</option>
+                    <option value="total">Geral</option>
+                </select>
+            </div>
+            <div id="area-filtros-data" class="flex flex-wrap gap-2 items-center bg-white/5 p-4 rounded-2xl">
+                <div id="box-data-inicio" class="flex-1 min-w-[140px]">
+                    <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Data / Início</p>
+                    <input type="date" id="filtro-data" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
+                </div>
+                <div id="box-data-fim" class="flex-1 min-w-[140px] hidden">
+                    <p class="text-[8px] text-slate-500 font-black uppercase mb-1 ml-1 text-center">Fim</p>
+                    <input type="date" id="filtro-data-fim" onclick="this.showPicker()" onchange="renderizarTudo()" class="w-full bg-black border border-white/10 text-white text-center text-[10px] font-black rounded-xl px-4 py-3 outline-none italic">
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
+            <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-slate-500 uppercase">Faturamento Bruto</p><h4 id="dash-faturamento" class="text-xl font-black text-white italic">R$ 0,00</h4></div>
+            <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-emerald-500 uppercase font-black italic">Total Comissões</p><h4 id="dash-comissoes" class="text-xl font-black text-emerald-500 italic">R$ 0,00</h4></div>
+            <div class="glass p-6 rounded-3xl border-blue-500/10"><p class="text-[9px] text-blue-400 uppercase font-black italic">Venda Produtos</p><h4 id="dash-produtos-total" class="text-xl font-black text-blue-400 italic">R$ 0,00</h4></div>
+            <div class="glass p-6 rounded-3xl"><p class="text-[9px] text-rose-500 uppercase font-black italic">Lucro da Casa</p><h4 id="dash-casa" class="text-xl font-black text-rose-500 italic">R$ 0,00</h4></div>
+        </div>
+        <div id="log-vendas-agrupado" class="space-y-8"></div>
+    </div>
+
+    <!-- ABA FINANCEIRO COM FILTRO CORRIGIDO -->
+    <div id="tab-financeiro" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-2xl font-black text-white uppercase italic">Financeiro</h3>
+            <div class="flex items-center gap-2">
+                <input type="date" id="filtro-data-financeiro" onchange="renderizarListasSecundarias()" class="glass text-white text-[10px] font-bold uppercase p-2 rounded-xl border border-white/10 outline-none italic">
+                <button onclick="abrirEditor('novo_gasto')" class="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase italic">ADICIONAR GASTO +</button>
+            </div>
+        </div>
+        <div id="lista-gastos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <div id="tab-clientes" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Clientes</h3><button onclick="abrirEditor('novo_cliente')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
+        <div id="lista-completa-clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+
+    <div id="tab-estoque" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-8"><h3 class="text-2xl font-black text-white uppercase italic">Estoque</h3><button onclick="abrirEditor('novo_produto')" class="bg-white text-black px-4 py-2 rounded-xl font-black text-[10px] uppercase">NOVO +</button></div>
+        
+        <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Serviços</p>
+        <div id="lista-servicos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
+        
+        <p class="text-[10px] text-slate-500 font-black uppercase mb-4 italic tracking-widest">— Produtos</p>
+        <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
+
+        <div class="mt-16 glass p-8 rounded-[2.5rem] border-blue-500/10">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="trending-up" class="text-blue-400"></i>
+                    <h3 class="text-xl font-black text-white uppercase italic">Desempenho de Vendas</h3>
+                </div>
+                <div class="flex gap-2 bg-black/40 p-2 rounded-2xl border border-white/5">
+                    <input type="date" id="estoque-data-inicio" onchange="renderizarTudo()" class="bg-transparent text-[10px] font-black text-white outline-none uppercase italic">
+                    <span class="text-slate-700 font-black">/</span>
+                    <input type="date" id="estoque-data-fim" onchange="renderizarTudo()" class="bg-transparent text-[10px] font-black text-white outline-none uppercase italic">
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-500 mb-6 uppercase font-bold italic tracking-widest">Relatório por período personalizado</p>
+            <div id="relatorio-vendas-produtos" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <div id="tab-config" class="tab-content hidden">
+        <h3 class="text-2xl font-black text-white mb-8 text-center uppercase italic">Equipe</h3>
+        <div id="lista-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+        <button onclick="abrirEditor('novo_barbeiro')" class="w-full max-w-md mx-auto block py-4 border border-white/10 rounded-xl font-black text-[10px] text-white uppercase italic">ADICIONAR BARBEIRO</button>
+    </div>
+</main>
 
     <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 px-2 py-3 flex justify-around items-center z-[450] rounded-t-[2rem]">
         <button onclick="switchTab('vendas')" class="text-white p-2"><i data-lucide="plus-circle"></i></button>
@@ -585,7 +588,7 @@
         const filtroT = document.getElementById('filtro-tempo').value;
         const dataS = document.getElementById('filtro-data').value;
         const dataF = document.getElementById('filtro-data-fim').value;
-        
+
         const agora = new Date();
         const mesAtual = agora.getMonth();
         const anoAtual = agora.getFullYear();
