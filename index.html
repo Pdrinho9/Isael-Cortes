@@ -578,54 +578,68 @@
                     equL.innerHTML += `<div class="glass p-5 rounded-3xl flex justify-between items-center"><div><p class="font-black text-white text-xs uppercase italic">${b.nome}</p></div><div class="flex gap-4 items-center">${btnWhats}<button onclick="abrirEditor('barbeiro', ${idx})" class="text-slate-600"><i data-lucide="edit-3" size="16"></i></button></div></div>`;
                 }); 
             }
-         const gastL = document.getElementById('lista-gastos');
-if (gastL) {
-    gastL.innerHTML = '';
+        const gastL = document.getElementById('lista-gastos');
+    if (gastL) {
+        gastL.innerHTML = '';
 
-    // Captura os valores dos filtros globais
-    const filtroT = document.getElementById('filtro-tempo').value;
-    const dataS = document.getElementById('filtro-data').value;
-    const dataF = document.getElementById('filtro-data-fim').value;
+        const filtroT = document.getElementById('filtro-tempo').value;
+        const dataS = document.getElementById('filtro-data').value;
+        const dataF = document.getElementById('filtro-data-fim').value;
+        
+        const agora = new Date();
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
 
-    const agora = new Date();
-    const mesAtual = agora.getMonth();
-    const anoAtual = agora.getFullYear();
+        let somaGastosFiltrados = 0;
 
-    // Filtra os gastos logicamente
-    const gastosExibidos = (DB.gastos || []).filter(g => {
-        const dataGastoStr = g.data.split(' ')[0]; // Formato YYYY-MM-DD
+        
+        const gastosExibidos = (DB.gastos || []).filter(g => {
+            const dataGastoStr = g.data.split(' ')[0]; 
 
-        if (filtroT === 'periodo') {
-            return dataGastoStr >= dataS && dataGastoStr <= dataF;
+            if (filtroT === 'dia') {
+                
+                return dataGastoStr === dataS;
+            }
+            if (filtroT === 'periodo') {
+                return dataGastoStr >= dataS && dataGastoStr <= dataF;
+            }
+          
+            const dataObj = new Date(g.data + 'T00:00:00');
+            return dataObj.getMonth() === mesAtual && dataObj.getFullYear() === anoAtual;
+        });
+
+        gastosExibidos.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+        if (gastosExibidos.length === 0) {
+            let msg = "Nenhum gasto anotado";
+            if (filtroT === 'dia') msg = `Sem gastos para o dia ${dataS.split('-').reverse().join('/')}`;
+            gastL.innerHTML = `<p class="text-[10px] text-slate-600 text-center py-8 uppercase font-bold italic">${msg}</p>`;
         }
-        if (filtroT === 'dia') {
-            return dataGastoStr === dataS;
-        }
-        // Se estiver em "Total" ou sem filtro específico, mostra o Mês Atual
-        // Criamos o objeto de data garantindo que o JS não mude o fuso horário
-        const dataObj = new Date(g.data + 'T00:00:00');
-        return dataObj.getMonth() === mesAtual && dataObj.getFullYear() === anoAtual;
-    });
 
-    if (gastosExibidos.length === 0) {
-        gastL.innerHTML = '<p class="text-[10px] text-slate-600 text-center py-4 uppercase font-bold">Nenhum gasto encontrado para este período</p>';
+        gastosExibidos.forEach((g) => {
+            const valor = parseFloat(g.valor) || 0;
+            somaGastosFiltrados += valor;
+
+            const realIdx = DB.gastos.indexOf(g);
+            gastL.innerHTML += `
+                <div class="glass p-4 rounded-2xl flex justify-between items-center mb-2 border border-white/5">
+                    <div>
+                        <p class="text-[10px] font-black uppercase italic text-rose-500 leading-none mb-1">${g.descricao}</p>
+                        <p class="text-white font-black text-sm italic">R$ ${valor.toFixed(2)}</p>
+                        <p class="text-slate-500 text-[8px] font-bold uppercase mt-1">Data: ${g.data.split('-').reverse().join('/')}</p>
+                    </div>
+                    <button onclick="abrirEditor('gasto', ${realIdx})" class="bg-white/5 p-2 rounded-lg text-slate-400">
+                        <i data-lucide="edit-3" size="14"></i>
+                    </button>
+                </div>`;
+        });
+
+        const labelTotal = document.getElementById('total-gastos-filtrados');
+        if (labelTotal) labelTotal.innerText = "R$ " + somaGastosFiltrados.toFixed(2);
     }
+    
+    lucide.createIcons();
 
-    gastosExibidos.forEach((g) => {
-        const realIdx = DB.gastos.indexOf(g);
-        gastL.innerHTML += `
-            <div class="glass p-4 rounded-2xl flex justify-between items-center mb-2">
-                <div>
-                    <p class="text-[10px] font-black uppercase italic text-rose-500">${g.descricao}</p>
-                    <p class="text-white font-bold text-xs">R$ ${parseFloat(g.valor).toFixed(2)}</p>
-                    <p class="text-slate-500 text-[8px] uppercase">${g.data.split('-').reverse().join('/')}</p>
-                </div>
-                <button onclick="abrirEditor('gasto', ${realIdx})" class="text-slate-600">
-                    <i data-lucide="edit-3" size="16"></i>
-                </button>
-            </div>`;
-    });
-}
         }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
