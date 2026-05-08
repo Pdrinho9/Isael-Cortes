@@ -844,7 +844,7 @@
         };
         btnDel.onclick = async () => { if(confirm("Remover?")) { DB.barbeiros.splice(idIdx, 1); await salvar(); fecharModais(); renderizarTudo(); } };
     }
-    // --- SEÇÃO DE GASTOS CORRIGIDA ---
+    
     else if (tipo === 'gasto' || tipo === 'novo_gasto') {
         // Busca pelo ID real para não dar erro de índice
         const g = tipo === 'gasto' ? DB.gastos.find(item => item.id == idIdx) : { descricao: '', valor: '', data: new Date().toISOString().split('T')[0] };
@@ -852,7 +852,6 @@
         t.innerText = "GASTO"; 
         if(tipo === 'novo_gasto') btnDel.style.display = 'none';
 
-        // Garante que a data esteja no formato YYYY-MM-DD para o input
         const dataFormatada = g.data ? g.data.split(' ')[0] : '';
 
         c.innerHTML = `
