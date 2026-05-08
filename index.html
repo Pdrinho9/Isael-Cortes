@@ -682,45 +682,81 @@
         }
 
         document.getElementById('form-venda').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-finalizar-venda');
-            const descInput = document.getElementById('venda-descricao');
-            if(btn.disabled) return;
-            if(carrinhoTemporario.length === 0 && descInput.value) { adicionarItemAoCarrinho(); }
-            if(carrinhoTemporario.length === 0) return;
-            btn.disabled = true; btn.innerText = "SALVANDO...";
-            const dataEscolhida = document.getElementById('venda-data-retroativa').value;
-            const agora = new Date();
-            const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
-            const backupVendas = JSON.parse(JSON.stringify(DB.vendas));
-            const backupEstoque = JSON.parse(JSON.stringify(DB.estoque));
-            carrinhoTemporario.forEach(item => {
-                const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
-                if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
-            });
-            DB.vendas.push({ 
-                barbeiro: document.getElementById('venda-barbeiro').value, 
-                cliente: document.getElementById('venda-cliente').value, 
-                descricao: carrinhoTemporario.map(i => i.nome).join(', '), 
-                valor: document.getElementById('venda-valor').value, 
-                pagamento: document.getElementById('venda-pagamento').value, 
-                data: `${dataEscolhida} ${horaAtual}` 
-            });
-            const sucesso = await salvar();
-            if (sucesso) { 
-                this.reset(); 
-                carrinhoTemporario = []; 
-                document.getElementById('venda-data-retroativa').value = hoje; 
-                atualizarVisualCarrinho(); 
-                renderizarTudo(); 
-                alert("Lançamento Realizado!"); 
-            } else { 
-                DB.vendas = backupVendas; 
-                DB.estoque = backupEstoque; 
+    e.preventDefault();
+    const btn = document.getElementById('btn-finalizar-venda');
+    const descInput = document.getElementById('venda-descricao');
+    
+    if(btn.disabled) return;
+
+    // Se o carrinho tá vazio mas tem algo escrito, tenta adicionar
+    if(carrinhoTemporario.length === 0 && descInput.value) { 
+        if(typeof adicionarItemAoCarrinho === 'function') adicionarItemAoCarrinho(); 
+    }
+    
+    if(carrinhoTemporario.length === 0) return;
+
+    btn.disabled = true; 
+    btn.innerText = "SALVANDO...";
+
+    // Backups para segurança
+    const backupVendas = JSON.parse(JSON.stringify(DB.vendas || []));
+    const backupEstoque = JSON.parse(JSON.stringify(DB.estoque || []));
+
+    try {
+        const dataEscolhida = document.getElementById('venda-data-retroativa').value || new Date().toISOString().split('T')[0];
+        const agora = new Date();
+        const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + agora.getMinutes().toString().padStart(2, '0');
+
+        // 1. Atualiza Estoque
+        carrinhoTemporario.forEach(item => {
+            const idx = DB.estoque.findIndex(e => e.nome.toLowerCase() === item.original.toLowerCase());
+            if(idx !== -1 && DB.estoque[idx].tipo === 'Produto') {
+                DB.estoque[idx].quantidade = (DB.estoque[idx].quantidade || 0) - item.qtd;
             }
-            btn.disabled = false; 
-            btn.innerText = "FINALIZAR";
-        }); 
+        });
+
+        // 2. Registra a Venda
+        DB.vendas.push({ 
+            id: Date.now(),
+            barbeiro: document.getElementById('venda-barbeiro').value, 
+            cliente: document.getElementById('venda-cliente').value, 
+            descricao: carrinhoTemporario.map(i => i.nome).join(', '), 
+            valor: document.getElementById('venda-valor').value, 
+            pagamento: document.getElementById('venda-pagamento').value, 
+            data: `${dataEscolhida} ${horaAtual}` 
+        });
+
+        // 3. Salva
+        const sucesso = await salvar();
+
+        if (sucesso) { 
+            this.reset(); 
+            carrinhoTemporario = []; 
+            
+            // Tenta rodar as atualizações de tela, mas não trava se elas falharem
+            try {
+                if (typeof atualizarVisualCarrinho === 'function') atualizarVisualCarrinho(); 
+                if (typeof renderizarTudo === 'function') renderizarTudo();
+                if (typeof fecharModais === 'function') fecharModais(); // Tenta fechar o modal sozinho
+            } catch (err) { console.warn("Erro ao atualizar visual:", err); }
+
+            alert("Lançamento Realizado!"); 
+        } else { 
+            throw new Error("Falha no retorno do salvar");
+        }
+
+    } catch (err) {
+        console.error("Erro Crítico:", err);
+        DB.vendas = backupVendas; 
+        DB.estoque = backupEstoque; 
+        alert("Erro ao salvar! O botão será liberado para tentar novamente.");
+    } finally {
+        // ISSO AQUI RESOLVE O SEU PROBLEMA DA FOTO:
+        // Não importa o que aconteça lá em cima, essas duas linhas VÃO rodar.
+        btn.disabled = false; 
+        btn.innerText = "FINALIZAR";
+    }
+});
 
         function calcularComissao(descricao) {
             let total = 0;
