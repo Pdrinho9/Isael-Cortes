@@ -751,8 +751,7 @@
         DB.estoque = backupEstoque; 
         alert("Erro ao realizar lançamento. Tente novamente.");
     } finally {
-        // ESSA PARTE É A MAIS IMPORTANTE: 
-        // Aconteça o que acontecer, o botão volta ao estado original
+       
         btn.disabled = false; 
         btn.innerText = "FINALIZAR";
     }
